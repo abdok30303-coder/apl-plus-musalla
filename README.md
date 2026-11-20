@@ -97,13 +97,18 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 
 ## Install
 
-> Requires a Samsung Smart TV on **Tizen 6.5 or newer** with Developer Mode on.
+> Requires a Samsung Smart TV from **2022 or newer** (Tizen 6.5+).
 
-1. Download `apl-plus-musalla-v8.7.17.wgt` from the [Releases page](../../releases) (or from [`releases/`](releases/)).
-2. Install it on the TV with your usual sideload route (Tizen Studio, Apps2Samsung, …).
-3. Open **APL+ Musalla** from the TV's app list.
+**The easy way: Apps2Samsung** (free, no programming needed)
 
-Many changes in [`app/CHANGELOG.md`](app/CHANGELOG.md) are marked *Untested on physical TV*; [`app/TV-TEST.md`](app/TV-TEST.md) is the checklist to confirm them. Found something? Please open an issue.
+1. On the TV, turn on **Developer Mode**: **Home › Apps**, type **12345**, switch Developer mode **On**, enter your computer's IP address, then **restart the TV**.
+2. Download `apl-plus-musalla-v8.7.17.wgt` from the [Releases page](../../releases).
+3. Open [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer, select your TV, choose a **custom `.wgt`**, pick the file and press **Install**.
+4. Open **APL+ Musalla** from the TV's **Apps** list.
+
+📖 **[Step-by-step guide with troubleshooting, in English and Arabic →](docs/INSTALL.md)**
+
+You can also sideload with Tizen Studio. Many changes in [`app/CHANGELOG.md`](app/CHANGELOG.md) are marked *Untested on physical TV*; [`app/TV-TEST.md`](app/TV-TEST.md) is the checklist to confirm them. Found something? Please open an issue.
 
 ## Configure
 
@@ -146,4 +151,4 @@ APL+ Musalla is a derivative of **APL Launcher** by Knikt (Gero Corp.). See [`NO
 - **مركز تحكم**، ومصادر HDMI، وملفات شخصية مع قفل للأطفال، وحافظ شاشة، ومهام بعدّاد تنازلي، وطقس.
 - واجهة عربية من اليمين لليسار بتسعة خطوط عربية، **وخفيفة** على الشاشة.
 
-**للتثبيت:** نزّل ملف `.wgt` من صفحة [Releases](../../releases) وثبّته على الشاشة بوضع المطوّر. المدينة الافتراضية القاهرة ويمكن تغييرها من الإعدادات.
+**للتثبيت:** نزّل ملف `.wgt` من صفحة [Releases](../../releases) وثبّته بأداة **Apps2Samsung** بعد تفعيل وضع المطوّر على الشاشة. الشرح خطوة بخطوة هنا: [دليل التثبيت](docs/INSTALL.md#التثبيت-على-شاشة-سامسونج-بواسطة-apps2samsung). المدينة الافتراضية القاهرة ويمكن تغييرها من الإعدادات.
