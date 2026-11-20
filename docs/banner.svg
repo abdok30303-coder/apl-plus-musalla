@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="APL+ Musalla">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1f1a"/>
+      <stop offset="0.55" stop-color="#10253a"/>
+      <stop offset="1" stop-color="#1b1f4a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.35" r="0.6">
+      <stop offset="0" stop-color="#e8c36a" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#e8c36a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6e2a0"/>
+      <stop offset="1" stop-color="#c9973b"/>
+    </linearGradient>
+    <pattern id="star" width="64" height="64" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#e8c36a" stroke-opacity="0.07" stroke-width="1.2">
+        <rect x="14" y="14" width="36" height="36"/>
+        <rect x="14" y="14" width="36" height="36" transform="rotate(45 32 32)"/>
+      </g>
+    </pattern>
+    <clipPath id="round"><rect width="1280" height="340" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#round)">
+    <rect width="1280" height="340" fill="url(#bg)"/>
+    <rect width="1280" height="340" fill="url(#star)"/>
+    <rect width="1280" height="340" fill="url(#glow)"/>
+
+    <!-- mosque skyline -->
+    <g fill="#050d0c" fill-opacity="0.55">
+      <path d="M860 340 V250 h26 V232 q0-10 8-10 t8 10 V250 h22 V340 z"/>
+      <path d="M1130 340 V236 h22 V210 q0-12 9-12 t9 12 V236 h20 V340 z"/>
+      <path d="M930 340 V262 q0-62 80-62 t80 62 V340 z"/>
+      <rect x="1004" y="150" width="12" height="52"/>
+      <path d="M1010 118 q-9 12 0 26 q9-14 0-26z"/>
+      <path d="M1100 340 V280 h-14 V340z"/>
+    </g>
+    <circle cx="1010" cy="120" r="3" fill="#f6e2a0"/>
+    <g fill="#f6e2a0" fill-opacity="0.8">
+      <circle cx="760" cy="60" r="1.6"/><circle cx="1180" cy="52" r="1.8"/>
+      <circle cx="880" cy="96" r="1.2"/><circle cx="1230" cy="140" r="1.4"/>
+      <circle cx="690" cy="130" r="1.2"/>
+    </g>
+
+    <!-- icon -->
+    <rect x="72" y="86" width="132" height="132" rx="30" fill="#000" fill-opacity="0.35"/>
+    <image href="icon.png" x="76" y="78" width="132" height="132"/>
+
+    <!-- title -->
+    <text x="240" y="162" font-family="'SF Pro Display','Segoe UI',Helvetica,Arial,sans-serif" font-size="82" font-weight="700" fill="#ffffff" letter-spacing="-1">APL<tspan fill="url(#gold)">+</tspan> Musalla</text>
+    <text x="244" y="206" font-family="'SF Pro Text','Segoe UI',Helvetica,Arial,sans-serif" font-size="27" fill="#cfe3dd">An Apple&#160;TV&#8211;style launcher for Samsung Tizen TVs</text>
+    <text x="244" y="246" font-family="'SF Pro Text','Segoe UI',Helvetica,Arial,sans-serif" font-size="21" fill="#e8c36a" letter-spacing="0.5">PRAYER TIMES  ·  QURAN RADIO  ·  FULL MUSHAF  ·  AZKAR  ·  RTL</text>
+    <text x="1208" y="62" text-anchor="end" font-family="'Noto Naskh Arabic','Amiri','Segoe UI',Arial,sans-serif" font-size="40" fill="url(#gold)">المصلّى</text>
+  </g>
+  <rect x="1" y="1" width="1278" height="338" rx="27" fill="none" stroke="#e8c36a" stroke-opacity="0.25"/>
+</svg>

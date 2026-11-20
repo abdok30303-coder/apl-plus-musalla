@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets"
+        xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://gerocorp.local/APLauncher"
+        version="8.7.17"
+        viewmodes="maximized">
+
+    <tizen:application id="APLauncher.Home"
+                       package="APLauncher"
+                       required_version="6.5"/>
+
+    <tizen:profile name="tv"/>
+
+    <content src="index.html"/>
+    <icon src="icon.png"/>
+    <name>APL+ Musalla</name>
+    <description>APL+ Musalla: an Apple TV style launcher for Samsung Tizen 6.5+ Smart TVs with prayer times, Quran radio and Mushaf, Pulse prayer alerts and tasks. Based on APL Launcher by Knikt (Gero Corp.).</description>
+    <author>APL+ Musalla contributors</author>
+
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+
+    <!-- Background execution categories required by Samsung Tizen 6.5+ so APLauncher.Bridge
+         keeps running 24/7 behind apps & HDMI without claiming a conflicting WebView media session -->
+    <tizen:background-category value="media"/>
+    <tizen:background-category value="background-network"/>
+    <tizen:background-category value="download"/>
+
+    <!-- App enumeration, launch, audio, remote, storage, power & full Vetro bridge communication -->
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.info"/>
+    <tizen:privilege name="http://tizen.org/privilege/packagemanager.info"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.audio"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.window"/>
+    <tizen:privilege name="http://tizen.org/privilege/system"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/volume.set"/>
+    <tizen:privilege name="http://tizen.org/privilege/unlimitedstorage"/>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.read"/>
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
+    <tizen:privilege name="http://tizen.org/privilege/notification"/>
+    <tizen:privilege name="http://tizen.org/privilege/power"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/productinfo"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/network.public"/>
+    <tizen:privilege name="http://developer.samsung.com/privilege/avinfo"/>
+    <!-- Bluetooth: AirPods, headphones and speakers from the Control Center -->
+    <tizen:privilege name="http://tizen.org/privilege/bluetooth"/>
+    <tizen:privilege name="http://tizen.org/privilege/bluetooth.admin"/>
+    <tizen:privilege name="http://tizen.org/privilege/bluetooth.gap"/>
+
+    <!-- Home button, Overlay & voice actions -->
+    <tizen:app-control>
+        <tizen:src name="index.html" reload="disable"/>
+        <tizen:operation name="http://tizen.org/appcontrol/operation/default"/>
+    </tizen:app-control>
+    <tizen:app-control>
+        <tizen:src name="index.html" reload="disable"/>
+        <tizen:operation name="http://tizen.org/appcontrol/operation/view"/>
+    </tizen:app-control>
+
+    <tizen:metadata key="http://samsung.com/tv/metadata/prelaunch.support" value="true"/>
+    <tizen:metadata key="http://tizen.org/metadata/app_ui_type/base_screen_resolution" value="extensive"/>
+
+    <tizen:setting screen-orientation="landscape"
+                   context-menu="disable"
+                   background-support="enable"
+                   encryption="disable"
+                   install-location="auto"
+                   hwkey-event="enable"/>
+
+    <!-- Persistent Vetro relay & 24/7 background supervisor watchdog (bridge/service.js) -->
+    <tizen:service id="APLauncher.Bridge" on-boot="true" auto-restart="true">
+        <tizen:content src="bridge/service.js"/>
+        <tizen:name>APL Bridge</tizen:name>
+        <tizen:description>Full Vetro relay and 24/7 background audio/alert supervisor for APL Launcher</tizen:description>
+        <tizen:metadata key="service-type" value="nodejs"/>
+    </tizen:service>
+
+    <access origin="*" subdomains="true"/>
+    <tizen:allow-navigation>*</tizen:allow-navigation>
+    <tizen:content-security-policy>default-src 'self' file: data: blob:; script-src 'self' file: data: blob: 'unsafe-inline'; style-src 'self' file: data: 'unsafe-inline'; img-src 'self' file: data: blob: https: http://127.0.0.1:* http://localhost:* http://127.0.0.1:8099; font-src 'self' file: data:; media-src 'self' file: data: blob: http: https:; connect-src 'self' file: data: blob: http: https: ws: wss:</tizen:content-security-policy>
+</widget>

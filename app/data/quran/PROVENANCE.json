@@ -1,0 +1,21 @@
+{
+  "narration": "Hafs an Asim / حفص عن عاصم",
+  "edition": "Tanzil Uthmani 1.1; Medina 604-page metadata",
+  "source": "https://tanzil.net/",
+  "hafsReference": "https://tanzil.net/docs/Medina_Mushaf",
+  "downloadPage": "https://tanzil.net/download/",
+  "metadataSource": "https://tanzil.net/res/text/metadata/quran-data.xml",
+  "retrieved": "2026-11-18",
+  "display": "6236 verbatim Uthmani verse strings, including full vowel/pause marks. No verse text is rewritten.",
+  "search": "Parallel Tanzil Simple Clean text for Imlaei spelling; normalization only in a transient search index.",
+  "sourceSha256": {
+    "quran-uthmani.txt": "7f30c647331a61100ebf24a80507dc0fcdd9f2df97f1312b5b2dfcb982a7f326",
+    "quran-simple-clean.txt": "1862ee63c70fbfc6285e0bb0b9587b89beb5b7891109a4d543d9d2cf8283e8c8",
+    "quran-data.xml": "8867c1d88191472adec9db694b3cd9f135b1a2ef580574d32cf888dcb22c5c7a"
+  },
+  "fontSource": "https://github.com/google/fonts/tree/main/ofl/amiriquran",
+  "fontLicense": "SIL Open Font License 1.1 (fonts/AmiriQuran-OFL.txt)",
+  "searchRuntime": "Transient normalized copies of Simple Clean AND the original Uthmani string; no changes to the distributed text.",
+  "packageLayout": "v7.0.6: meta.json (surah/page/juz tables + verbatim 1:1 as 'opening'), juz/01..30.json (verbatim Uthmani verse slices), search.json (Simple Clean). Each file keeps the Tanzil notice. tools/quran-split.py --join rebuilds the v7.0.0 hafs.json byte-for-byte.",
+  "hafsJsonSha256": "8f7aa810ba1d85ac83d776fb68924a81686c695a49f2dac3e9535ada39fd2b2c"
+}
