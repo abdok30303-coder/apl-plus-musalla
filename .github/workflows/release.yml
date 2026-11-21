@@ -1,0 +1,39 @@
+name: Publish release
+
+# Publishes the .wgt from releases/ as a public GitHub Release when a version tag is pushed.
+# Release assets of a public repo can be downloaded by anyone, without login and without a daily cap.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish, e.g. v8.7.18"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: Create or update the release
+        run: |
+          ver="${TAG#v}"
+          file="releases/apl-plus-musalla-v${ver}.wgt"
+          test -f "$file"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$file" --clobber
+          else
+            gh release create "$TAG" "$file" --title "APL+ Musalla v${ver}" --latest \
+              --notes "Install the .wgt with Apps2Samsung (custom .wgt). Own package IDs (APLMusalla*): it installs next to APL Launcher and does not replace it. If you have 8.7.17 installed, uninstall it first. MIT licensed, see LICENSE. Untested on a physical TV."
+          fi
+      - name: Retire the old 8.7.17 file (it used APL Launcher's package IDs)
+        run: gh release delete-asset v8.7.17 apl-plus-musalla-v8.7.17.wgt --yes || true

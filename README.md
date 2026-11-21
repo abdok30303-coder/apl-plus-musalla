@@ -102,7 +102,7 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 **The easy way: Apps2Samsung** (free, no programming needed)
 
 1. On the TV, turn on **Developer Mode**: **Home › Apps**, type **12345**, switch Developer mode **On**, enter your computer's IP address, then **restart the TV**.
-2. Download `apl-plus-musalla-v8.7.18.wgt` from the [Releases page](../../releases).
+2. Download `apl-plus-musalla-v8.7.18.wgt` from the [Releases page](../../releases) (or directly: [`releases/apl-plus-musalla-v8.7.18.wgt`](releases/apl-plus-musalla-v8.7.18.wgt)).
 3. Open [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer, select your TV, choose a **custom `.wgt`**, pick the file and press **Install**.
 4. Open **APL+ Musalla** from the TV's **Apps** list.
 
