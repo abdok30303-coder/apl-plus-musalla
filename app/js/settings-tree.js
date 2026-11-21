@@ -54,7 +54,7 @@
     function getRemapAppChoices() {
         var base = [
             ["default", APL.t("Default (Original TV Action)")],
-            ["APLauncher.Home", APL.t("APL Launcher")]
+            ["APLMusalla.Home", APL.t("APL Launcher")]
         ];
         /* v1.2.103: the screen's HDMI inputs, so a remote button can open one of them (handled by the launcher: system.js handleRemapKey). */
         try {
@@ -68,7 +68,7 @@
         if (typeof APL.allApps === "function") {
             try {
                 realApps = (APL.allApps() || []).filter(function (a) {
-                    return a && a.id && !a.virtual && a.id !== "APLauncher.Home";
+                    return a && a.id && !a.virtual && a.id !== "APLMusalla.Home";
                 });
             } catch (e) {}
         }

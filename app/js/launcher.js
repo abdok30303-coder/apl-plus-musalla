@@ -964,7 +964,7 @@
 
     /* Settings › Apps: closes the apps left open behind the launcher. Only Home Screen apps
        and the big video apps: never a screen service. TizenTube stays ready (20 s from cold). */
-    var KEEP_OPEN = /^(APLauncher\.|apl\.launcher\.|xvvl3S1bvH\.|vetrotvapp)/;
+    var KEEP_OPEN = /^(APLMusalla\.|APLauncher\.|apl\.launcher\.|xvvl3S1bvH\.|vetrotvapp)/;
     var VIDEO_APPS = ["org.tizen.netflix-app", "org.tizen.primevideo", "HEPsqFNie0.tvplusstandalone"];   // their tile carries a different id
     function memoryLeft() {
         return APL.sys.exec("awk '/MemAvailable|SwapFree/{s+=$2} END{print s}' /proc/meminfo").then(function (r) { return parseInt(r.output, 10) || 0; });
@@ -1665,7 +1665,7 @@
     }
 
     /* ---------- "hold OK" menu (as on tvOS) ---------- */
-    var PROTECTED = /^(vetrotvapp|APLauncher\.|xvvl3S1bvH\.|com\.samsung\.|org\.tizen\.|samsung\.)/i;   // xvvl3S1bvH: TizenBrew
+    var PROTECTED = /^(vetrotvapp|APLMusalla\.|APLauncher\.|xvvl3S1bvH\.|com\.samsung\.|org\.tizen\.|samsung\.)/i;   // xvvl3S1bvH: TizenBrew
 
     function openAppMenu(i, el) {
         var app = apps[i];

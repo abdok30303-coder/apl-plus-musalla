@@ -72,7 +72,7 @@ else
     done
 fi
 [ "$found" = 1 ] || { report CANNON_NO_PULSE; exit 1; }
-PULSE_PROP='media.role=event application.name=APL_Ramadan_Cannon application.id=APLauncher.Home'
+PULSE_PROP='media.role=event application.name=APL_Ramadan_Cannon application.id=APLMusalla.Home'
 export PULSE_PROP
 pactl upload-sample "$wav" "$sample" || { report CANNON_UPLOAD_FAILED; exit 1; }
 uploaded=1

@@ -606,14 +606,14 @@
                directory, and its resolved path is cached for later switches. */
             var cmd = "H=$(cat " + NATIVE_HELPER_CACHE + " 2>/dev/null); " +
                 "if [ ! -f \"$H\" ]; then H=; for p in " +
-                "/opt/usr/home/owner/apps_rw/APLauncher/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
-                "/opt/usr/home/owner/apps_rw/APLauncher.Home/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
-                "/home/owner/apps_rw/APLauncher/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
-                "/home/owner/apps_rw/APLauncher.Home/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
-                "/opt/usr/apps/APLauncher/native/" + NATIVE_HELPER_NAME + " " +
-                "/opt/usr/apps/APLauncher.Home/native/" + NATIVE_HELPER_NAME + " " +
-                "/usr/apps/APLauncher/native/" + NATIVE_HELPER_NAME + " " +
-                "/usr/apps/APLauncher.Home/native/" + NATIVE_HELPER_NAME + "; do " +
+                "/opt/usr/home/owner/apps_rw/APLMusalla/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
+                "/opt/usr/home/owner/apps_rw/APLMusalla.Home/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
+                "/home/owner/apps_rw/APLMusalla/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
+                "/home/owner/apps_rw/APLMusalla.Home/res/wgt/native/" + NATIVE_HELPER_NAME + " " +
+                "/opt/usr/apps/APLMusalla/native/" + NATIVE_HELPER_NAME + " " +
+                "/opt/usr/apps/APLMusalla.Home/native/" + NATIVE_HELPER_NAME + " " +
+                "/usr/apps/APLMusalla/native/" + NATIVE_HELPER_NAME + " " +
+                "/usr/apps/APLMusalla.Home/native/" + NATIVE_HELPER_NAME + "; do " +
                 "if [ -f \"$p\" ]; then H=\"$p\"; break; fi; done; fi; " +
                 "if [ -z \"$H\" ]; then H=$(find /opt/usr /usr/apps /home/owner -maxdepth 14 -type f -name " + NATIVE_HELPER_NAME + " -print -quit 2>/dev/null); fi; " +
                 "[ -n \"$H\" ] && [ -f \"$H\" ] || { echo native-helper-missing; exit 127; }; " +
@@ -820,7 +820,7 @@
        /screen. The launcher's private bridge (bridge/service.js, a service in this package) makes
        the other requests and sends the answer back through a trusted Tizen message port
        (reserved for apps signed with the same certificate; no network port is opened). */
-    var BRIDGE_ID = "APLauncher.Bridge", BRIDGE_PORT = "APL_BRIDGE", BRIDGE_PORT_PLAIN = "APL_BRIDGE_PLAIN";
+    var BRIDGE_ID = "APLMusalla.Bridge", BRIDGE_PORT = "APL_BRIDGE", BRIDGE_PORT_PLAIN = "APL_BRIDGE_PLAIN";
     var replyPort = null, plainReplyPort = null, pending = {}, seq = 0, bridgeDownUntil = 0, bridgeStarting = null;
     var usePlainBridge = false;
     var bridgeToken = "";
@@ -1337,7 +1337,7 @@
         if (PREVIEW) return Promise.resolve(MOCK_NATIVE[id] || (d.min !== undefined ? Math.round((d.min + d.max) / 2) : 0));
         if (d.home) {
             // On only if both took: with Autorun off the screen still starts on the TV input
-            return withTimeout(homeAppRead(), 15000).then(function (s) { return s.home === "APLauncher.Home" && s.autostart === 1 ? 1 : 0; });
+            return withTimeout(homeAppRead(), 15000).then(function (s) { return s.home === "APLMusalla.Home" && s.autostart === 1 ? 1 : 0; });
         }
         if (d.vconf) {
             return tvExec("vconftool get " + d.vconf + " 2>&1").then(function (r) {
@@ -1377,7 +1377,7 @@
        (and what vconftool answered, when it said anything): "refused" alone told nobody why. */
     function homeAppCheck(value, written) {
         return homeAppRead().then(function (s) {
-            var back = s.home === "APLauncher.Home" && s.autostart === 1 ? 1 : 0;
+            var back = s.home === "APLMusalla.Home" && s.autostart === 1 ? 1 : 0;
             if (back === value) return back;
             var said = String((written && written.output) || "").replace(/\s+/g, " ").trim().slice(0, 90);
             throw new Error(APL.t("The screen kept {app} as its home app, Autorun Smart Hub {state}.",
@@ -1398,15 +1398,15 @@
     function homeAppSet(value) {
         return homeAppRead().then(function (cur) {
             if (value === 1) {
-                if (cur.home !== "APLauncher.Home") setPref("homeAppSaved", { home: cur.home, autostart: cur.autostart });
-                return tvExec("vconftool set -f -t string " + HOME_KEY + " APLauncher.Home 2>&1; vconftool set -f -t int " + AUTOSTART_KEY + " 1 2>&1");
+                if (cur.home !== "APLMusalla.Home") setPref("homeAppSaved", { home: cur.home, autostart: cur.autostart });
+                return tvExec("vconftool set -f -t string " + HOME_KEY + " APLMusalla.Home 2>&1; vconftool set -f -t int " + AUTOSTART_KEY + " 1 2>&1");
             }
             var saved = pref("homeAppSaved") || {};
-            var home = saved.home && saved.home !== "APLauncher.Home" && APP_ID_RE.test(saved.home) ? saved.home : null;
+            var home = saved.home && saved.home !== "APLMusalla.Home" && APP_ID_RE.test(saved.home) ? saved.home : null;
             var autostart = saved.autostart === 1 ? 1 : 0;
             var setHome = home ? "vconftool set -f -t string " + HOME_KEY + " " + home + " 2>&1"
                 : "h=$(vconftool get db/first_screen/type 2>/dev/null | awk '{print $4}'); " +
-                  "if [ -z \"$h\" ] || [ \"$h\" = APLauncher.Home ]; then h=com.samsung.tv.csfs; fi; " +
+                  "if [ -z \"$h\" ] || [ \"$h\" = APLMusalla.Home ]; then h=com.samsung.tv.csfs; fi; " +
                   "vconftool set -f -t string " + HOME_KEY + " \"$h\" 2>&1";
             return tvExec(setHome + "; vconftool set -f -t int " + AUTOSTART_KEY + " " + autostart + " 2>&1").then(function (r) {
                 setPref("homeAppSaved", null);
@@ -1559,7 +1559,7 @@
 
     function restartSystemUI() {
         if (PREVIEW) return Promise.reject(new Error(APL.t("PC preview: UI restart not sent")));
-        return tvExec("killall -9 xwalk; app_launcher -k org.tizen.tv-viewer; sleep 1; app_launcher -s APLauncher.Home 2>&1; true");
+        return tvExec("killall -9 xwalk; app_launcher -k org.tizen.tv-viewer; sleep 1; app_launcher -s APLMusalla.Home 2>&1; true");
     }
 
     function clearSystemCache() {
@@ -1773,7 +1773,7 @@
 
         if (sound && sound.select) sound.select();
 
-        if (matchedApp === "APLauncher.Home") {
+        if (matchedApp === "APLMusalla.Home") {
             if (global.APL && global.APL.goHome) global.APL.goHome();
             return true;
         }
@@ -1939,10 +1939,10 @@
                 "while [ $(($(date +%s) - start)) -lt 12 ]; do " +
                 "for k in memory/appfw/current_fullscreen_appid memory/appfw/current_appid; do " +
                 "app=$(vconftool get $k 2>/dev/null); " +
-                "case \"$app\" in ''|*Error*|*error*|*APLauncher*) ;; *) " +
+                "case \"$app\" in ''|*Error*|*error*|*APLMusalla*) ;; *) " +
                 "printf '%s\\n' \"$app\" > /tmp/apl-captured-app; " +
                 "/usr/bin/app_launcher -k \"$app\" >/dev/null 2>&1; " +
-                "/usr/bin/app_launcher -s APLauncher.Home >/dev/null 2>&1; " +
+                "/usr/bin/app_launcher -s APLMusalla.Home >/dev/null 2>&1; " +
                 "exit 0 ;; esac; done; " +
                 "usleep 80000 2>/dev/null || sleep 0.1 2>/dev/null || sleep 1; " +
                 "done) >/dev/null 2>&1 &";
@@ -2017,7 +2017,7 @@
                 tvExec("cat /tmp/apl-captured-app 2>/dev/null").then(function (res) {
                     if (done) return;
                     var app = (res && res.output && res.output.trim()) || "";
-                    if (app && app.indexOf("Error") === -1 && app.indexOf("APLauncher") === -1) {
+                    if (app && app.indexOf("Error") === -1 && app.indexOf("APLMusalla") === -1 && app.indexOf("APLauncher") === -1) {
                         var code = "226";
                         var name = "OTT Button";
                         if (app.indexOf("3201512006785") !== -1 || app.indexOf("shahid") !== -1) {

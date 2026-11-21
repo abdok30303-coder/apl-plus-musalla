@@ -1,6 +1,6 @@
-/* Build manifest for APL+ Musalla v8.7.17 */
+/* Build manifest for APL+ Musalla v8.7.18 */
 window.APL_BUILD = {
-  "version": "8.7.17",
+  "version": "8.7.18",
   "custom": true,
   "scripts": [
     "js/errlog.js",

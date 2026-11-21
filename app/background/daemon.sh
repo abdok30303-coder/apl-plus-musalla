@@ -61,7 +61,7 @@ daemon_spawn() {
 #      event role for our alert-style stream, so the system policy can classify it
 #      instead of silently treating it as ordinary background media.
 unset PULSE_SERVER PULSE_RUNTIME_PATH 2>/dev/null || true
-export PULSE_PROP="media.role=event application.name=APL_Launcher application.id=APLauncher.Home"
+export PULSE_PROP="media.role=event application.name=APL_Launcher application.id=APLMusalla.Home"
 
 setup_tls_env() {
     if [ -z "$XDG_RUNTIME_DIR" ] && [ -d /run ]; then
@@ -132,7 +132,7 @@ repair_pulse_streams() {
         [ -n "$sink" ] || sink=$(pactl info 2>/dev/null | awk -F': ' '/Default Sink:/{print $2; exit}')
         pactl list sink-inputs 2>/dev/null | awk '
             /^Sink Input #/ { sub(/#/, "", $3); id=$3; ours=0 }
-            /media.name = "APL|application.name = "APL Launcher"|application.id = "APLauncher.Home"|APL-Alert|APL Alert/ { ours=1 }
+            /media.name = "APL|application.name = "APL Launcher"|application.id = "APLMusalla.Home"|APL-Alert|APL Alert/ { ours=1 }
             /^$/ { if (id != "" && ours) print id; id="" }
             END { if (id != "" && ours) print id }
         ' | while read -r sid; do
@@ -158,7 +158,7 @@ pulse_stream_summary() {
         /^[[:space:]]*Corked:/ { cork=$2 }
         /^[[:space:]]*Mute:/ { mute=$2 }
         /media.role =/ { role=$0; sub(/^.*media.role = "/, "", role); sub(/".*$/, "", role) }
-        /media.name = "APL|application.name = "APL Launcher"|application.id = "APLauncher.Home"/ { ours=1 }
+        /media.name = "APL|application.name = "APL Launcher"|application.id = "APLMusalla.Home"/ { ours=1 }
         /media.name =/ { name=$0; sub(/^.*media.name = "/, "", name); sub(/".*$/, "", name) }
         /application.name =/ { app=$0; sub(/^.*application.name = "/, "", app); sub(/".*$/, "", app) }
         /^$/ { emit(); seen=0 }
@@ -356,7 +356,7 @@ remap_loop() {
         case "$fg" in
             ''|*Error*|*error*) ;;
             "$last_fg") ;;
-            *APLauncher*)
+            *APLMusalla*|*APLauncher*)
                 last_fg="$fg"
                 ;;
             *)
@@ -484,9 +484,9 @@ pipe_cmd() {
     pdir=$(find_pulse_dir 2>/dev/null || echo "")
     penv=""
     if [ -n "$pdir" ]; then
-        penv="PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native' PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home'"
+        penv="PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native' PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home'"
     fi
-    pprops="props,media.role=event,media.name=APL Quran Radio,application.name=APL Launcher,application.id=APLauncher.Home"
+    pprops="props,media.role=event,media.name=APL Quran Radio,application.name=APL Launcher,application.id=APLMusalla.Home"
     case "$nth" in
         0) echo "$penv $bin -q playbin uri='$url' audio-sink='pulsesink stream-properties=\\\"$pprops\\\"'" ;;
         1) echo "$penv $bin -q playbin uri='$url' audio-sink=pulsesink" ;;
@@ -515,9 +515,9 @@ try_url_pipelines() {
         cmd=$(pipe_cmd "$bin" "$turl" "$nth")
         if [ -n "$cmd" ]; then
             if command -v setsid >/dev/null 2>&1; then
-                setsid sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home'; $cmd" </dev/null >>"$LOGFILE" 2>&1 3>&- 4>&- 5>&- &
+                setsid sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home'; $cmd" </dev/null >>"$LOGFILE" 2>&1 3>&- 4>&- 5>&- &
             else
-                nohup sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home'; $cmd" </dev/null >>"$LOGFILE" 2>&1 3>&- 4>&- 5>&- &
+                nohup sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home'; $cmd" </dev/null >>"$LOGFILE" 2>&1 3>&- 4>&- 5>&- &
             fi
             newpid=$!
             echo "$newpid" > "$PIDFILE"
@@ -597,7 +597,7 @@ radio_pulse_stream_present() {
     # genuine failure; a missing name alone must not cause a restart loop.
     [ -n "$pdir" ] || return 0
     PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" \
-        pactl list sink-inputs 2>/dev/null | grep -Eq 'APL Quran Radio|application.name = "APL Launcher"|application.id = "APLauncher.Home"'
+        pactl list sink-inputs 2>/dev/null | grep -Eq 'APL Quran Radio|application.name = "APL Launcher"|application.id = "APLMusalla.Home"'
 }
 
 check_radio_health() {
@@ -671,7 +671,7 @@ foreground_app() {
 }
 
 is_apl_foreground() {
-    case "$1" in *APLauncher*|*apl-launcher*|*APLauncher.Home*) return 0 ;; esac
+    case "$1" in *APLMusalla*|*APLauncher*|*apl-launcher*) return 0 ;; esac
     return 1
 }
 
@@ -778,22 +778,22 @@ find_wgt_root() {
     fi
     for d in \
         "$DATADIR" \
-        "/opt/usr/home/owner/apps_rw/APLauncher/res/wgt" \
-        "/opt/usr/home/owner/apps_rw/APLauncher.Home/res/wgt" \
-        "/home/owner/apps_rw/APLauncher/res/wgt" \
-        "/home/owner/apps_rw/APLauncher.Home/res/wgt" \
-        "/opt/usr/apps/APLauncher/res/wgt" \
-        "/opt/usr/apps/APLauncher.Home/res/wgt" \
-        "/usr/apps/APLauncher/res/wgt" \
-        "/usr/apps/APLauncher.Home/res/wgt" \
-        "/opt/usr/apps/APLauncher" \
-        "/opt/usr/apps/APLauncher.Home" \
-        "/opt/usr/home/owner/apps_rw/APLauncher" \
-        "/opt/usr/home/owner/apps_rw/APLauncher.Home" \
-        "/home/owner/apps_rw/APLauncher" \
-        "/home/owner/apps_rw/APLauncher.Home" \
-        "/home/owner/share/APLauncher" \
-        "/home/owner/share/APLauncher.Home"
+        "/opt/usr/home/owner/apps_rw/APLMusalla/res/wgt" \
+        "/opt/usr/home/owner/apps_rw/APLMusalla.Home/res/wgt" \
+        "/home/owner/apps_rw/APLMusalla/res/wgt" \
+        "/home/owner/apps_rw/APLMusalla.Home/res/wgt" \
+        "/opt/usr/apps/APLMusalla/res/wgt" \
+        "/opt/usr/apps/APLMusalla.Home/res/wgt" \
+        "/usr/apps/APLMusalla/res/wgt" \
+        "/usr/apps/APLMusalla.Home/res/wgt" \
+        "/opt/usr/apps/APLMusalla" \
+        "/opt/usr/apps/APLMusalla.Home" \
+        "/opt/usr/home/owner/apps_rw/APLMusalla" \
+        "/opt/usr/home/owner/apps_rw/APLMusalla.Home" \
+        "/home/owner/apps_rw/APLMusalla" \
+        "/home/owner/apps_rw/APLMusalla.Home" \
+        "/home/owner/share/APLMusalla" \
+        "/home/owner/share/APLMusalla.Home"
     do
         if [ -f "$d/sounds/prayer/isha.wav" ] || [ -f "$d/sounds/prayer/isha.mp3" ]; then
             echo "$d" > "$WGTDIRCACHE" 2>/dev/null
@@ -822,22 +822,22 @@ find_real_wgt_root() {
         fi
     fi
     for d in \
-        "/opt/usr/home/owner/apps_rw/APLauncher/res/wgt" \
-        "/opt/usr/home/owner/apps_rw/APLauncher.Home/res/wgt" \
-        "/home/owner/apps_rw/APLauncher/res/wgt" \
-        "/home/owner/apps_rw/APLauncher.Home/res/wgt" \
-        "/opt/usr/apps/APLauncher/res/wgt" \
-        "/opt/usr/apps/APLauncher.Home/res/wgt" \
-        "/usr/apps/APLauncher/res/wgt" \
-        "/usr/apps/APLauncher.Home/res/wgt" \
-        "/opt/usr/apps/APLauncher" \
-        "/opt/usr/apps/APLauncher.Home" \
-        "/opt/usr/home/owner/apps_rw/APLauncher" \
-        "/opt/usr/home/owner/apps_rw/APLauncher.Home" \
-        "/home/owner/apps_rw/APLauncher" \
-        "/home/owner/apps_rw/APLauncher.Home" \
-        "/home/owner/share/APLauncher" \
-        "/home/owner/share/APLauncher.Home"
+        "/opt/usr/home/owner/apps_rw/APLMusalla/res/wgt" \
+        "/opt/usr/home/owner/apps_rw/APLMusalla.Home/res/wgt" \
+        "/home/owner/apps_rw/APLMusalla/res/wgt" \
+        "/home/owner/apps_rw/APLMusalla.Home/res/wgt" \
+        "/opt/usr/apps/APLMusalla/res/wgt" \
+        "/opt/usr/apps/APLMusalla.Home/res/wgt" \
+        "/usr/apps/APLMusalla/res/wgt" \
+        "/usr/apps/APLMusalla.Home/res/wgt" \
+        "/opt/usr/apps/APLMusalla" \
+        "/opt/usr/apps/APLMusalla.Home" \
+        "/opt/usr/home/owner/apps_rw/APLMusalla" \
+        "/opt/usr/home/owner/apps_rw/APLMusalla.Home" \
+        "/home/owner/apps_rw/APLMusalla" \
+        "/home/owner/apps_rw/APLMusalla.Home" \
+        "/home/owner/share/APLMusalla" \
+        "/home/owner/share/APLMusalla.Home"
     do
         if [ -f "$d/sounds/prayer/isha.wav" ]; then
             echo "$d" > "$WGTDIRCACHE" 2>/dev/null
@@ -897,9 +897,9 @@ run_single_alert_cmd() {
     attempt="$LOGFILE.alert.$$"
     rm -f "$attempt"
     if command -v setsid >/dev/null 2>&1; then
-        setsid sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home'; exec $cmd" </dev/null >>"$attempt" 2>&1 &
+        setsid sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home'; exec $cmd" </dev/null >>"$attempt" 2>&1 &
     else
-        sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home'; exec $cmd" </dev/null >>"$attempt" 2>&1 &
+        sh -c "export PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home'; exec $cmd" </dev/null >>"$attempt" 2>&1 &
     fi
     apid=$!
     # ALERTPID belongs to the worker. Keeping the two PIDs separate prevents a
@@ -1002,11 +1002,11 @@ play_file_blocking() {
                     default)      cmd="$bin -q playbin uri='$uri' volume=$vol" ;;
                     auto)         cmd="$bin -q playbin uri='$uri' volume=$vol audio-sink=autoaudiosink" ;;
                     pulse_notif)
-                        cmd="env PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native' PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home' $bin -q playbin uri='$uri' volume=$vol audio-sink='pulsesink stream-properties=\"props,media.role=event,media.name=APL Alert,application.name=APL Launcher,application.id=APLauncher.Home\"'"
+                        cmd="env PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native' PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home' $bin -q playbin uri='$uri' volume=$vol audio-sink='pulsesink stream-properties=\"props,media.role=event,media.name=APL Alert,application.name=APL Launcher,application.id=APLMusalla.Home\"'"
                         ;;
                     pulse_plain)
                         if [ -n "$pdir" ]; then
-                            cmd="env PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native' PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLauncher.Home' $bin -q playbin uri='$uri' volume=$vol audio-sink=pulsesink"
+                            cmd="env PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native' PULSE_PROP='media.role=event application.name=APL_Launcher application.id=APLMusalla.Home' $bin -q playbin uri='$uri' volume=$vol audio-sink=pulsesink"
                         else
                             cmd="$bin -q playbin uri='$uri' volume=$vol audio-sink=pulsesink"
                         fi
@@ -1048,9 +1048,9 @@ play_file_blocking() {
     fi
     if [ -n "$sfile" ] && command -v paplay >/dev/null 2>&1; then
         if [ -n "$pdir" ]; then
-            PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" PULSE_PROP="media.role=event application.name=APL_Launcher application.id=APLauncher.Home" paplay "$sfile" >/dev/null 2>&1 && return 0
+            PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" PULSE_PROP="media.role=event application.name=APL_Launcher application.id=APLMusalla.Home" paplay "$sfile" >/dev/null 2>&1 && return 0
         else
-            PULSE_PROP="media.role=event application.name=APL_Launcher application.id=APLauncher.Home" paplay "$sfile" >/dev/null 2>&1 && return 0
+            PULSE_PROP="media.role=event application.name=APL_Launcher application.id=APLMusalla.Home" paplay "$sfile" >/dev/null 2>&1 && return 0
         fi
     fi
     return 1

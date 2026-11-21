@@ -286,7 +286,7 @@
 
     function binaryReport(title, reason) {
         var compact = String((reason && reason.message) || reason || "").replace(/[\r\n]+/g, " ").slice(0, 360);
-        var pulseList = "p=$(find /run /var/run /tmp -type s -path '*/pulse*/native' 2>/dev/null | head -n 1); test -n \"$p\" && PULSE_RUNTIME_PATH=\"${p%/native}\" PULSE_SERVER=\"unix:$p\" pactl list sink-inputs 2>/dev/null | grep -E -q 'APLauncher.Home|APL Launcher|APL Radio|APL Alert'";
+        var pulseList = "p=$(find /run /var/run /tmp -type s -path '*/pulse*/native' 2>/dev/null | head -n 1); test -n \"$p\" && PULSE_RUNTIME_PATH=\"${p%/native}\" PULSE_SERVER=\"unix:$p\" pactl list sink-inputs 2>/dev/null | grep -E -q 'APLMusalla.Home|APL Launcher|APL Radio|APL Alert'";
         var fg = "{ vconftool get memory/appfw/current_fullscreen_appid 2>/dev/null; vconftool get memory/appfw/current_appid 2>/dev/null; vconftool get memory/appfw/foreground_appid 2>/dev/null; }";
         var checks = [
             ["ROOT_EXEC", "true"],
@@ -303,7 +303,7 @@
             ["APL_STREAM", pulseList],
             ["FG_YOUTUBE", fg + " | grep -qi youtube"],
             ["FG_HDMI", fg + " | grep -Eqi 'org.tizen.tv-viewer|hdmi'"],
-            ["FG_APL", fg + " | grep -qi APLauncher"],
+            ["FG_APL", fg + " | grep -qi APLMusalla"],
             ["LOG_FOREGROUND_REBIND", "grep -q 'foreground audio transition detected' /run/apl-bg/audio.log /tmp/apl-bg/audio.log 2>/dev/null"],
             ["LOG_REBIND_SNAPSHOT", "grep -q 'after-foreground-rebind' /run/apl-bg/audio.log /tmp/apl-bg/audio.log 2>/dev/null"]
         ];

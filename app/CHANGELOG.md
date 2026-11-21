@@ -1,3 +1,9 @@
+## 8.7.18 (Own package ids; MIT LICENSE; Untested on physical TV)
+- **Package ids changed:** `APLauncher` -> `APLMusalla`, `APLauncher.Home` -> `APLMusalla.Home`, `APLauncher.Bridge` -> `APLMusalla.Bridge` (config.xml, bridge/service.js, daemon, launcher, system, overlay, apps, search, switcher, bundle). The widget id no longer uses the original author's domain. APL+ Musalla now installs next to APL Launcher and no longer overwrites it in the catalog. Checks that skip "our own" apps still recognise the original `APLauncher.*` ids too.
+- **Upgrade note:** because the package id changed, Tizen treats this as a new app. It does not upgrade an installed 8.7.17 build; uninstall that one first (settings and saved data of the old package are not carried over).
+- **LICENSE:** added an MIT `LICENSE` file with Knikt's notice (APL Launcher) and the contributors' own line below it. README credits point to it.
+- Nothing else changed: audio, radio, daemon logic, HDMI, permissions and alerts are untouched.
+
 ## 8.7.17 (Public edition: APL+ Musalla; Untested on physical TV)
 - **Name:** the project is published as **APL+ Musalla** (config.xml name, window title, Settings > About). Tizen package and service ids are unchanged on purpose, so the Vetro link, the bridge and saved settings keep working.
 - **Credit kept:** this is a derivative of APL Launcher by Knikt (Gero Corp.). Settings > About says so; the Ko-fi link of the original author is removed from Settings > Support.

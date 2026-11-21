@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <widget xmlns="http://www.w3.org/ns/widgets"
         xmlns:tizen="http://tizen.org/ns/widgets"
-        id="http://gerocorp.local/APLauncher"
-        version="8.7.17"
+        id="http://apl-plus-musalla.local/APLMusalla"
+        version="8.7.18"
         viewmodes="maximized">
 
-    <tizen:application id="APLauncher.Home"
-                       package="APLauncher"
+    <tizen:application id="APLMusalla.Home"
+                       package="APLMusalla"
                        required_version="6.5"/>
 
     <tizen:profile name="tv"/>
@@ -19,7 +19,7 @@
 
     <feature name="http://tizen.org/feature/screen.size.all"/>
 
-    <!-- Background execution categories required by Samsung Tizen 6.5+ so APLauncher.Bridge
+    <!-- Background execution categories required by Samsung Tizen 6.5+ so APLMusalla.Bridge
          keeps running 24/7 behind apps & HDMI without claiming a conflicting WebView media session -->
     <tizen:background-category value="media"/>
     <tizen:background-category value="background-network"/>
@@ -69,10 +69,10 @@
                    hwkey-event="enable"/>
 
     <!-- Persistent Vetro relay & 24/7 background supervisor watchdog (bridge/service.js) -->
-    <tizen:service id="APLauncher.Bridge" on-boot="true" auto-restart="true">
+    <tizen:service id="APLMusalla.Bridge" on-boot="true" auto-restart="true">
         <tizen:content src="bridge/service.js"/>
         <tizen:name>APL Bridge</tizen:name>
-        <tizen:description>Full Vetro relay and 24/7 background audio/alert supervisor for APL Launcher</tizen:description>
+        <tizen:description>Full Vetro relay and 24/7 background audio/alert supervisor for APL+ Musalla</tizen:description>
         <tizen:metadata key="service-type" value="nodejs"/>
     </tizen:service>
 

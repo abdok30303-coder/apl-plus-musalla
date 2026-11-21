@@ -1,7 +1,7 @@
 /*
- * APL Bridge (APLauncher.Bridge) — Tizen 6.5+ Full Vetro Relay & Background Watchdog
+ * APL Bridge (APLMusalla.Bridge) — Tizen 6.5+ Full Vetro Relay & Background Watchdog
  *
- * Headless Node.js service running inside the APLauncher package:
+ * Headless Node.js service running inside the APLMusalla package:
  *   1. Relays ALL Vetro HTTP endpoints and methods with full permissions (no route blocklist).
  *   2. Listens on BOTH Trusted (APL_BRIDGE) and Plain (APL_BRIDGE_PLAIN) MessagePorts
  *      and replies with 20 KB chunking across Trusted, Plain, and Attached ports so
@@ -9,7 +9,7 @@
  *   3. Runs a low-frequency root heartbeat to the detached alert keeper. The root
  *      daemon owns rapid recovery itself; this only resurrects it if firmware reclaims it,
  *      so Prayer and Task alerts survive even when
- *      APLauncher.Home is suspended behind YouTube, Netflix, IPTV, or HDMI inputs.
+ *      APLMusalla.Home is suspended behind YouTube, Netflix, IPTV, or HDMI inputs.
  */
 
 var http = require("http");
@@ -24,7 +24,7 @@ var PORT_NAME_PLAIN = "APL_BRIDGE_PLAIN";
 var SHORTCUT_PORT = "APL_SOURCE_SHORTCUT";
 var REPLY_PORT = "APL_BRIDGE_REPLY";
 var REPLY_PORT_PLAIN = "APL_BRIDGE_REPLY_PLAIN";
-var UI_APP = "APLauncher.Home";
+var UI_APP = "APLMusalla.Home";
 var VETRO_PORT = 8099;
 var CHUNK_SIZE = 20000;
 var HEARTBEAT_MS = 60 * 1000;
@@ -54,7 +54,7 @@ var MAX_INFLIGHT = 8;
    - Only GET/POST/HEAD (the launcher never sends another method).
    - The trusted port is limited by Tizen itself to apps signed with this package's certificate.
      The plain port (needed when a re-signed package breaks the trusted one, Tizen < 9) is open to every app,
-     so on it the sender must be APLauncher.Home (reply port's appId, filled in by the platform);
+     so on it the sender must be APLMusalla.Home (reply port's appId, filled in by the platform);
      without that it only answers read-only diagnostics, and never to the sender's own port. */
 var VETRO_PATHS = {
     "/status": 1, "/probe": 1, "/screen": 1, "/apps": 1, "/components/action": 1, "/exec": 1, "/hbbtv": 1,
@@ -68,7 +68,7 @@ function callerIsLauncher(reply) {
     try {
         var id = String(reply.appId || "");
         if (!id) return true; // Tizen 6.5 MessagePort does not populate appId on incoming messages
-        return id === UI_APP || id === "APLauncher" || id.indexOf("APLauncher") !== -1;
+        return id === UI_APP || id === "APLMusalla" || id.indexOf("APLMusalla") !== -1;
     } catch (e) { return true; }
 }
 var cachedLauncherToken = "";
@@ -98,12 +98,12 @@ function constantTimeEquals(a, b) {
     return diff === 0 && la === lb;
 }
 var TOKEN_FILES = [
-    "/opt/usr/home/owner/apps_rw/APLauncher.Home/data/bridge.token",
-    "/opt/usr/home/owner/apps_data/APLauncher.Home/data/bridge.token",
-    "/opt/usr/home/owner/apps_rw/APLauncher.Home/shared/data/bridge.token",
-    "/opt/usr/home/owner/apps_rw/APLauncher/data/bridge.token",
-    "/opt/usr/home/owner/apps_data/APLauncher/data/bridge.token",
-    "/opt/usr/home/owner/apps_rw/APLauncher/shared/data/bridge.token"
+    "/opt/usr/home/owner/apps_rw/APLMusalla.Home/data/bridge.token",
+    "/opt/usr/home/owner/apps_data/APLMusalla.Home/data/bridge.token",
+    "/opt/usr/home/owner/apps_rw/APLMusalla.Home/shared/data/bridge.token",
+    "/opt/usr/home/owner/apps_rw/APLMusalla/data/bridge.token",
+    "/opt/usr/home/owner/apps_data/APLMusalla/data/bridge.token",
+    "/opt/usr/home/owner/apps_rw/APLMusalla/shared/data/bridge.token"
 ];
 /* Token on disk (written by the launcher into its own package data). Returns "" when no file can be read. */
 function readDiskToken() {
@@ -118,7 +118,7 @@ function readDiskToken() {
     return "";
 }
 /* v8.7.5: the DISK token is the source of truth (it is re-read when a token does not match the cache, at most
-   5 failures / 10 s). Only a caller already verified as APLauncher.Home reaches this function. If the disk token
+   5 failures / 10 s). Only a caller already verified as APLMusalla.Home reaches this function. If the disk token
    cannot be read at all (path differs on this firmware), that verified caller's token is (re)pinned in memory,
    so a rotated token can never lock the launcher out of /exec until the service restarts. */
 function verifyPlainToken(reqToken) {
@@ -591,18 +591,18 @@ function shortcutCommand(spec, label) {
        system.js. The helper itself owns the tested EFL animator-frame ordering. */
     var dll = "APLSourceHandoff.dll";
     var paths = [
-        "/opt/usr/home/owner/apps_rw/APLauncher/res/wgt/native/" + dll,
-        "/opt/usr/home/owner/apps_rw/APLauncher.Home/res/wgt/native/" + dll,
-        "/home/owner/apps_rw/APLauncher/res/wgt/native/" + dll,
-        "/home/owner/apps_rw/APLauncher.Home/res/wgt/native/" + dll,
-        "/opt/usr/apps/APLauncher/native/" + dll,
-        "/opt/usr/apps/APLauncher.Home/native/" + dll,
-        "/usr/apps/APLauncher/native/" + dll,
-        "/usr/apps/APLauncher.Home/native/" + dll
+        "/opt/usr/home/owner/apps_rw/APLMusalla/res/wgt/native/" + dll,
+        "/opt/usr/home/owner/apps_rw/APLMusalla.Home/res/wgt/native/" + dll,
+        "/home/owner/apps_rw/APLMusalla/res/wgt/native/" + dll,
+        "/home/owner/apps_rw/APLMusalla.Home/res/wgt/native/" + dll,
+        "/opt/usr/apps/APLMusalla/native/" + dll,
+        "/opt/usr/apps/APLMusalla.Home/native/" + dll,
+        "/usr/apps/APLMusalla/native/" + dll,
+        "/usr/apps/APLMusalla.Home/native/" + dll
     ];
     var quoted = paths.map(function (p) { return "'" + p + "'"; }).join(" ");
     return "H=; for p in " + quoted + "; do if [ -f \"$p\" ]; then H=\"$p\"; break; fi; done; " +
-           "if [ -z \"$H\" ]; then H=$(find /opt/usr /usr/apps /home/owner -maxdepth 14 -type f -path '*APLauncher*' -name " + dll + " -print -quit 2>/dev/null); fi; " +
+           "if [ -z \"$H\" ]; then H=$(find /opt/usr /usr/apps /home/owner -maxdepth 14 -type f -path '*APLMusalla*' -name " + dll + " -print -quit 2>/dev/null); fi; " +
            "[ -n \"$H\" ] && [ -f \"$H\" ] || { echo native-helper-missing; exit 127; }; " +
            "exec /usr/bin/dotnet \"$H\" " + spec.sourceType + " '" + shortcutLabel(label, spec.fallback) + "'";
 }
@@ -655,10 +655,10 @@ function packageRoots() {
     var out = [];
     function add(p) { if (p && /^[A-Za-z0-9_\/.\-]+$/.test(p) && out.indexOf(p) < 0) out.push(p); }
     try { add(require("path").resolve(__dirname, "..")); } catch (e) {}
-    ["/opt/usr/home/owner/apps_rw/APLauncher/res/wgt", "/opt/usr/home/owner/apps_rw/APLauncher.Home/res/wgt",
-     "/opt/usr/apps/APLauncher/res/wgt", "/opt/usr/apps/APLauncher.Home/res/wgt",
-     "/opt/usr/apps/APLauncher", "/opt/usr/apps/APLauncher.Home",
-     "/opt/usr/home/owner/apps_rw/APLauncher", "/opt/usr/home/owner/apps_rw/APLauncher.Home"].forEach(add);
+    ["/opt/usr/home/owner/apps_rw/APLMusalla/res/wgt", "/opt/usr/home/owner/apps_rw/APLMusalla.Home/res/wgt",
+     "/opt/usr/apps/APLMusalla/res/wgt", "/opt/usr/apps/APLMusalla.Home/res/wgt",
+     "/opt/usr/apps/APLMusalla", "/opt/usr/apps/APLMusalla.Home",
+     "/opt/usr/home/owner/apps_rw/APLMusalla", "/opt/usr/home/owner/apps_rw/APLMusalla.Home"].forEach(add);
     return out;
 }
 function heartbeatCommand(persist, tmpPath, roots, logPath) {

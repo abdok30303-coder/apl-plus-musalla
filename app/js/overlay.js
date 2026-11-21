@@ -16,10 +16,10 @@
 
     var APL = global.APL, sys = APL.sys;
     /* APL Overlay is apl.launcher.overlay when APL Launcher Setup installs it (a package of its own), and
-       APLauncher.Overlay inside the hybrid package for Apps2Samsung. The one installed is used; if both
+       APLMusalla.Overlay inside the hybrid package for Apps2Samsung. The one installed is used; if both
        are, the one in this package. */
-    var OVERLAY_IDS = ["APLauncher.Overlay", "apl.launcher.overlay"];
-    var OVERLAY = OVERLAY_IDS[1], LAUNCHER = "APLauncher.Home", HOME_RULE = "physical_63";
+    var OVERLAY_IDS = ["APLMusalla.Overlay", "apl.launcher.overlay"];
+    var OVERLAY = OVERLAY_IDS[1], LAUNCHER = "APLMusalla.Home", HOME_RULE = "physical_63";
     var installed = false, light = false;
 
     /* The apps the Echo can open: "Name=app:id", Home Screen first (the first ones

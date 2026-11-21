@@ -76,7 +76,7 @@
     /* v1.2.92: Yellow closes every open app in one go (one command), then returns to the Home Screen. */
     function closeAll() {
         var ids = nav.tiles.map(function (t) { return t._app && t._app.id; }).filter(function (id) {
-            return id && /^[A-Za-z0-9._-]+$/.test(id) && id.indexOf("APLauncher") === -1;
+            return id && /^[A-Za-z0-9._-]+$/.test(id) && id.indexOf("APLMusalla") === -1 && id.indexOf("APLauncher") === -1;
         });
         if (ids.length) {
             sys.exec(ids.map(function (id) { return "app_launcher -k " + id + " >/dev/null 2>&1"; }).join("; ") + "; true").catch(function () {});

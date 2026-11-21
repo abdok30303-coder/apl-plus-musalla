@@ -6,7 +6,7 @@
 (function (global) {
     "use strict";
 
-    var MY_APP_ID = "APLauncher.Home";
+    var MY_APP_ID = "APLMusalla.Home";
 
     /* Apps you told us you actually use — pinned to the front, in this order.
        TizenTube is recognised by its name (see isTizenTube) and always comes first.

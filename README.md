@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img alt="version" src="https://img.shields.io/badge/version-8.7.17-c9973b?style=for-the-badge">
+  <img alt="version" src="https://img.shields.io/badge/version-8.7.18-c9973b?style=for-the-badge">
   <img alt="platform" src="https://img.shields.io/badge/Samsung%20Tizen-6.5%2B-1b1f4a?style=for-the-badge">
   <img alt="ui" src="https://img.shields.io/badge/UI-Arabic%20%C2%B7%20RTL-0b6e4f?style=for-the-badge">
   <img alt="offline" src="https://img.shields.io/badge/Mushaf%20%26%20tafsir-offline-8a5cf6?style=for-the-badge">
@@ -102,7 +102,7 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 **The easy way: Apps2Samsung** (free, no programming needed)
 
 1. On the TV, turn on **Developer Mode**: **Home › Apps**, type **12345**, switch Developer mode **On**, enter your computer's IP address, then **restart the TV**.
-2. Download `apl-plus-musalla-v8.7.17.wgt` from the [Releases page](../../releases).
+2. Download `apl-plus-musalla-v8.7.18.wgt` from the [Releases page](../../releases).
 3. Open [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer, select your TV, choose a **custom `.wgt`**, pick the file and press **Install**.
 4. Open **APL+ Musalla** from the TV's **Apps** list.
 
@@ -137,7 +137,9 @@ APL+ Musalla is free and open source. If it is useful to you, you can support it
 
 ## Credits
 
-APL+ Musalla is a derivative of **APL Launcher** by Knikt (Gero Corp.). See [`NOTICE.md`](NOTICE.md) for the full list: Tanzil Quran text, fonts, data sources and trademarks.
+APL+ Musalla is a derivative of **APL Launcher** by Knikt (Gero Corp.), released under the MIT License. The original copyright notice is kept in [`LICENSE`](LICENSE). See [`NOTICE.md`](NOTICE.md) for the full list: Tanzil Quran text, fonts, data sources and trademarks.
+
+APL+ Musalla uses its own package IDs (`APLMusalla`, `APLMusalla.Home`, `APLMusalla.Bridge`), so it installs next to APL Launcher and does not replace it.
 
 ## عربي
 

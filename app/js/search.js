@@ -108,7 +108,7 @@
        leave them) and says how much memory came back, measured (MemAvailable before and after).
        Only apps the launcher knows (the same list as the app switcher) are closed; never the launcher, Vetro
        or anything of the system. Nothing else is touched: radio, alerts and the root daemon keep running. */
-    var KEEP = /(APLauncher|vetro|dropbear|ssh)/i;
+    var KEEP = /(APLMusalla|APLauncher|vetro|dropbear|ssh)/i;
     function mb(n) { return APL.digits ? APL.digits(n) : String(n); }
     function clean() {
         if (cleaning) return;

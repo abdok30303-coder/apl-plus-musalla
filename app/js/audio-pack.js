@@ -405,8 +405,8 @@
         if (APL.sys && typeof APL.sys.exec === "function") {
             var cmd = "mkdir -p /opt/usr/home/owner/content/Documents/APL-Audio && " +
                       "[ ! -s /opt/usr/home/owner/content/Documents/APL-Audio/alkahf.mp3 ] && " +
-                      "[ -f /opt/usr/apps/APLauncher/res/wgt/audio/alkahf.mp3 ] && " +
-                      "cp /opt/usr/apps/APLauncher/res/wgt/audio/*.mp3 /opt/usr/home/owner/content/Documents/APL-Audio/ 2>/dev/null; " +
+                      "[ -f /opt/usr/apps/APLMusalla/res/wgt/audio/alkahf.mp3 ] && " +
+                      "cp /opt/usr/apps/APLMusalla/res/wgt/audio/*.mp3 /opt/usr/home/owner/content/Documents/APL-Audio/ 2>/dev/null; " +
                       "chmod -R a+rX /opt/usr/home/owner/content/Documents/APL-Audio";
             APL.sys.exec(cmd).then(function () {
                 storeSet("apl.audio.persisted", "true");
