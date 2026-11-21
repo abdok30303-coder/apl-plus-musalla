@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to publish, e.g. v8.7.18"
+        description: "Version tag to publish from the current branch, e.g. v8.7.18 (created if missing)"
         required: true
 
 permissions:
@@ -22,8 +22,6 @@ jobs:
       TAG: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ env.TAG }}
       - name: Create or update the release
         run: |
           ver="${TAG#v}"
@@ -32,7 +30,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$file" --clobber
           else
-            gh release create "$TAG" "$file" --title "APL+ Musalla v${ver}" --latest \
+            gh release create "$TAG" "$file" --target "$GITHUB_SHA" --title "APL+ Musalla v${ver}" --latest \
               --notes "Install the .wgt with Apps2Samsung (custom .wgt). Own package IDs (APLMusalla*): it installs next to APL Launcher and does not replace it. If you have 8.7.17 installed, uninstall it first. MIT licensed, see LICENSE. Untested on a physical TV."
           fi
       - name: Retire the old 8.7.17 file (it used APL Launcher's package IDs)
