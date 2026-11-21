@@ -1,7 +1,7 @@
 # Notice & credits
 
 ## Original project
-APL+ Musalla is based on **APL Launcher** (APL-Launcher-for-TizenOS) by **Knikt (Gero Corp.)**. All credit for the launcher's original design and code belongs to its author; this edition adds the Arabic/prayer/Quran features and removes the original author's personal support link.
+Salah Launcher is based on **APL Launcher** (APL-Launcher-for-TizenOS) by **Knikt (Gero Corp.)**. All credit for the launcher's original design and code belongs to its author; this edition adds the Arabic/prayer/Quran features and removes the original author's personal support link.
 
 ## Third-party content
 - **Quran text** — Tanzil Project, Uthmani text v1.1, licensed CC BY 3.0. The copyright block in `app/data/quran/LICENSE-TANZIL.txt` must stay unchanged; the text must not be modified.

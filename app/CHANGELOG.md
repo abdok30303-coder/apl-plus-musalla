@@ -1,3 +1,8 @@
+## 8.7.19 (Renamed to Salah Launcher; new icon; Untested on physical TV)
+- **Name:** the app is now called **Salah Launcher** (config.xml name, window title, Settings > About and Support, README, install guide, banner). The Arabic banner tag reads "صلاة لانشر". Package, app and service ids are unchanged (`APLMusalla*`), so nothing else is affected.
+- **Icon:** new app icon (a watercolor mosque on a soft rounded background), same file used in the README banner.
+- Release file is now `salah-launcher-v8.7.19.wgt`.
+
 ## 8.7.18 (Own package ids; MIT LICENSE; Untested on physical TV)
 - **Package ids changed:** `APLauncher` -> `APLMusalla`, `APLauncher.Home` -> `APLMusalla.Home`, `APLauncher.Bridge` -> `APLMusalla.Bridge` (config.xml, bridge/service.js, daemon, launcher, system, overlay, apps, search, switcher, bundle). The widget id no longer uses the original author's domain. APL+ Musalla now installs next to APL Launcher and no longer overwrites it in the catalog. Checks that skip "our own" apps still recognise the original `APLauncher.*` ids too.
 - **Upgrade note:** because the package id changed, Tizen treats this as a new app. It does not upgrade an installed 8.7.17 build; uninstall that one first (settings and saved data of the old package are not carried over).

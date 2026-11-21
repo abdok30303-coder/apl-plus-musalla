@@ -1033,7 +1033,7 @@
                     action(APL.t("Check for Update"), function () { if (APL.updater) APL.updater.check(true); },
                         APL.t("Checks right away for a new version."), "update")
                 ], APL.t("Automatic updates from GitHub.")),
-                action(APL.t("Support APL+ Musalla"), function () {
+                action(APL.t("Support Salah Launcher"), function () {
                     var page = (window.APL_SITE && window.APL_SITE.support && window.APL_SITE.support.url) || "", qr = document.createElement("div");
                     if (!page) { APL.toast(APL.t("Support link is not set")); return; }
                     qr.className = "aplalert__qr";
@@ -1042,9 +1042,9 @@
                     url.className = "aplalert__qrurl";
                     url.textContent = page.replace(/^https?:\/\//, "");
                     qr.appendChild(url);
-                    APL.alert({ title: APL.t("Support APL+ Musalla"), message: APL.t("Scan the code with your phone's camera. Thank you!"),
+                    APL.alert({ title: APL.t("Support Salah Launcher"), message: APL.t("Scan the code with your phone's camera. Thank you!"),
                                 node: qr, buttons: [{ label: APL.t("OK") }] });
-                }, APL.t("APL+ Musalla is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone."), "sparkle"),
+                }, APL.t("Salah Launcher is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone."), "sparkle"),
                 menu(APL.t("About This Screen"), "info", [
                     info(APL.t("Name"), function () { return sys.product().name; }),
                     info(APL.t("Model"), function () { return sys.product().model; }),
@@ -1120,7 +1120,7 @@
                             APL.alert({ title: "HDMI Handoff Status", message: "Read-only diagnostic. It does not change HDMI, picture settings, APL, or Vetro.", node: node, buttons: [{ label: APL.t("OK") }] });
                         }, function (e) { APL.toast((e && e.message) || "HDMI status unavailable"); });
                     }, "Shows whether APL used the native CAPI helper or fell back to the Web route on the last HDMI switch. Read-only.", "info")),
-                    info("APL+ Musalla", function () { return APL.t("Version {v}", { v: sys.version }); }, APL.t("Based on APL Launcher by Knikt (Gero Corp.)")), 
+                    info("Salah Launcher", function () { return APL.t("Version {v}", { v: sys.version }); }, APL.t("Based on APL Launcher by Knikt (Gero Corp.)")), 
                     info(APL.t("Sources"), function () { return "TMDB, YouTube, App Store, Apple Music"; },
                         APL.t("Movies and shows: This product uses the TMDB API but is not endorsed or certified by TMDB."))
                 ], APL.t("Model, software and storage."))

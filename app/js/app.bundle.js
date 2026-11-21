@@ -415,7 +415,7 @@
 
 /* === js/site-config.js === */
 /* ============================================================
-   site-config.js — this build's own defaults (APL+ Musalla).
+   site-config.js — this build's own defaults (Salah Launcher).
 
    Everything the custom build adds reads its defaults from here:
    the prayer times city, the weather place, the radio station.
@@ -431,7 +431,7 @@
 
     global.APL_SITE = {
         custom: true,                 // custom build: no automatic updates from the original repo
-        buildName: "APL+ Musalla",
+        buildName: "Salah Launcher",
 
         /* Prayer times: AlAdhan API, Egyptian General Authority of Survey (method 5),
            Asr at the usual time (school 0), Africa/Cairo. */
@@ -1118,9 +1118,9 @@ window.APL_LANG_AR_EXTRA = {
     "Checks right away for a new version.": "يتحقق من إصدار جديد الآن.",
     "Forgets the downloaded updates and goes back to the version installed by APL Launcher Setup.": "ينسى التحديثات المنزّلة ويعود إلى الإصدار المثبّت من APL Launcher Setup.",
     "Automatic updates from GitHub.": "تحديثات تلقائية من GitHub.",
-    "Support APL+ Musalla": "ادعم APL+ Musalla",
+    "Support Salah Launcher": "ادعم Salah Launcher",
     "Scan the code with your phone's camera. Thank you!": "امسح الرمز بكاميرا هاتفك. شكرًا لك!",
-    "APL+ Musalla is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone.": "APL+ Musalla مجاني ومفتوح المصدر. إن أفادك يمكنك دعم تطويره: اضغط OK لعرض رمز تمسحه بهاتفك.",
+    "Salah Launcher is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone.": "Salah Launcher مجاني ومفتوح المصدر. إن أفادك يمكنك دعم تطويره: اضغط OK لعرض رمز تمسحه بهاتفك.",
     "Link to Vetro": "الاتصال بـ Vetro",
     "Vetro Health": "حالة Vetro",
     "Use the Screen's Input Name": "استخدام اسم المدخل المحفوظ في التلفاز",
@@ -2826,7 +2826,7 @@ window.APL_CATALOG = [
         pauseKey: "samsunghome",    // ⏯ on the remote: "samsunghome" | "controlcenter" | "playpause"
         language: "auto",           // "auto" (screen language) | "ar" | "en": read at start-up by i18n.js
 
-        /* ---- this build (APL+ Musalla) ---- */
+        /* ---- this build (Salah Launcher) ---- */
         clockFormat: "12",          // "12" (with AM/PM, ص/م) | "24": the Home Screen clock (launcher.js startClock)
         digitStyle: "west",         // v1.2.97: "west" (1 2 3) | "arabic" (١ ٢ ٣): prayer widget, clock, weather, in Arabic only (i18n.js)
         homeDate: "full",           // the date beside the clock: "full" (Gregorian + Hijri) | "greg" | "off" (js/home-clock.js)
@@ -15981,7 +15981,7 @@ window.APL_KEYS = {
                     action(APL.t("Check for Update"), function () { if (APL.updater) APL.updater.check(true); },
                         APL.t("Checks right away for a new version."), "update")
                 ], APL.t("Automatic updates from GitHub.")),
-                action(APL.t("Support APL+ Musalla"), function () {
+                action(APL.t("Support Salah Launcher"), function () {
                     var page = (window.APL_SITE && window.APL_SITE.support && window.APL_SITE.support.url) || "", qr = document.createElement("div");
                     if (!page) { APL.toast(APL.t("Support link is not set")); return; }
                     qr.className = "aplalert__qr";
@@ -15990,9 +15990,9 @@ window.APL_KEYS = {
                     url.className = "aplalert__qrurl";
                     url.textContent = page.replace(/^https?:\/\//, "");
                     qr.appendChild(url);
-                    APL.alert({ title: APL.t("Support APL+ Musalla"), message: APL.t("Scan the code with your phone's camera. Thank you!"),
+                    APL.alert({ title: APL.t("Support Salah Launcher"), message: APL.t("Scan the code with your phone's camera. Thank you!"),
                                 node: qr, buttons: [{ label: APL.t("OK") }] });
-                }, APL.t("APL+ Musalla is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone."), "sparkle"),
+                }, APL.t("Salah Launcher is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone."), "sparkle"),
                 menu(APL.t("About This Screen"), "info", [
                     info(APL.t("Name"), function () { return sys.product().name; }),
                     info(APL.t("Model"), function () { return sys.product().model; }),
@@ -16068,7 +16068,7 @@ window.APL_KEYS = {
                             APL.alert({ title: "HDMI Handoff Status", message: "Read-only diagnostic. It does not change HDMI, picture settings, APL, or Vetro.", node: node, buttons: [{ label: APL.t("OK") }] });
                         }, function (e) { APL.toast((e && e.message) || "HDMI status unavailable"); });
                     }, "Shows whether APL used the native CAPI helper or fell back to the Web route on the last HDMI switch. Read-only.", "info")),
-                    info("APL+ Musalla", function () { return APL.t("Version {v}", { v: sys.version }); }, APL.t("Based on APL Launcher by Knikt (Gero Corp.)")), 
+                    info("Salah Launcher", function () { return APL.t("Version {v}", { v: sys.version }); }, APL.t("Based on APL Launcher by Knikt (Gero Corp.)")), 
                     info(APL.t("Sources"), function () { return "TMDB, YouTube, App Store, Apple Music"; },
                         APL.t("Movies and shows: This product uses the TMDB API but is not endorsed or certified by TMDB."))
                 ], APL.t("Model, software and storage."))

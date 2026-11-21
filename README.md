@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="docs/banner.svg" alt="APL+ Musalla" width="100%">
+  <img src="docs/banner.svg" alt="Salah Launcher" width="100%">
 </p>
 
 <p align="center">
-  <img alt="version" src="https://img.shields.io/badge/version-8.7.18-c9973b?style=for-the-badge">
+  <img alt="version" src="https://img.shields.io/badge/version-8.7.19-c9973b?style=for-the-badge">
   <img alt="platform" src="https://img.shields.io/badge/Samsung%20Tizen-6.5%2B-1b1f4a?style=for-the-badge">
   <img alt="ui" src="https://img.shields.io/badge/UI-Arabic%20%C2%B7%20RTL-0b6e4f?style=for-the-badge">
   <img alt="offline" src="https://img.shields.io/badge/Mushaf%20%26%20tafsir-offline-8a5cf6?style=for-the-badge">
@@ -28,14 +28,14 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/01-home.jpg" alt="APL+ Musalla home screen: clock, Hijri date, prayer strip and app shelf" width="100%">
+  <img src="docs/screenshots/01-home.jpg" alt="Salah Launcher home screen: clock, Hijri date, prayer strip and app shelf" width="100%">
 </p>
 
 ---
 
-## Why APL+ Musalla
+## Why Salah Launcher
 
-A TV is the one screen the whole family gathers around, yet its home screen knows nothing about the day's rhythm. **APL+ Musalla** changes that. Open your TV and the first thing you see is the time, the Hijri date, and **how long until the next prayer**. One press away is a complete prayer-and-Quran space that works the way you already use a remote.
+A TV is the one screen the whole family gathers around, yet its home screen knows nothing about the day's rhythm. **Salah Launcher** changes that. Open your TV and the first thing you see is the time, the Hijri date, and **how long until the next prayer**. One press away is a complete prayer-and-Quran space that works the way you already use a remote.
 
 - **Always in time.** Prayer times are calculated on the TV itself, so the strip on your Home Screen is there even when the Wi-Fi isn't. Short spoken alerts at each prayer.
 - **A Mushaf in your living room.** The full Hafs Quran text, with tashkeel, ships inside the app. No download, no internet, no account.
@@ -102,9 +102,9 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 **The easy way: Apps2Samsung** (free, no programming needed)
 
 1. On the TV, turn on **Developer Mode**: **Home › Apps**, type **12345**, switch Developer mode **On**, enter your computer's IP address, then **restart the TV**.
-2. Download `apl-plus-musalla-v8.7.18.wgt` from the [Releases page](../../releases) (or directly: [`releases/apl-plus-musalla-v8.7.18.wgt`](releases/apl-plus-musalla-v8.7.18.wgt)).
+2. Download `salah-launcher-v8.7.19.wgt` from the [Releases page](../../releases) (or directly: [`releases/salah-launcher-v8.7.19.wgt`](releases/salah-launcher-v8.7.19.wgt)).
 3. Open [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer, select your TV, choose a **custom `.wgt`**, pick the file and press **Install**.
-4. Open **APL+ Musalla** from the TV's **Apps** list.
+4. Open **Salah Launcher** from the TV's **Apps** list.
 
 📖 **[Step-by-step guide with troubleshooting, in English and Arabic →](docs/INSTALL.md)**
 
@@ -126,7 +126,7 @@ python3 tools/make-support-qr.py "https://your-support-link"
 
 ## Support
 
-APL+ Musalla is free and open source. If it is useful to you, you can support its development. The same code is in the app under **Settings › Support**.
+Salah Launcher is free and open source. If it is useful to you, you can support its development. The same code is in the app under **Settings › Support**.
 
 <!--SUPPORT-START-->
 <p align="center">
@@ -137,13 +137,13 @@ APL+ Musalla is free and open source. If it is useful to you, you can support it
 
 ## Credits
 
-APL+ Musalla is a derivative of **APL Launcher** by Knikt (Gero Corp.), released under the MIT License. The original copyright notice is kept in [`LICENSE`](LICENSE). See [`NOTICE.md`](NOTICE.md) for the full list: Tanzil Quran text, fonts, data sources and trademarks.
+Salah Launcher is a derivative of **APL Launcher** by Knikt (Gero Corp.), released under the MIT License. The original copyright notice is kept in [`LICENSE`](LICENSE). See [`NOTICE.md`](NOTICE.md) for the full list: Tanzil Quran text, fonts, data sources and trademarks.
 
-APL+ Musalla uses its own package IDs (`APLMusalla`, `APLMusalla.Home`, `APLMusalla.Bridge`), so it installs next to APL Launcher and does not replace it.
+Salah Launcher uses its own package IDs (`APLMusalla`, `APLMusalla.Home`, `APLMusalla.Bridge`), so it installs next to APL Launcher and does not replace it.
 
 ## عربي
 
-**APL+ Musalla** مشغّل بشكل Apple TV لشاشات سامسونج (Tizen 6.5 فأحدث)، يحوّل الشاشة الرئيسية لمساحة للصلاة والقرآن: أول ما تفتح الشاشة تشوف الوقت والتاريخ الهجري **والمتبقي على الصلاة القادمة**.
+**Salah Launcher** مشغّل بشكل Apple TV لشاشات سامسونج (Tizen 6.5 فأحدث)، يحوّل الشاشة الرئيسية لمساحة للصلاة والقرآن: أول ما تفتح الشاشة تشوف الوقت والتاريخ الهجري **والمتبقي على الصلاة القادمة**.
 
 **اللي هتلاقيه جواه**
 - **مواقيت الصلاة** بتتحسب على الشاشة نفسها، فتظهر حتى من غير إنترنت، مع تنبيهات صوتية عند كل صلاة.

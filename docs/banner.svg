@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="APL+ Musalla">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="340" viewBox="0 0 1280 340" role="img" aria-label="Salah Launcher">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#0b1f1a"/>
@@ -47,10 +47,10 @@
     <image href="icon.png" x="76" y="78" width="132" height="132"/>
 
     <!-- title -->
-    <text x="240" y="162" font-family="'SF Pro Display','Segoe UI',Helvetica,Arial,sans-serif" font-size="82" font-weight="700" fill="#ffffff" letter-spacing="-1">APL<tspan fill="url(#gold)">+</tspan> Musalla</text>
+    <text x="240" y="162" font-family="'SF Pro Display','Segoe UI',Helvetica,Arial,sans-serif" font-size="82" font-weight="700" fill="#ffffff" letter-spacing="-1">Salah <tspan fill="url(#gold)">Launcher</tspan></text>
     <text x="244" y="206" font-family="'SF Pro Text','Segoe UI',Helvetica,Arial,sans-serif" font-size="27" fill="#cfe3dd">An Apple&#160;TV&#8211;style launcher for Samsung Tizen TVs</text>
     <text x="244" y="246" font-family="'SF Pro Text','Segoe UI',Helvetica,Arial,sans-serif" font-size="21" fill="#e8c36a" letter-spacing="0.5">PRAYER TIMES  ·  QURAN RADIO  ·  FULL MUSHAF  ·  AZKAR  ·  RTL</text>
-    <text x="1208" y="62" text-anchor="end" font-family="'Noto Naskh Arabic','Amiri','Segoe UI',Arial,sans-serif" font-size="40" fill="url(#gold)">المصلّى</text>
+    <text x="1208" y="62" text-anchor="end" font-family="'Noto Naskh Arabic','Amiri','Segoe UI',Arial,sans-serif" font-size="40" fill="url(#gold)">صلاة لانشر</text>
   </g>
   <rect x="1" y="1" width="1278" height="338" rx="27" fill="none" stroke="#e8c36a" stroke-opacity="0.25"/>
 </svg>

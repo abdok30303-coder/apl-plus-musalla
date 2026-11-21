@@ -2,7 +2,7 @@
 <widget xmlns="http://www.w3.org/ns/widgets"
         xmlns:tizen="http://tizen.org/ns/widgets"
         id="http://apl-plus-musalla.local/APLMusalla"
-        version="8.7.18"
+        version="8.7.19"
         viewmodes="maximized">
 
     <tizen:application id="APLMusalla.Home"
@@ -13,9 +13,9 @@
 
     <content src="index.html"/>
     <icon src="icon.png"/>
-    <name>APL+ Musalla</name>
-    <description>APL+ Musalla: an Apple TV style launcher for Samsung Tizen 6.5+ Smart TVs with prayer times, Quran radio and Mushaf, Pulse prayer alerts and tasks. Based on APL Launcher by Knikt (Gero Corp.).</description>
-    <author>APL+ Musalla contributors</author>
+    <name>Salah Launcher</name>
+    <description>Salah Launcher: an Apple TV style launcher for Samsung Tizen 6.5+ Smart TVs with prayer times, Quran radio and Mushaf, Pulse prayer alerts and tasks. Based on APL Launcher by Knikt (Gero Corp.).</description>
+    <author>Salah Launcher contributors</author>
 
     <feature name="http://tizen.org/feature/screen.size.all"/>
 
@@ -72,7 +72,7 @@
     <tizen:service id="APLMusalla.Bridge" on-boot="true" auto-restart="true">
         <tizen:content src="bridge/service.js"/>
         <tizen:name>APL Bridge</tizen:name>
-        <tizen:description>Full Vetro relay and 24/7 background audio/alert supervisor for APL+ Musalla</tizen:description>
+        <tizen:description>Full Vetro relay and 24/7 background audio/alert supervisor for Salah Launcher</tizen:description>
         <tizen:metadata key="service-type" value="nodejs"/>
     </tizen:service>
 

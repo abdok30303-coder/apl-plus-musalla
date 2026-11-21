@@ -25,13 +25,13 @@ jobs:
       - name: Create or update the release
         run: |
           ver="${TAG#v}"
-          file="releases/apl-plus-musalla-v${ver}.wgt"
+          file="releases/salah-launcher-v${ver}.wgt"
           test -f "$file"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$file" --clobber
           else
-            gh release create "$TAG" "$file" --target "$GITHUB_SHA" --title "APL+ Musalla v${ver}" --latest \
+            gh release create "$TAG" "$file" --target "$GITHUB_SHA" --title "Salah Launcher v${ver}" --latest \
               --notes "Install the .wgt with Apps2Samsung (custom .wgt). Own package IDs (APLMusalla*): it installs next to APL Launcher and does not replace it. If you have 8.7.17 installed, uninstall it first. MIT licensed, see LICENSE. Untested on a physical TV."
           fi
       - name: Retire the old 8.7.17 file (it used APL Launcher's package IDs)
-        run: gh release delete-asset v8.7.17 apl-plus-musalla-v8.7.17.wgt --yes || true
+        run: gh release delete-asset v8.7.17 salah-launcher-v8.7.17.wgt --yes || true

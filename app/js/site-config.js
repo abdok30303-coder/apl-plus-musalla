@@ -15,7 +15,7 @@
 
     global.APL_SITE = {
         custom: true,                 // custom build: no automatic updates from the original repo
-        buildName: "APL+ Musalla",
+        buildName: "Salah Launcher",
 
         /* Prayer times: AlAdhan API, Egyptian General Authority of Survey (method 5),
            Asr at the usual time (school 0), Africa/Cairo. */
