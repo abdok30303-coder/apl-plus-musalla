@@ -246,7 +246,7 @@
 
 /* === js/lifecycle.js === */
 /* ============================================================
-   APL Launcher — Lifecycle Management (APL.lifecycle)
+   Salah Launcher — Lifecycle Management (APL.lifecycle)
    Centralized scope, timer suspension, audio teardown, and cache trimmer.
    ES2019 / Chromium 76 compatible.
    ============================================================ */
@@ -463,7 +463,7 @@
                 "http://stream.radiojar.com/8s5u5tpdtwzuv"
             ],
             name: "إذاعة القرآن الكريم من القاهرة",
-            background: false         // the radio plays only while APL Launcher is in front
+            background: false         // the radio plays only while Salah Launcher is in front
         },
 
         /* Home wallpapers: the 20 compact local wallpapers, one every five minutes. */
@@ -536,12 +536,12 @@
             "background:#1c1c1e;color:#fff;font:28px/1.45 sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.6)";
         var title = document.createElement("div");
         title.style.cssText = "font-size:40px;font-weight:700;margin-bottom:18px";
-        title.textContent = t("APL Launcher couldn't start");
+        title.textContent = t("Salah Launcher couldn't start");
         var body = document.createElement("div");
         body.textContent = t("Please send a photo of this screen in a GitHub issue, so it can be fixed.");
         var details = document.createElement("pre");
         details.style.cssText = "margin:24px 0 0;white-space:pre-wrap;font:22px/1.4 monospace;color:#c7c7cc";
-        details.textContent = "APL Launcher " + version + (screen() ? " · " + screen() : "") + "\n" +
+        details.textContent = "Salah Launcher " + version + (screen() ? " · " + screen() : "") + "\n" +
             (errors.length ? errors.join("\n") : t("No error was reported: the list of apps never came back."));
         box.appendChild(title);
         box.appendChild(body);
@@ -709,7 +709,7 @@ window.APL_LANG_AR = {
     "Preparing…": "جارٍ التحضير…",
     "Playback": "التشغيل",
     "Try the Radio Again": "إعادة محاولة تشغيل الراديو",
-    "The radio uses Samsung AVPlay inside APL Launcher. It stops when you leave the launcher.": "يستخدم الراديو مشغل Samsung AVPlay داخل APL Launcher فقط، ويتوقف عند الخروج من اللانشر.",
+    "The radio uses Samsung AVPlay inside Salah Launcher. It stops when you leave the launcher.": "يستخدم الراديو مشغل Samsung AVPlay داخل Salah Launcher فقط، ويتوقف عند الخروج من اللانشر.",
     "The status includes AVPlay preparation or error details.": "تتضمن الحالة تفاصيل تحضير AVPlay أو الخطأ.",
     "Starts the Samsung AVPlay radio path again and shows any preparation error.": "يعيد تشغيل مسار راديو Samsung AVPlay ويعرض أي خطأ في التحضير.",
     "Background engine unavailable: the radio stops when an app opens.": "محرّك الخلفية غير متاح: يتوقف الراديو عند فتح تطبيق.",
@@ -751,7 +751,7 @@ window.APL_LANG_AR = {
     "Statistics reset": "تم تصفير الإحصاءات",
     "Reset the Use Statistics": "تصفير إحصاءات الاستخدام",
     "Channel Up / Down": "زر تقليب القنوات",
-    "Opens APL Settings with Channel Up or Channel Down. Samsung may keep these buttons for itself.": "يفتح إعدادات APL بزر القناة الأعلى أو الأسفل. قد تحتفظ سامسونج بهذين الزرين.",
+    "Opens Salah Launcher Settings with Channel Up or Channel Down. Samsung may keep these buttons for itself.": "يفتح إعدادات Salah Launcher بزر القناة الأعلى أو الأسفل. قد تحتفظ سامسونج بهذين الزرين.",
     "Clock Format": "صيغة الساعة",
     "12-Hour Time": "12 ساعة",
     "24-Hour Time": "24 ساعة",
@@ -845,7 +845,7 @@ window.APL_LANG_AR = {
     "Brightness Optimization": "تحسين السطوع",
     "Power Saving Mode": "وضع توفير الطاقة",
     "Close Apps at Start-Up": "إغلاق التطبيقات عند التشغيل",
-    "Start on APL Launcher": "البدء بـ APL",
+    "Start on Salah Launcher": "البدء بـ Salah Launcher",
     "Diagnostics": "التشخيص",
     "Unavailable": "غير متاح",
     "Visible": "ظاهر",
@@ -963,7 +963,7 @@ window.APL_LANG_AR_EXTRA = {
     "Prayer times, alerts, Islamic occasions and the black screen.": "المواقيت والتنبيهات والمناسبات الإسلامية والشاشة السوداء.",
     "Play and Pause": "تشغيل وإيقاف",
     "What the play/pause button does while an app is in front: open the Control Center over it, or play and pause in the app. On the Home Screen it always opens the Control Center, and holding Home opens it everywhere.": "ما يفعله زر التشغيل/الإيقاف أثناء وجود تطبيق في المقدمة: يفتح مركز التحكم فوقه، أو يشغّل ويوقف داخل التطبيق. في الشاشة الرئيسية يفتح مركز التحكم دائمًا، والضغط المطوّل على Home يفتحه في كل مكان.",
-    "Sends Home and ⏯ to APL Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again.": "يجعل Home و⏯ يفتحان APL Launcher في Vetro، كما يفعل APL Launcher Setup. للانشر المثبّت من الهاتف بـ Apps2Samsung، أو إذا عاد زر Home يفتح شاشة سامسونج.",
+    "Sends Home and ⏯ to Salah Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again.": "يجعل Home و⏯ يفتحان Salah Launcher في Vetro، كما يفعل APL Launcher Setup. للانشر المثبّت من الهاتف بـ Apps2Samsung، أو إذا عاد زر Home يفتح شاشة سامسونج.",
     "Alexa on the Microphone Button": "أليكسا بزر الميكروفون",
     "Do this once: in the Voice menu, choose Amazon Alexa and sign in to your Amazon account. Then hold the microphone button on the remote and talk to Alexa.": "افعل هذا مرة واحدة: في قائمة الصوت، اختر Amazon Alexa وسجّل الدخول بحساب أمازون. بعدها اضغط مطوّلًا على زر الميكروفون في الريموت وتكلّم مع أليكسا.",
     "Say “Alexa, discover my devices” once. Then: “Alexa, turn on TizenTube”, “Alexa, turn off the screen”, “Alexa, turn on the AirPods”, “Alexa, turn on game mode”.": "قل «Alexa, discover my devices» مرة واحدة. بعدها: «Alexa, turn on TizenTube»، «Alexa, turn off the screen»، «Alexa, turn on the AirPods»، «Alexa, turn on game mode».",
@@ -1097,7 +1097,7 @@ window.APL_LANG_AR_EXTRA = {
     "Note": "ملاحظة",
     "Light Mode was not measured on a television: no figure is claimed for it.": "لم يُقس الوضع الخفيف على تلفاز: لا نَصِف له رقمًا.",
     "Fewer background jobs.": "أعمال خلفية أقل.",
-    "The screen opens APL Launcher at power-on, about a second after the picture, instead of the TV input. Off: the screen starts as before.": "يفتح التلفاز APL Launcher عند التشغيل، بعد ثانية تقريبًا من ظهور الصورة، بدلًا من مدخل التلفاز. عند الإيقاف: يبدأ التلفاز كما كان.",
+    "The screen opens Salah Launcher at power-on, about a second after the picture, instead of the TV input. Off: the screen starts as before.": "يفتح التلفاز Salah Launcher عند التشغيل، بعد ثانية تقريبًا من ظهور الصورة، بدلًا من مدخل التلفاز. عند الإيقاف: يبدأ التلفاز كما كان.",
     "Once per full power-on, closes what the system opens on its own: Netflix, TV Plus, Disney+, Samsung Internet, Art Mode, the pieces of the Samsung home screen and the blocked services. Frees about 350 MB.": "مرة واحدة عند كل تشغيل كامل، يغلق ما يفتحه النظام بنفسه: Netflix وTV Plus وDisney+ وSamsung Internet وArt Mode وأجزاء شاشة سامسونج والخدمات المحجوبة. يحرّر نحو 350 م.ب.",
     "Lowers the brightness in a dark room.": "يخفض السطوع في الغرفة المظلمة.",
     "Reduces power consumption.": "يقلل استهلاك الطاقة.",
@@ -1165,7 +1165,7 @@ window.APL_LANG_AR_EXTRA = {
     "Vetro is back": "عاد اتصال Vetro",
     "How the launcher talks to Vetro. Through the bridge it reads the screen's settings; without it, orders still go out but the settings show Unavailable.": "كيف يتحدث اللانشر مع Vetro. عبر الجسر يقرأ إعدادات التلفاز؛ وبدونه تخرج الأوامر لكن الإعدادات تظهر «غير متاح».",
     "Version {v}": "الإصدار {v}",
-    "Based on APL Launcher by Knikt (Gero Corp.)": "مبني على APL Launcher من إنشاء Knikt (Gero Corp.)",
+    "Based on APL Launcher by Knikt (Gero Corp.)": "مبني على Salah Launcher من إنشاء Knikt (Gero Corp.)",
     "Movies and shows: This product uses the TMDB API but is not endorsed or certified by TMDB.": "الأفلام والمسلسلات: يستخدم هذا المنتج واجهة TMDB لكنه غير معتمد من TMDB.",
     "Model, software and storage.": "الطراز والبرنامج والتخزين.",
     "Launcher updates, about.": "تحديثات اللانشر ومعلومات عنه.",
@@ -1392,7 +1392,7 @@ window.APL_LANG_AR_EXTRA = {
     "Button mapped to TizenTube": "تم ربط الزر بتطبيق TizenTube",
     "Button mapped to YouTube": "تم ربط الزر بتطبيق YouTube",
     "Button mapped to Hot IPTV": "تم ربط الزر بتطبيق Hot IPTV",
-    "Button mapped to APL Launcher": "تم ربط الزر باللانشر",
+    "Button mapped to Salah Launcher": "تم ربط الزر باللانشر",
     "Button mapped to Stremio": "تم ربط الزر بتطبيق Stremio",
     "Restore Default Remote Buttons": "استعادة وظائف أزرار الريموت الأصلية",
     "Restore Remote Buttons?": "استعادة وظائف الريموت؟",
@@ -1506,7 +1506,7 @@ window.APL_LANG_AR_EXTRA = {
     "4.1 GB free of 8.0 GB (preview)": "4.1 جيجابايت متوفرة من 8.0 جيجابايت (معاينة)",
     "A black layer inside the launcher, not the screen": "طبقة سوداء داخل المشغل، وليست الشاشة",
     "A tile that opens Samsung": "بطاقة تفتح تطبيق سامسونج",
-    "APL Launcher": "مشغل APL",
+    "Salah Launcher": "Salah Launcher",
     "APL Overlay is not installed": "طبقة APL Overlay غير مثبتة",
     "Access denied on the screen": "تم رفض الوصول على الشاشة",
     "Active": "نشط",
@@ -1603,10 +1603,10 @@ window.APL_LANG_AR_EXTRA = {
     "Hold OK = app menu": "اضغط مطولاً على OK = قائمة التطبيق",
     "Home and \u23ef open APL Overlay: hold Home for the Control Center, press it twice for the open apps.": "زر Home و ⏯ يفتحان واجهة APL Overlay: اضغط مطولاً على Home لمركز التحكم، واضغطه مرتين للتطبيقات المفتوحة.",
     "Home app: add the screen, then Control Center \u203a Remote": "تطبيق Home: أضف الشاشة، ثم مركز التحكم › Remote",
-    "Home now opens APL Launcher, and {keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.": "زر Home يفتح الآن مشغل APL، واستعادت سامسونج أزرار {keys}. شغّل إعداد المشغل لاستعادة الواجهة السريعة.",
-    "Home now opens APL Launcher, and {keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.": "زر Home يفتح الآن مشغل APL، واستعادت سامسونج زر {keys}. شغّل إعداد المشغل لاستعادة الواجهة السريعة.",
-    "Home now opens APL Launcher. Run APL Launcher Setup again to get the overlay back.": "زر Home يفتح الآن مشغل APL. شغّل إعداد المشغل لاستعادة الواجهة السريعة.",
-    "Home opens APL Launcher.": "زر Home يفتح مشغل APL.",
+    "Home now opens Salah Launcher, and {keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.": "زر Home يفتح الآن Salah Launcher، واستعادت سامسونج أزرار {keys}. شغّل إعداد المشغل لاستعادة الواجهة السريعة.",
+    "Home now opens Salah Launcher, and {keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.": "زر Home يفتح الآن Salah Launcher، واستعادت سامسونج زر {keys}. شغّل إعداد المشغل لاستعادة الواجهة السريعة.",
+    "Home now opens Salah Launcher. Run APL Launcher Setup again to get the overlay back.": "زر Home يفتح الآن Salah Launcher. شغّل إعداد المشغل لاستعادة الواجهة السريعة.",
+    "Home opens Salah Launcher.": "زر Home يفتح Salah Launcher.",
     "How the launcher talks to Vetro through the private bridge.": "كيفية اتصال المشغل مع Vetro عبر الجسر الداخلي.",
     "Humidity": "الرطوبة",
     "Invalid address": "عنوان غير صالح",
@@ -1695,8 +1695,8 @@ window.APL_LANG_AR_EXTRA = {
     "Searching\u2026": "جارٍ البحث…",
     "Select letters with OK \u00b7 Back when done.": "اختر الحروف بزر OK · اضغط رجوع عند الانتهاء.",
     "Send a Video or Photos": "إرسال فيديو أو صور",
-    "Sends Home and \u23ef to APL Launcher in Vetro, as APL Launcher Setup does.": "يوجه زري Home و ⏯ لمشغل APL عبر Vetro.",
-    "Sends Home and \u23ef to APL Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again.": "يوجه زري Home و ⏯ لمشغل APL عبر Vetro (إذا كان مثبتاً عبر Apps2Samsung أو عاد زر Home لفتح واجهة سامسونج الأصلية).",
+    "Sends Home and \u23ef to Salah Launcher in Vetro, as APL Launcher Setup does.": "يوجه زري Home و ⏯ لSalah Launcher عبر Vetro.",
+    "Sends Home and \u23ef to Salah Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again.": "يوجه زري Home و ⏯ لSalah Launcher عبر Vetro (إذا كان مثبتاً عبر Apps2Samsung أو عاد زر Home لفتح واجهة سامسونج الأصلية).",
     "Services restored: they will come back the next time the screen starts": "تمت استعادة الخدمات: ستعود للعمل عند إعادة تشغيل الشاشة القادمة",
     "Setting up the buttons in Vetro\u2026": "جارٍ إعداد الأزرار في Vetro…",
     "Show": "إظهار",
@@ -1785,7 +1785,7 @@ window.APL_LANG_AR_EXTRA = {
     "\u2717 Root Alert Keeper: Stopped": "✗ الحارس الجذري: متوقف",
 
     /* ---------- start-up error screen (js/diag.js) ---------- */
-    "APL Launcher couldn't start": "تعذّر تشغيل APL Launcher",
+    "Salah Launcher couldn't start": "تعذّر تشغيل Salah Launcher",
     "Please send a photo of this screen in a GitHub issue, so it can be fixed.": "من فضلك صوّر هذه الشاشة وأرسل الصورة لمطوّر النسخة حتى يتم إصلاح المشكلة.",
     "No error was reported: the list of apps never came back.": "لم يُسجَّل أي خطأ: قائمة التطبيقات لم تصل.",
     "Since {prayer}": "منذ {prayer}",
@@ -2736,7 +2736,7 @@ window.APL_CATALOG = [
    Remote keys, picture, Game Mode: root commands through Vetro
    (via the private bridge, bridge/service.js). Without Vetro, the local
    network remote (ws://127.0.0.1:8001) puts the screen to sleep: the first
-   time, the screen asks whether to allow APL Launcher, which must be accepted.
+   time, the screen asks whether to allow Salah Launcher, which must be accepted.
 
    On PC (preview), everything is simulated and marked "(preview)".
    ============================================================ */
@@ -2821,7 +2821,7 @@ window.APL_CATALOG = [
         alexaBridge: true,          // the Echo Dot can open apps (overlay/Alexa.cs)
         servicesCut: {},            // blocked Samsung services and their original settings (services.js)
         bootCleanup: true,          // once per power-on: closes what Samsung opens on its own
-        homeAppSaved: null,         // { home, autostart } before "Start on APL Launcher", put back when it is turned off
+        homeAppSaved: null,         // { home, autostart } before "Start on Salah Launcher", put back when it is turned off
         idleClose: true,            // an app left in the background for 10 min is closed (overlay/IdleApps.cs)
         pauseKey: "samsunghome",    // ⏯ on the remote: "samsunghome" | "controlcenter" | "playpause"
         language: "auto",           // "auto" (screen language) | "ar" | "en": read at start-up by i18n.js
@@ -2854,7 +2854,7 @@ window.APL_CATALOG = [
         radioDuringAlert: true,     // pause the radio while a prayer alert plays, then resume
         radioUrl: "",               // empty: the station of js/site-config.js
         weatherPlace: "cairo",     // key in js/cities.js (weather.js)
-        channelKeys: true,          // Channel Up / Down opens APL Settings (the Home key stays with Samsung)
+        channelKeys: true,          // Channel Up / Down opens Salah Launcher Settings (the Home key stays with Samsung)
         systemFilter: true,         // hide Samsung services and plugins that look like apps (apps.js)
         shownSystemApps: [],        // the ones brought back from Settings › Apps › System Components
         autoBackup: true,           // a daily snapshot of the settings and the app order (backup.js)
@@ -3135,7 +3135,7 @@ window.APL_CATALOG = [
     var TOKEN_KEY = "apl.remoteToken";
     function wsRemoteKey(key) {
         return new Promise(function (resolve, reject) {
-            var name = global.btoa("APL Launcher");
+            var name = global.btoa("Salah Launcher");
             var token = "";
             try { token = global.localStorage.getItem(TOKEN_KEY) || ""; } catch (e) {}
             var urls = [
@@ -4082,7 +4082,7 @@ window.APL_CATALOG = [
     function nativeSet(id, value) {
         var d = NATIVE[id];
         if (PREVIEW) { MOCK_NATIVE[id] = value; return Promise.resolve(value); }
-        // Start on APL Launcher first: it has no D-Bus method, and reading d.set below threw before anything was
+        // Start on Salah Launcher first: it has no D-Bus method, and reading d.set below threw before anything was
         // written, so OK only showed "…" on every screen (an S90F). The timeout covers the read back too.
         if (d.home) return withTimeout(homeAppSet(value).then(function (r) { return homeAppCheck(value, r); }), 20000);
         var write = d.vconf ? "vconftool set -f -t int " + d.vconf + " " + value + " 2>&1" : AVOC + d.set.replace("V", value) + " 2>&1";
@@ -4099,7 +4099,7 @@ window.APL_CATALOG = [
             p.then(function (v) { clearTimeout(t); resolve(v); }, function (e) { clearTimeout(t); reject(e); });
         });
     }
-    /* Start on APL Launcher read back. When the screen doesn't keep it, the message says what it kept
+    /* Start on Salah Launcher read back. When the screen doesn't keep it, the message says what it kept
        (and what vconftool answered, when it said anything): "refused" alone told nobody why. */
     function homeAppCheck(value, written) {
         return homeAppRead().then(function (s) {
@@ -7036,7 +7036,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         closeAvPlay();
         playing = false;
         mode = "";
-        why = "Stopped because APL Launcher is no longer in front.";
+        why = "Stopped because Salah Launcher is no longer in front.";
         changed();
     }
 
@@ -7444,7 +7444,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     }
 
     /* leaving the launcher stops it (the position is kept), like the radio */
-    function left() { if (current || paused) stop(true, "Stopped because APL Launcher is no longer in front."); }
+    function left() { if (current || paused) stop(true, "Stopped because Salah Launcher is no longer in front."); }
     document.addEventListener("visibilitychange", function () { if (document.hidden) left(); });
     global.addEventListener("pagehide", left);
 
@@ -7533,7 +7533,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
    - Syncs a rolling 30-day schedule of exact UTC Unix timestamps
      to Vetro's persistent root daemon (/opt/usr/home/owner/APL/bg/)
      so prayer alerts ALWAYS play on time in the background even
-     when APL Launcher is suspended behind YouTube, Netflix, IPTV,
+     when Salah Launcher is suspended behind YouTube, Netflix, IPTV,
      or HDMI inputs.
    ============================================================ */
 (function (global) {
@@ -9118,7 +9118,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
    tasks.js — Scheduled Tasks & Next-Task Countdown Engine.
 
    - Lets the user add, edit, complete, snooze, and delete tasks
-     directly inside APL Launcher.
+     directly inside Salah Launcher.
    - Displays a live countdown showing the exact remaining time
      until the next upcoming task on the Home Screen status card
      (controlled by the "Show Next Task Countdown" option).
@@ -15002,7 +15002,7 @@ window.APL_KEYS = {
     function getRemapAppChoices() {
         var base = [
             ["default", APL.t("Default (Original TV Action)")],
-            ["APLMusalla.Home", APL.t("APL Launcher")]
+            ["APLMusalla.Home", APL.t("Salah Launcher")]
         ];
         /* v1.2.103: the screen's HDMI inputs, so a remote button can open one of them (handled by the launcher: system.js handleRemapKey). */
         try {
@@ -15346,12 +15346,12 @@ window.APL_KEYS = {
                     ["playpause", APL.t("Play and Pause")]
                 ], APL.t("What the play/pause button does on the remote: open Samsung's Smart Hub, open the launcher's Control Center, or play and pause.")),
                 vetro(action(APL.t("Set Up the Remote Buttons"), function () { APL.overlay.setUpButtons(); },
-                    APL.t("Sends Home and ⏯ to APL Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again."), "remote")),
+                    APL.t("Sends Home and ⏯ to Salah Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again."), "remote")),
                 vetro(action(APL.t("Alexa on the Microphone Button"), function () { APL.settings.close(); APL.services.alexaMic(); },
                     APL.t("Do this once: in the Voice menu, choose Amazon Alexa and sign in to your Amazon account. Then hold the microphone button on the remote and talk to Alexa."), "mic")),
                 toggle("Alexa (Echo Dot)", "alexaBridge", APL.t("Say “Alexa, discover my devices” once. Then: “Alexa, turn on TizenTube”, “Alexa, turn off the screen”, “Alexa, turn on the AirPods”, “Alexa, turn on game mode”.")),
                 toggle(APL.t("Channel Up / Down"), "channelKeys",
-                    APL.t("Opens APL Settings with Channel Up or Channel Down. Samsung may keep these buttons for itself.")),
+                    APL.t("Opens Salah Launcher Settings with Channel Up or Channel Down. Samsung may keep these buttons for itself.")),
                 action("Bluetooth", openAudio, APL.t("Connect or pair AirPods, headphones or a speaker."), "bluetooth")
             ], APL.t("The remote's buttons, Alexa, Bluetooth.")),
 
@@ -15800,7 +15800,7 @@ window.APL_KEYS = {
 
                 /* -------- System UI & Power Controls -------- */
                 vetro(action(APL.t("Set Up the Remote Buttons"), function () { APL.overlay.setUpButtons(); },
-                    APL.t("Sends Home and ⏯ to APL Launcher in Vetro, as APL Launcher Setup does."), "remote")),
+                    APL.t("Sends Home and ⏯ to Salah Launcher in Vetro, as APL Launcher Setup does."), "remote")),
 
                 vetro(action(APL.t("Restore Home to Smart Hub"), function () {
                     APL.alert({
@@ -15937,7 +15937,7 @@ window.APL_KEYS = {
                     }, "\u062a\u062d\u0645\u064a\u0644 = \u0648\u0635\u0648\u0644 \u0643\u0648\u062f \u0627\u0644\u0644\u0627\u0646\u0634\u0631\u060c \u062c\u0627\u0647\u0632\u064a\u0629 = \u0638\u0647\u0648\u0631 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629. \u0623\u0631\u0642\u0627\u0645 \u0622\u062e\u0631 5 \u062a\u0634\u063a\u064a\u0644\u0627\u062a \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u062a\u0644\u0641\u0632\u064a\u0648\u0646\u060c \u0644\u0644\u0645\u0642\u0627\u0631\u0646\u0629 \u0642\u0628\u0644 \u0623\u064a \u062a\u0639\u062f\u064a\u0644 \u0648\u0628\u0639\u062f\u0647."),
                     info(APL.t("Note"), function () { return APL.t("Light Mode was not measured on a television: no figure is claimed for it."); })
                 ], APL.t("Fewer background jobs.")),
-                n("homeApp", APL.t("Start on APL Launcher"), APL.t("The screen opens APL Launcher at power-on, about a second after the picture, instead of the TV input. Off: the screen starts as before."), ON_OFF),
+                n("homeApp", APL.t("Start on Salah Launcher"), APL.t("The screen opens Salah Launcher at power-on, about a second after the picture, instead of the TV input. Off: the screen starts as before."), ON_OFF),
                 vetro(toggle(APL.t("Close Apps at Start-Up"), "bootCleanup", APL.t("Once per full power-on, closes what the system opens on its own: Netflix, TV Plus, Disney+, Samsung Internet, Art Mode, the pieces of the Samsung home screen and the blocked services. Frees about 350 MB."))),
                 menu(APL.t("Power and Energy Saving"), "leaf", [
                     n("ecoSensor", APL.t("Brightness Optimization"), APL.t("Lowers the brightness in a dark room."), ON_OFF),
@@ -16186,7 +16186,7 @@ window.APL_KEYS = {
             // Two values: OK switches straight from one to the other
             if (item.options.length === 2) {
                 var next = item.options[0][0] === n ? item.options[1] : item.options[0];
-                // The other screen settings of the menu too: one switch can change another (Start on APL Launcher, Autorun)
+                // The other screen settings of the menu too: one switch can change another (Start on Salah Launcher, Autorun)
                 var slot = row.querySelector(".srow__value");
                 if (slot) slot.textContent = "…";                         // the screen is being asked: shown at once
                 // Any failure says so, even one thrown before the write starts: "…" must never stay on its own
@@ -18386,7 +18386,7 @@ window.APL_DEVICES = [
     /* ---------- app artwork ---------- */
     function slides() {
         var list = ((APL.allApps && APL.allApps()) || []).filter(function (a) { return a.bg; });
-        return list.length ? list : [{ name: "APL Launcher", bg: null }];
+        return list.length ? list : [{ name: "Salah Launcher", bg: null }];
     }
 
     function nextArt() {
@@ -18921,9 +18921,9 @@ window.APL_DEVICES = [
         if (!APL.alert) return;
         var keys = freed.join(", "), many = freed.length > 1, message;
         if (home && freed.length) message = many
-            ? APL.t("Home now opens APL Launcher, and {keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys })
-            : APL.t("Home now opens APL Launcher, and {keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys });
-        else if (home) message = APL.t("Home now opens APL Launcher. Run APL Launcher Setup again to get the overlay back.");
+            ? APL.t("Home now opens Salah Launcher, and {keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys })
+            : APL.t("Home now opens Salah Launcher, and {keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys });
+        else if (home) message = APL.t("Home now opens Salah Launcher. Run APL Launcher Setup again to get the overlay back.");
         else message = many
             ? APL.t("{keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys })
             : APL.t("{keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys });
@@ -18989,7 +18989,7 @@ window.APL_DEVICES = [
         APL.toast(APL.t("Setting up the buttons in Vetro…"), true);
         setUpButtons().then(function (r) {
             if (r.preview) { APL.toast(APL.t("Preview: the buttons are set on the screen"), true); return; }
-            var done = r.target === LAUNCHER ? APL.t("Home opens APL Launcher.")
+            var done = r.target === LAUNCHER ? APL.t("Home opens Salah Launcher.")
                 : APL.t("Home and ⏯ open APL Overlay: hold Home for the Control Center, press it twice for the open apps.");
             var lines = [r.changed.length ? done : APL.t("The buttons were already set up.") + " " + done];
             if (r.intercepting === false) {
@@ -21085,7 +21085,7 @@ window.APL_DEVICES = [
     APL.reloadApps = function () { render(); };
     APL.openSources = function () { if (APL.sources) APL.sources.open(); };
 
-    /* Channel Up / Channel Down open APL Settings (Settings › Remote and Devices › Channel Up / Down).
+    /* Channel Up / Channel Down open Salah Launcher Settings (Settings › Remote and Devices › Channel Up / Down).
        These keys are only seen if Samsung hands them to the app: on many screens the system keeps
        them for its own channel list, and then nothing happens. */
     var CH_UP = 427, CH_DOWN = 428;
@@ -22518,7 +22518,7 @@ window.APL_DEVICES = [
         var lastSr = srStore("apl.softReloadLast");
         var lc = (APL.lifecycle && APL.lifecycle.stats) ? APL.lifecycle.stats() : null;
         var lcLine = lc ? "Lifecycle: scopes=" + lc.scopes + ", listeners=" + lc.listeners + ", timers=" + lc.timers + ", audios=" + lc.audios : "Lifecycle: inactive";
-        var L = ["APL Launcher EG " + v + " - diagnostic report " + stamp(),
+        var L = ["Salah Launcher EG " + v + " - diagnostic report " + stamp(),
                  "Screen: " + prod + " | load " + (global.APL_BOOT_MS || "?") + " ms | ready " + (global.APL_READY_MS || "?") + " ms | timers " + jobs,
                  "Browser: " + ua,
                  lcLine,

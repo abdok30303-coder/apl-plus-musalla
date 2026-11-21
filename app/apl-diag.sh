@@ -1,5 +1,5 @@
 #!/bin/sh
-# apl-diag.sh — Read-only diagnostic inspector for APL Launcher & Background Daemon
+# apl-diag.sh — Read-only diagnostic inspector for Salah Launcher & Background Daemon
 # Can be run via Vetro Root Bridge or directly via sdb shell.
 
 VERDICT="OK"

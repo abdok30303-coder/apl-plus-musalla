@@ -364,7 +364,7 @@
     }
 
     /* leaving the launcher stops it (the position is kept), like the radio */
-    function left() { if (current || paused) stop(true, "Stopped because APL Launcher is no longer in front."); }
+    function left() { if (current || paused) stop(true, "Stopped because Salah Launcher is no longer in front."); }
     document.addEventListener("visibilitychange", function () { if (document.hidden) left(); });
     global.addEventListener("pagehide", left);
 

@@ -7,7 +7,7 @@
    - Syncs a rolling 30-day schedule of exact UTC Unix timestamps
      to Vetro's persistent root daemon (/opt/usr/home/owner/APL/bg/)
      so prayer alerts ALWAYS play on time in the background even
-     when APL Launcher is suspended behind YouTube, Netflix, IPTV,
+     when Salah Launcher is suspended behind YouTube, Netflix, IPTV,
      or HDMI inputs.
    ============================================================ */
 (function (global) {

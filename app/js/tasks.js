@@ -2,7 +2,7 @@
    tasks.js — Scheduled Tasks & Next-Task Countdown Engine.
 
    - Lets the user add, edit, complete, snooze, and delete tasks
-     directly inside APL Launcher.
+     directly inside Salah Launcher.
    - Displays a live countdown showing the exact remaining time
      until the next upcoming task on the Home Screen status card
      (controlled by the "Show Next Task Countdown" option).

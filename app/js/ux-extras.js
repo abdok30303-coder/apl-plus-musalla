@@ -294,7 +294,7 @@
         var lastSr = srStore("apl.softReloadLast");
         var lc = (APL.lifecycle && APL.lifecycle.stats) ? APL.lifecycle.stats() : null;
         var lcLine = lc ? "Lifecycle: scopes=" + lc.scopes + ", listeners=" + lc.listeners + ", timers=" + lc.timers + ", audios=" + lc.audios : "Lifecycle: inactive";
-        var L = ["APL Launcher EG " + v + " - diagnostic report " + stamp(),
+        var L = ["Salah Launcher EG " + v + " - diagnostic report " + stamp(),
                  "Screen: " + prod + " | load " + (global.APL_BOOT_MS || "?") + " ms | ready " + (global.APL_READY_MS || "?") + " ms | timers " + jobs,
                  "Browser: " + ua,
                  lcLine,

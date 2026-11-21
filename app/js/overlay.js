@@ -101,9 +101,9 @@
         if (!APL.alert) return;
         var keys = freed.join(", "), many = freed.length > 1, message;
         if (home && freed.length) message = many
-            ? APL.t("Home now opens APL Launcher, and {keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys })
-            : APL.t("Home now opens APL Launcher, and {keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys });
-        else if (home) message = APL.t("Home now opens APL Launcher. Run APL Launcher Setup again to get the overlay back.");
+            ? APL.t("Home now opens Salah Launcher, and {keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys })
+            : APL.t("Home now opens Salah Launcher, and {keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys });
+        else if (home) message = APL.t("Home now opens Salah Launcher. Run APL Launcher Setup again to get the overlay back.");
         else message = many
             ? APL.t("{keys} are back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys })
             : APL.t("{keys} is back to Samsung. Run APL Launcher Setup again to get the overlay back.", { keys: keys });
@@ -169,7 +169,7 @@
         APL.toast(APL.t("Setting up the buttons in Vetro…"), true);
         setUpButtons().then(function (r) {
             if (r.preview) { APL.toast(APL.t("Preview: the buttons are set on the screen"), true); return; }
-            var done = r.target === LAUNCHER ? APL.t("Home opens APL Launcher.")
+            var done = r.target === LAUNCHER ? APL.t("Home opens Salah Launcher.")
                 : APL.t("Home and ⏯ open APL Overlay: hold Home for the Control Center, press it twice for the open apps.");
             var lines = [r.changed.length ? done : APL.t("The buttons were already set up.") + " " + done];
             if (r.intercepting === false) {

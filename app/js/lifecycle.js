@@ -1,5 +1,5 @@
 /* ============================================================
-   APL Launcher — Lifecycle Management (APL.lifecycle)
+   Salah Launcher — Lifecycle Management (APL.lifecycle)
    Centralized scope, timer suspension, audio teardown, and cache trimmer.
    ES2019 / Chromium 76 compatible.
    ============================================================ */

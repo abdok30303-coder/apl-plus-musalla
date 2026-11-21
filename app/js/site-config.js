@@ -1,5 +1,5 @@
 /* ============================================================
-   site-config.js — this build's own defaults (APL Launcher — Egypt).
+   site-config.js — this build's own defaults (Salah Launcher — Egypt).
 
    Everything the custom build adds reads its defaults from here:
    the prayer times city, the weather place, the radio station.
@@ -47,7 +47,7 @@
                 "http://stream.radiojar.com/8s5u5tpdtwzuv"
             ],
             name: "إذاعة القرآن الكريم من القاهرة",
-            background: false         // the radio plays only while APL Launcher is in front
+            background: false         // the radio plays only while Salah Launcher is in front
         },
 
         /* Home wallpapers: the 20 compact local wallpapers, one every five minutes. */

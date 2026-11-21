@@ -99,7 +99,7 @@
             // Two values: OK switches straight from one to the other
             if (item.options.length === 2) {
                 var next = item.options[0][0] === n ? item.options[1] : item.options[0];
-                // The other screen settings of the menu too: one switch can change another (Start on APL Launcher, Autorun)
+                // The other screen settings of the menu too: one switch can change another (Start on Salah Launcher, Autorun)
                 var slot = row.querySelector(".srow__value");
                 if (slot) slot.textContent = "…";                         // the screen is being asked: shown at once
                 // Any failure says so, even one thrown before the write starts: "…" must never stay on its own

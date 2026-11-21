@@ -478,7 +478,7 @@
         closeAvPlay();
         playing = false;
         mode = "";
-        why = "Stopped because APL Launcher is no longer in front.";
+        why = "Stopped because Salah Launcher is no longer in front.";
         changed();
     }
 

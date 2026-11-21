@@ -2008,7 +2008,7 @@
     APL.reloadApps = function () { render(); };
     APL.openSources = function () { if (APL.sources) APL.sources.open(); };
 
-    /* Channel Up / Channel Down open APL Settings (Settings › Remote and Devices › Channel Up / Down).
+    /* Channel Up / Channel Down open Salah Launcher Settings (Settings › Remote and Devices › Channel Up / Down).
        These keys are only seen if Samsung hands them to the app: on many screens the system keeps
        them for its own channel list, and then nothing happens. */
     var CH_UP = 427, CH_DOWN = 428;

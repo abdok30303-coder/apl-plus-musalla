@@ -52,12 +52,12 @@
             "background:#1c1c1e;color:#fff;font:28px/1.45 sans-serif;box-shadow:0 30px 80px rgba(0,0,0,.6)";
         var title = document.createElement("div");
         title.style.cssText = "font-size:40px;font-weight:700;margin-bottom:18px";
-        title.textContent = t("APL Launcher couldn't start");
+        title.textContent = t("Salah Launcher couldn't start");
         var body = document.createElement("div");
         body.textContent = t("Please send a photo of this screen in a GitHub issue, so it can be fixed.");
         var details = document.createElement("pre");
         details.style.cssText = "margin:24px 0 0;white-space:pre-wrap;font:22px/1.4 monospace;color:#c7c7cc";
-        details.textContent = "APL Launcher " + version + (screen() ? " · " + screen() : "") + "\n" +
+        details.textContent = "Salah Launcher " + version + (screen() ? " · " + screen() : "") + "\n" +
             (errors.length ? errors.join("\n") : t("No error was reported: the list of apps never came back."));
         box.appendChild(title);
         box.appendChild(body);

@@ -10,7 +10,7 @@
    Remote keys, picture, Game Mode: root commands through Vetro
    (via the private bridge, bridge/service.js). Without Vetro, the local
    network remote (ws://127.0.0.1:8001) puts the screen to sleep: the first
-   time, the screen asks whether to allow APL Launcher, which must be accepted.
+   time, the screen asks whether to allow Salah Launcher, which must be accepted.
 
    On PC (preview), everything is simulated and marked "(preview)".
    ============================================================ */
@@ -95,12 +95,12 @@
         alexaBridge: true,          // the Echo Dot can open apps (overlay/Alexa.cs)
         servicesCut: {},            // blocked Samsung services and their original settings (services.js)
         bootCleanup: true,          // once per power-on: closes what Samsung opens on its own
-        homeAppSaved: null,         // { home, autostart } before "Start on APL Launcher", put back when it is turned off
+        homeAppSaved: null,         // { home, autostart } before "Start on Salah Launcher", put back when it is turned off
         idleClose: true,            // an app left in the background for 10 min is closed (overlay/IdleApps.cs)
         pauseKey: "samsunghome",    // ⏯ on the remote: "samsunghome" | "controlcenter" | "playpause"
         language: "auto",           // "auto" (screen language) | "ar" | "en": read at start-up by i18n.js
 
-        /* ---- this build (APL Launcher — Egypt) ---- */
+        /* ---- this build (Salah Launcher — Egypt) ---- */
         clockFormat: "12",          // "12" (with AM/PM, ص/م) | "24": the Home Screen clock (launcher.js startClock)
         digitStyle: "west",         // v1.2.97: "west" (1 2 3) | "arabic" (١ ٢ ٣): prayer widget, clock, weather, in Arabic only (i18n.js)
         homeDate: "full",           // the date beside the clock: "full" (Gregorian + Hijri) | "greg" | "off" (js/home-clock.js)
@@ -409,7 +409,7 @@
     var TOKEN_KEY = "apl.remoteToken";
     function wsRemoteKey(key) {
         return new Promise(function (resolve, reject) {
-            var name = global.btoa("APL Launcher");
+            var name = global.btoa("Salah Launcher");
             var token = "";
             try { token = global.localStorage.getItem(TOKEN_KEY) || ""; } catch (e) {}
             var urls = [
@@ -1356,7 +1356,7 @@
     function nativeSet(id, value) {
         var d = NATIVE[id];
         if (PREVIEW) { MOCK_NATIVE[id] = value; return Promise.resolve(value); }
-        // Start on APL Launcher first: it has no D-Bus method, and reading d.set below threw before anything was
+        // Start on Salah Launcher first: it has no D-Bus method, and reading d.set below threw before anything was
         // written, so OK only showed "…" on every screen (an S90F). The timeout covers the read back too.
         if (d.home) return withTimeout(homeAppSet(value).then(function (r) { return homeAppCheck(value, r); }), 20000);
         var write = d.vconf ? "vconftool set -f -t int " + d.vconf + " " + value + " 2>&1" : AVOC + d.set.replace("V", value) + " 2>&1";
@@ -1373,7 +1373,7 @@
             p.then(function (v) { clearTimeout(t); resolve(v); }, function (e) { clearTimeout(t); reject(e); });
         });
     }
-    /* Start on APL Launcher read back. When the screen doesn't keep it, the message says what it kept
+    /* Start on Salah Launcher read back. When the screen doesn't keep it, the message says what it kept
        (and what vconftool answered, when it said anything): "refused" alone told nobody why. */
     function homeAppCheck(value, written) {
         return homeAppRead().then(function (s) {

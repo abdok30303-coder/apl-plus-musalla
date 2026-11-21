@@ -1,5 +1,5 @@
 /* ============================================================
-   APL Launcher — a reproduction of the tvOS 17/18 Home Screen
+   Salah Launcher — a reproduction of the tvOS 17/18 Home Screen
    1920x1080 surface. Measurements taken from Apple TV screenshots:
      dock      : x 42→1878, y 783→1008, radius 46, light glass
      icons     : 250x150, gap 50, radius 20, focus x1.2 with no outline
@@ -1048,7 +1048,7 @@ body.is-editing .rows {
 }
 .aplalert__buttons::-webkit-scrollbar { display: none; }
 
-/* A QR code under the message (Settings › Support › Support APL Launcher): dark modules on white, sharp */
+/* A QR code under the message (Settings › Support › Support Salah Launcher): dark modules on white, sharp */
 .aplalert__qr { display: flex; flex-direction: column; align-items: center; margin: -14px 0 40px; }
 
 .aplalert__qr canvas { width: 300px; height: 300px; padding: 22px; border-radius: 34px; background: #fff; image-rendering: pixelated; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }

@@ -54,7 +54,7 @@
     function getRemapAppChoices() {
         var base = [
             ["default", APL.t("Default (Original TV Action)")],
-            ["APLMusalla.Home", APL.t("APL Launcher")]
+            ["APLMusalla.Home", APL.t("Salah Launcher")]
         ];
         /* v1.2.103: the screen's HDMI inputs, so a remote button can open one of them (handled by the launcher: system.js handleRemapKey). */
         try {
@@ -398,12 +398,12 @@
                     ["playpause", APL.t("Play and Pause")]
                 ], APL.t("What the play/pause button does on the remote: open Samsung's Smart Hub, open the launcher's Control Center, or play and pause.")),
                 vetro(action(APL.t("Set Up the Remote Buttons"), function () { APL.overlay.setUpButtons(); },
-                    APL.t("Sends Home and ⏯ to APL Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again."), "remote")),
+                    APL.t("Sends Home and ⏯ to Salah Launcher in Vetro, as APL Launcher Setup does. For a launcher installed from a phone with Apps2Samsung, or when Home opens Samsung's home again."), "remote")),
                 vetro(action(APL.t("Alexa on the Microphone Button"), function () { APL.settings.close(); APL.services.alexaMic(); },
                     APL.t("Do this once: in the Voice menu, choose Amazon Alexa and sign in to your Amazon account. Then hold the microphone button on the remote and talk to Alexa."), "mic")),
                 toggle("Alexa (Echo Dot)", "alexaBridge", APL.t("Say “Alexa, discover my devices” once. Then: “Alexa, turn on TizenTube”, “Alexa, turn off the screen”, “Alexa, turn on the AirPods”, “Alexa, turn on game mode”.")),
                 toggle(APL.t("Channel Up / Down"), "channelKeys",
-                    APL.t("Opens APL Settings with Channel Up or Channel Down. Samsung may keep these buttons for itself.")),
+                    APL.t("Opens Salah Launcher Settings with Channel Up or Channel Down. Samsung may keep these buttons for itself.")),
                 action("Bluetooth", openAudio, APL.t("Connect or pair AirPods, headphones or a speaker."), "bluetooth")
             ], APL.t("The remote's buttons, Alexa, Bluetooth.")),
 
@@ -852,7 +852,7 @@
 
                 /* -------- System UI & Power Controls -------- */
                 vetro(action(APL.t("Set Up the Remote Buttons"), function () { APL.overlay.setUpButtons(); },
-                    APL.t("Sends Home and ⏯ to APL Launcher in Vetro, as APL Launcher Setup does."), "remote")),
+                    APL.t("Sends Home and ⏯ to Salah Launcher in Vetro, as APL Launcher Setup does."), "remote")),
 
                 vetro(action(APL.t("Restore Home to Smart Hub"), function () {
                     APL.alert({
@@ -989,7 +989,7 @@
                     }, "\u062a\u062d\u0645\u064a\u0644 = \u0648\u0635\u0648\u0644 \u0643\u0648\u062f \u0627\u0644\u0644\u0627\u0646\u0634\u0631\u060c \u062c\u0627\u0647\u0632\u064a\u0629 = \u0638\u0647\u0648\u0631 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629. \u0623\u0631\u0642\u0627\u0645 \u0622\u062e\u0631 5 \u062a\u0634\u063a\u064a\u0644\u0627\u062a \u0639\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u062a\u0644\u0641\u0632\u064a\u0648\u0646\u060c \u0644\u0644\u0645\u0642\u0627\u0631\u0646\u0629 \u0642\u0628\u0644 \u0623\u064a \u062a\u0639\u062f\u064a\u0644 \u0648\u0628\u0639\u062f\u0647."),
                     info(APL.t("Note"), function () { return APL.t("Light Mode was not measured on a television: no figure is claimed for it."); })
                 ], APL.t("Fewer background jobs.")),
-                n("homeApp", APL.t("Start on APL Launcher"), APL.t("The screen opens APL Launcher at power-on, about a second after the picture, instead of the TV input. Off: the screen starts as before."), ON_OFF),
+                n("homeApp", APL.t("Start on Salah Launcher"), APL.t("The screen opens Salah Launcher at power-on, about a second after the picture, instead of the TV input. Off: the screen starts as before."), ON_OFF),
                 vetro(toggle(APL.t("Close Apps at Start-Up"), "bootCleanup", APL.t("Once per full power-on, closes what the system opens on its own: Netflix, TV Plus, Disney+, Samsung Internet, Art Mode, the pieces of the Samsung home screen and the blocked services. Frees about 350 MB."))),
                 menu(APL.t("Power and Energy Saving"), "leaf", [
                     n("ecoSensor", APL.t("Brightness Optimization"), APL.t("Lowers the brightness in a dark room."), ON_OFF),

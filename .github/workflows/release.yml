@@ -33,5 +33,9 @@ jobs:
             gh release create "$TAG" "$file" --target "$GITHUB_SHA" --title "Salah Launcher v${ver}" --latest \
               --notes "Install the .wgt with Apps2Samsung (custom .wgt). Own package IDs (APLMusalla*): it installs next to APL Launcher and does not replace it. If you have 8.7.17 installed, uninstall it first. MIT licensed, see LICENSE. Untested on a physical TV."
           fi
-      - name: Retire the old 8.7.17 file (it used APL Launcher's package IDs)
-        run: gh release delete-asset v8.7.17 salah-launcher-v8.7.17.wgt --yes || true
+      - name: Retire superseded files (older builds used APL Launcher's ids or the old name)
+        run: |
+          for v in 8.7.17 8.7.18 8.7.19; do
+            gh release delete-asset "v$v" "$(gh release view "v$v" --json assets --jq '.assets[0].name')" --yes || true
+            gh release edit "v$v" --title "Salah Launcher v$v (superseded, use the latest release)" || true
+          done

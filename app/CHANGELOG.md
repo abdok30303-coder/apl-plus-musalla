@@ -1,3 +1,8 @@
+## 8.7.20 (Salah Launcher everywhere; Untested on physical TV)
+- **Visible name:** every on-screen "APL Launcher" label that meant this app now says **Salah Launcher** (Settings, alerts, diagnostics, screensaver, Arabic translations, the TV remote pairing name). Credits to the original APL Launcher by Knikt and mentions of its separate Setup tool are unchanged on purpose.
+- **Left as they are (internal):** package/app/service ids (`APLMusalla*`), the `APL-Audio` and `APL-Quran` folders on the TV, and the audio stream names used by the background daemon. Renaming them would hide users' files or break the daemon's matching.
+- The remote pairing name changed, so Samsung may ask once to allow the app again.
+
 ## 8.7.19 (Renamed to Salah Launcher; new icon; Untested on physical TV)
 - **Name:** the app is now called **Salah Launcher** (config.xml name, window title, Settings > About and Support, README, install guide, banner). The Arabic banner tag reads "صلاة لانشر". Package, app and service ids are unchanged (`APLMusalla*`), so nothing else is affected.
 - **Icon:** new app icon (a watercolor mosque on a soft rounded background), same file used in the README banner.

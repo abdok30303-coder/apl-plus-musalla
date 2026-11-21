@@ -102,7 +102,7 @@
     /* ---------- app artwork ---------- */
     function slides() {
         var list = ((APL.allApps && APL.allApps()) || []).filter(function (a) { return a.bg; });
-        return list.length ? list : [{ name: "APL Launcher", bg: null }];
+        return list.length ? list : [{ name: "Salah Launcher", bg: null }];
     }
 
     function nextArt() {
