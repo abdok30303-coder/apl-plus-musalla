@@ -16,6 +16,7 @@ On Windows: press the **Windows key**, type `cmd`, press Enter, then type `ipcon
 ## Step 2 — Turn on Developer Mode on the TV
 1. Press **Home** (Smart Hub) on the remote and open **Apps**.
 2. Type **12345** with the remote's number buttons. If your remote has no numbers, press the **123** button and type it on the screen.
+   > **2024 TV or newer, or nothing happens?** Open **Apps**, scroll down and open **App Settings** (sometimes labelled **App Management**) at the bottom of the Apps screen, then type **12345** there instead.
 3. Switch **Developer mode** to **On**.
 4. Type your computer's IP address from Step 1, then press **OK**.
 5. **Restart the TV** (hold the power button until it restarts, or unplug it for 5 seconds). When you open **Apps** again, you should see "Developer Mode" at the top.
@@ -62,6 +63,7 @@ Sideloading is done at your own risk, and enabling Developer Mode can affect sup
 ## الخطوة 2: فعّل وضع المطوّر على الشاشة
 1. اضغط **Home** في الريموت وافتح **Apps**.
 2. اكتب **12345** بأزرار الأرقام. لو الريموت من غير أرقام، اضغط زر **123** واكتبها على الشاشة.
+   > **شاشة 2024 أو أحدث، أو مفيش حاجة حصلت؟** جوه شاشة **Apps**، انزل لتحت ودوّر على **App Settings** (وممكن تلاقيها باسم **إدارة التطبيقات / App Management**)، واكتب **12345** هناك بدل الشاشة الرئيسية لـ Apps.
 3. شغّل **Developer mode** على **On**.
 4. اكتب رقم IP الكمبيوتر من الخطوة 1 واضغط **OK**.
 5. **أعد تشغيل الشاشة** (اضغط زر الباور فترة لحد ما تعيد التشغيل، أو افصل الكهربا 5 ثواني). لما تفتح **Apps** تاني هتلاقي كلمة Developer Mode فوق.
