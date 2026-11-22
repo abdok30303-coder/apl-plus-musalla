@@ -10,8 +10,10 @@ Apps2Samsung is a free tool that installs apps on Samsung TVs from your computer
 - The file **`salah-launcher-v8.7.20.wgt`** from the [Releases page](../../../releases).
 - The **Apps2Samsung** tool: <https://github.com/Apps2Samsung/Apps2Samsung/releases> (homepage: apps2samsung.madebypatrick.nl).
 
-## Step 1 — Find your computer's IP address
-On Windows: press the **Windows key**, type `cmd`, press Enter, then type `ipconfig` and press Enter. Write down the number next to **IPv4 Address** (it looks like `192.168.1.25`).
+## Step 1 — Open Apps2Samsung and get your computer's IP
+1. Download and open the **Apps2Samsung** tool on your computer (link below).
+2. Click the **Settings** (gear) icon, then under **Local IP** choose your active connection (**Ethernet** or **Wi-Fi**). The tool shows your computer's IP address next to it (it looks like `192.168.1.25`) — write it down.
+   > If nothing useful shows up there, open Command Prompt on Windows, type `ipconfig` and press Enter — the number next to **IPv4 Address** is the same thing.
 
 ## Step 2 — Turn on Developer Mode on the TV
 1. Press **Home** (Smart Hub) on the remote and open **Apps**.
@@ -57,8 +59,10 @@ Sideloading is done at your own risk, and enabling Developer Mode can affect sup
 - ملف **`salah-launcher-v8.7.20.wgt`** من صفحة [Releases](../../../releases).
 - أداة **Apps2Samsung**: <https://github.com/Apps2Samsung/Apps2Samsung/releases>
 
-## الخطوة 1: اعرف رقم IP بتاع الكمبيوتر
-على ويندوز: اضغط زر **Windows**، اكتب `cmd` واضغط Enter، بعدين اكتب `ipconfig` واضغط Enter. اكتب الرقم اللي جنب **IPv4 Address** (شكله `192.168.1.25`).
+## الخطوة 1: افتح Apps2Samsung واعرف رقم IP بتاع الكمبيوتر
+1. نزّل أداة **Apps2Samsung** وافتحها على الكمبيوتر (الرابط تحت).
+2. ادخل على أيقونة **Settings** (الترس)، وتحت **Local IP** اختار الاتصال الشغال عندك (**Ethernet** أو **Wi-Fi**). الأداة بتوريك رقم IP الكمبيوتر جنبه (شكله `192.168.1.25`) — اكتبه.
+   > لو مفيش حاجة واضحة ظهرت، افتح Command Prompt على ويندوز، اكتب `ipconfig` واضغط Enter — الرقم اللي جنب **IPv4 Address** هو نفسه.
 
 ## الخطوة 2: فعّل وضع المطوّر على الشاشة
 1. اضغط **Home** في الريموت وافتح **Apps**.
