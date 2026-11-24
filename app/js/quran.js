@@ -260,6 +260,7 @@
             toolsEl.appendChild(button("↕ تباعد", "spacing", cycleSpacing));
             toolsEl.appendChild(button("◐ ورقي", "paper", togglePaper));
             toolsEl.appendChild(button("◉ لون", "color", cycleColor));
+            toolsEl.appendChild(button("⇔ حواف الشاشة", "safe", cycleSafe));
             toolsEl.appendChild(button("✓ قرأت الصفحة", "mark-read", markRead, "mq__button--green mq__tool--wide"));
         } else if (mode === "tafsir") {
             toolsEl.appendChild(button("◄ التالية", "tf-next", function () { tfGo(1); }));
@@ -281,6 +282,7 @@
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
                 if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
             }, "mq__tool--wide"));
+            toolsEl.appendChild(button("⇔ حواف الشاشة", "tf-safe", cycleSafe, "mq__tool--wide"));
         }
     }
     function step(id) { if (focusID(id) && APL.sound && APL.sound.tick) APL.sound.tick(); }
@@ -427,7 +429,22 @@
         }
         readBody.style.fontSize = best + "px"; fitSize = best; readBody.scrollTop = 0;
     }
+    /* v8.8.1: a margin from the screen's edges (TVs hide a few pixels at the sides), shared by the Mushaf and the tafsir. */
+    var SAFE = [0, 24, 44, 64, 88];
+    function safeIdx() { var v = prefs.safe; return (typeof v === "number" && v >= 0 && v < SAFE.length) ? v : 1; }
+    function applySafe() {
+        if (!root) return;
+        var x = SAFE[safeIdx()];
+        root.style.setProperty("--mq-safe-x", x + "px");
+        root.style.setProperty("--mq-safe-y", Math.round(x * 0.6) + "px");
+    }
+    function cycleSafe() {
+        prefs.safe = (safeIdx() + 1) % SAFE.length; savePrefs(); applySafe();
+        if (readBody && prefs.fit !== false) fit();
+        if (APL.toast) APL.toast("حواف الشاشة: " + (SAFE[safeIdx()] ? SAFE[safeIdx()] + " بكسل" : "بدون"), true);
+    }
     function applyLook() {
+        applySafe();
         if (!readBody) return;
         readBody.style.lineHeight = String(LH[prefs.lh]);
         readBody.classList.toggle("is-paper", !!prefs.paper);
@@ -849,7 +866,7 @@
     function tfLook() {
         if (!tfBody) return;
         tfBody.style.fontFamily = global.getComputedStyle(document.body).fontFamily;
-        tfBody.style.fontSize = (prefs.tfont || 34) + "px"; tfBody.style.lineHeight = String(LH[prefs.lh]); tfBody.style.overflowY = "auto";
+        tfBody.style.fontSize = (prefs.tfont || 34) + "px"; tfBody.style.lineHeight = String(LH[prefs.lh]); tfBody.style.overflowY = "auto"; applySafe();
         tfBody.classList.toggle("is-paper", !!prefs.paper);
         var hex = (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
         tfBody.style.color = hex; tfBody.classList.toggle("has-color", !!hex);

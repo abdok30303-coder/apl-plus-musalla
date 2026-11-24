@@ -61,8 +61,16 @@
 
     function place() {
         var key = sys.pref("weatherPlace") || CFG.place || "cairo";
+        /* v8.8.1: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
+        if (key === "same" || !userChoseWeather()) key = sys.pref("prayerCity") || CFG.city || key;
         return global.APL_CITY ? global.APL_CITY(key) : { key: "cairo", ar: "القاهرة", en: "Cairo", lat: 30.0444, lon: 31.2357 };
     }
+
+    function userChoseWeather() {
+        try { return Object.prototype.hasOwnProperty.call(JSON.parse(global.localStorage.getItem("apl.prefs") || "{}"), "weatherPlace"); } catch (e) { return false; }
+    }
+    function unitF() { return sys.pref("weatherUnit") === "F"; }
+    function unitParams() { return unitF() ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""; }
 
     function readSaved() {
         try { return JSON.parse(global.localStorage.getItem(KEY) || "null"); } catch (e) { return null; }
@@ -79,7 +87,7 @@
                   "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure" +
                   "&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_probability_max,wind_speed_10m_max" +
                   "&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code" +
-                  "&timezone=" + encodeURIComponent((SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo");
+                  "&timezone=" + encodeURIComponent(p.tz || (SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo") + unitParams();
         busy = true;
         return APL.fetchJSON(url, 12000).then(function (j) {   // v1.2.115: 12 s limit (a stalled request left busy = true for ever)
             busy = false;
@@ -232,10 +240,13 @@
         refresh: fetchNow,
         start: start,
         placeName: function () { var p = place(); return APL.lang === "ar" ? p.ar : p.en; },
+        windUnit: function () { return unitF() ? "mph" : "km/h"; },
         describe: describe
     };
 
     sys.onPref("weatherPlace", function () { fetchNow(); });
+    sys.onPref("weatherUnit", function () { fetchNow(); });
+    sys.onPref("prayerCity", function () { if (sys.pref("weatherPlace") === "same" || !userChoseWeather()) fetchNow(); });
     sys.onPref("clockFormat", function () { render(); });
     sys.onPref("digitStyle", function () { render(); });
 

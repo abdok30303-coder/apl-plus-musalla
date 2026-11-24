@@ -40,7 +40,64 @@
     function openAudio() { APL.settings.close(); APL.controlCenter.openAudio(); }
     /* The Egyptian places of js/cities.js, for the prayer times and the weather. */
     function cityOptions() {
-        return (global.APL_CITIES || []).map(function (c) { return [c.key, APL.lang === "ar" ? c.ar : c.en]; });
+        var list = [], cu = global.APL_CITY_CUSTOM && global.APL_CITY_CUSTOM();
+        if (cu) list.push(["custom", "\u2605 " + cu.en + (cu.cc && global.APL_COUNTRY_NAME ? " \u00b7 " + global.APL_COUNTRY_NAME(cu.cc) : "")]);
+        (global.APL_CITIES || []).forEach(function (c) {
+            var nm = APL.lang === "ar" ? c.ar : c.en;
+            list.push([c.key, c.cc === "EG" ? nm : nm + " \u00b7 " + (global.APL_COUNTRY_NAME ? global.APL_COUNTRY_NAME(c.cc) : c.cc)]);
+        });
+        return list;
+    }
+    /* v8.8.1: world support for the prayer times and the weather. */
+    function weatherOptions() { return [["same", APL.t("Same as prayer city")]].concat(cityOptions()); }
+    function methodOptions() {
+        var list = [["auto", APL.t("Automatic (by country)")]];
+        (global.APL_METHODS || []).forEach(function (m) { list.push([m.id, APL.lang === "ar" ? m.ar : m.en]); });
+        return list;
+    }
+    function reloadPrayer() { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); }
+    /* Search for a city anywhere: Open-Meteo geocoding (internet), then the list of answers. Same text field as the profile name. */
+    function searchCity() {
+        var box = document.createElement("div");
+        box.className = "pprompt";
+        box.innerHTML = '<div class="pprompt__box"><h2 class="pprompt__title">' + APL.t("Search for a city") + '</h2>' +
+            '<input class="pprompt__input" type="text" maxlength="40"><p class="pprompt__hint">' + APL.t("Type the city name, then OK \u00b7 Back to cancel") + '</p></div>';
+        document.body.appendChild(box);
+        var input = box.querySelector("input"), done = false;
+        function finish(ok) {
+            if (done) return;
+            done = true;
+            var q = input.value.trim();
+            if (box.parentNode) box.parentNode.removeChild(box);
+            if (ok && q.length > 1) lookupCity(q);
+        }
+        input.addEventListener("keydown", function (e) {
+            if (e.keyCode === 13) { e.preventDefault(); e.stopPropagation(); finish(true); }
+            else if (e.keyCode === 27 || e.keyCode === 10009) { e.preventDefault(); e.stopPropagation(); finish(false); }
+        });
+        input.addEventListener("blur", function () { setTimeout(function () { finish(true); }, 0); });
+        setTimeout(function () { input.focus(); }, 50);
+    }
+    function lookupCity(q) {
+        APL.toast(APL.t("Searching\u2026"), true);
+        APL.fetchJSON("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&format=json&language=" + (APL.lang === "ar" ? "ar" : "en"), 12000).then(function (j) {
+            var r = (j && j.results) || [];
+            if (!r.length) { APL.toast(APL.t("No city found"), true); return; }
+            var items = r.map(function (x) {
+                var label = x.name + (x.admin1 ? ", " + x.admin1 : "") + (x.country ? " \u00b7 " + x.country : "");
+                return { label: label, icon: "sparkle", run: function () { useCity(x); } };
+            });
+            APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
+        }).catch(function () { APL.toast(APL.t("No internet connection"), true); });
+    }
+    function useCity(x) {
+        var c = { name: x.name, lat: +x.latitude, lon: +x.longitude, cc: String(x.country_code || "").toUpperCase(), tz: x.timezone || "" };
+        APL.sys.setPref("customPlace", c);
+        APL.sys.setPref("weatherPlace", "same");
+        APL.sys.setPref("prayerCity", "custom");
+        if (APL.prayer) APL.prayer.setCity("custom");
+        if (APL.weather) APL.weather.refresh();
+        APL.toast(APL.t("City set: {name}", { name: x.name }), true);
     }
     function openDuck() { APL.settings.close(); if (APL.openUrl) APL.openUrl("https://duck.ai/").catch(function (e) { if (APL.toast) APL.toast(e.message); }); }
     function openPrayer() { APL.settings.close(); if (APL.prayerPage) APL.prayerPage.open(); }
@@ -182,8 +239,12 @@
                             if (typeof APL.prayerPage.openWeather === "function") APL.prayerPage.openWeather();
                         }
                     }, APL.t("Opens detailed 7-day forecast, humidity, wind, and live conditions."), "sun"),
-                    choice(APL.t("Weather Place"), "weatherPlace", cityOptions(),
+                    choice(APL.t("Weather Place"), "weatherPlace", weatherOptions(),
                         APL.t("Uses Open-Meteo. The screen's location is never requested."),
+                        function () { if (APL.weather) APL.weather.refresh(); }),
+                    choice(APL.t("Temperature Unit"), "weatherUnit",
+                        [["C", APL.t("Celsius (\u00b0C), km/h")], ["F", APL.t("Fahrenheit (\u00b0F), mph")]],
+                        APL.t("Choose the unit of the temperature and the wind."),
                         function () { if (APL.weather) APL.weather.refresh(); }),
                     info(APL.t("Weather"), function () {
                         var w = APL.weather && APL.weather.get();
@@ -317,10 +378,20 @@
                     var n = APL.prayer && APL.prayer.next();
                     if (!n) return APL.t("Loading…");
                     return n.name + " " + APL.prayer.hhmm(n.time) + " · " + APL.prayer.left(n.ms);
-                }, APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.")),
+                }, (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."))),
                 choice(APL.t("City"), "prayerCity", cityOptions(),
-                    APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."),
+                    (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.")),
                     function (v) { if (APL.prayer) APL.prayer.setCity(v); }),
+                action(APL.t("Search for a city anywhere"), searchCity,
+                    APL.t("Needs internet. Finds any city in the world for the prayer times and the weather."), "sparkle"),
+                choice(APL.t("Calculation Method"), "prayerMethod", methodOptions(),
+                    APL.t("Automatic picks the usual method of the country."), reloadPrayer),
+                choice(APL.t("Asr Time"), "prayerSchool",
+                    [[0, APL.t("Standard (Shafi, Maliki, Hanbali)")], [1, APL.t("Hanafi (later Asr)")]],
+                    APL.t("Hanafi Asr starts when the shadow is twice the object."), reloadPrayer),
+                choice(APL.t("High-Latitude Rule"), "prayerHighLat",
+                    [["auto", APL.t("Automatic")], [1, APL.t("Middle of the night")], [2, APL.t("One-seventh of the night")], [3, APL.t("Angle-based")]],
+                    APL.t("For far-north and far-south cities, where the sun does not go deep enough below the horizon."), reloadPrayer),
                 choice(APL.t("Prayer Widget Size"), "prayerWidgetScale",
                     [[0, APL.t("Current size") + " 100%"], [25, "125%"], [50, "150%"], [75, "175%"], [100, "200%"], [150, "250%"], [200, "300%"]],
                     APL.t("Makes the prayer widget on the Home Screen bigger than its current size.")),

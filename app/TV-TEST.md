@@ -615,3 +615,9 @@
 ### 23. استعادة Vetro السريعة (8.7.9)
 * **خطوة التجربة:** من الإعدادات > الأداء > تقرير الأخطاء شوف حالة Vetro (النقطة الخضراء في شريط الحالة). لو قدرت، أوقف خدمة Vetro أو افصله لحظيًا وراقب النقطة.
 * **النتيجة المتوقعة:** النقطة تتحول للأحمر، وخلال حوالي دقيقة تحاول الخدمة تتشغل تاني وترجع خضراء (قبل كده كان بياخد حوالي 3 دقايق قبل أول محاولة).
+
+## v8.7.21 world support
+- Mushaf page 293 and the tafsir of Al-Kahf: no word is cut at the left or right edge; the button "Screen edges" changes the margin.
+- Settings > Prayer and Quran: City shows the world cities; pick London: the times and the method (Muslim World League) change.
+- "Search for a city anywhere": the TV keyboard opens, type "kuala", pick a result: prayer times and weather follow it.
+- Settings > Weather: Temperature Unit F shows Fahrenheit.

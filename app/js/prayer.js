@@ -37,6 +37,32 @@
     function cityKey() { return sys.pref("prayerCity") || CFG.city || "cairo"; }
     function city() { return global.APL_CITY ? global.APL_CITY(cityKey()) : { key: "cairo", lat: 30.0444, lon: 31.2357, ar: "القاهرة", en: "Cairo" }; }
     function cityName() { var c = city(); return APL.lang === "ar" ? c.ar : c.en; }
+    /* v8.8.1: world support. The time zone, the calculation method, the Asr rule and the high-latitude rule follow the chosen city. */
+    function tz() { var c = city(); return (c && c.tz) || CFG.timezone || "Africa/Cairo"; }
+    function methodId() {
+        var v = sys.pref("prayerMethod"), n = parseInt(v, 10);
+        if (v !== undefined && v !== null && v !== "auto" && !isNaN(n)) return n;
+        var c = city();
+        return (global.APL_METHOD_AUTO && c && c.cc) ? global.APL_METHOD_AUTO(c.cc) : (CFG.method || 5);
+    }
+    function schoolId() { var n = parseInt(sys.pref("prayerSchool"), 10); return isNaN(n) ? (CFG.school === 1 ? 1 : 0) : (n === 1 ? 1 : 0); }
+    function hlNum() { var n = parseInt(sys.pref("prayerHighLat"), 10); return (n >= 1 && n <= 3) ? n : 0; }
+    function hlParam() { return hlNum() ? "&latitudeAdjustmentMethod=" + hlNum() : ""; }
+    function methodInfo() {
+        var id = methodId(), L = global.APL_METHODS || [];
+        for (var i = 0; i < L.length; i++) if (L[i].id === id) return L[i];
+        return { id: id, en: "Method " + id, ar: "طريقة " + id, fajr: 18, isha: 17, ishaMin: 0, mag: 0 };
+    }
+    /* What the saved month belongs to: the city, the method, the Asr rule and the high-latitude rule. */
+    function locSig() {
+        var c = city();
+        return c.key + (c.key === "custom" ? "@" + c.lat.toFixed(3) + "," + c.lon.toFixed(3) : "") + "|" + methodId() + "|" + schoolId() + "|" + hlNum();
+    }
+    function methodNote() {
+        var m = methodInfo();
+        return APL.t("Times from AlAdhan, {method}. Timezone {tz}.", { method: APL.lang === "ar" ? m.ar : m.en, tz: tz() });
+    }
+    function tzHours(isoDay) { var o = at(isoDay, "12:00"); return o ? cairoOffset(o) / 3600000 : 2; }
     function alertsOn() { return sys.pref("prayerAlerts") !== false; }
     function nameOf(key) {
         for (var i = 0; i < NAMES.length; i++) if (NAMES[i][0] === key) return APL.lang === "ar" ? NAMES[i][2] : APL.t(NAMES[i][1]);
@@ -79,16 +105,23 @@
         return o;
     }
 
-    var fmt = null;
-    try {
-        fmt = new global.Intl.DateTimeFormat("en-GB", {
-            timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
-            hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
-        });
-    } catch (e) { fmt = null; }
+    /* v8.8.1: one formatter per time zone (the zone of the chosen city), made when first needed. */
+    var fmtCache = {};
+    function fmtFor(zone) {
+        if (fmtCache[zone] !== undefined) return fmtCache[zone];
+        var f = null;
+        try {
+            f = new global.Intl.DateTimeFormat("en-GB", {
+                timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+            });
+        } catch (e) { f = null; }
+        fmtCache[zone] = f;
+        return f;
+    }
 
     function cairoParts(when) {
-        var d = when || new Date();
+        var d = when || new Date(), fmt = fmtFor(tz());
         if (!fmt) {
             return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), H: d.getHours(), M: d.getMinutes(), S: d.getSeconds(), month: d.getMonth() + 1 };
         }
@@ -135,7 +168,7 @@
         var key = monthKey(y, m), raw = null;
         try { raw = JSON.parse(global.localStorage.getItem(key) || "null"); } catch (e) { raw = null; }
         if (!raw || !raw.days) return false;
-        if (raw.city && raw.city !== cityKey()) return false;
+        if (raw.city && raw.city !== locSig()) return false;
         Object.keys(raw.days).forEach(function (d) { days[d] = raw.days[d]; });
         loadedMonths[y + "-" + (m < 10 ? "0" : "") + m] = true;
         return true;
@@ -160,7 +193,7 @@
         if (!force && readMonth(y, m)) return Promise.resolve(true);
         var c = city();
         var url = "https://api.aladhan.com/v1/calendar?latitude=" + c.lat + "&longitude=" + c.lon +
-                  "&method=" + (CFG.method || 5) + "&school=" + (CFG.school || 0) +
+                  "&method=" + methodId() + "&school=" + schoolId() + hlParam() +
                   "&month=" + m + "&year=" + y;
         return APL.fetchJSON(url, 15000).then(function (j) {   // v1.2.115: 15 s limit
             var list = (j && j.data) || [];
@@ -186,7 +219,7 @@
                 store[isoDay] = out;
                 days[isoDay] = out;
             });
-            try { global.localStorage.setItem(monthKey(y, m), JSON.stringify({ at: Date.now(), city: c.key, days: store })); } catch (e) {}
+            try { global.localStorage.setItem(monthKey(y, m), JSON.stringify({ at: Date.now(), city: locSig(), days: store })); } catch (e) {}
             loadedMonths[mk] = true;
             lastError = "";
             syncedSig = "";
@@ -277,15 +310,22 @@
         var ra = fix(Math.atan2(cos(e) * sin(L), cos(L)) / R, 360) / 15;
         var eqt = qq / 15 - ra, decl = Math.asin(sin(e) * sin(L)) / R;
         eqt = eqt - 24 * Math.round(eqt / 24);
-        var noon = 12 - eqt - lon / 15 + 2;                                             // local solar noon, UTC+2
+        var noon = 12 - eqt - lon / 15 + tzHours(isoDay);   // local solar noon in the city's own time zone (v8.8.1)
         function span(angle) {                                                          // hours from noon to the sun at -angle (angle > 0 = below the horizon)
             var c = (-sin(angle) - sin(decl) * sin(lat)) / (cos(decl) * cos(lat));
             if (c < -1 || c > 1) return null;
             return Math.acos(c) / R / 15;
         }
-        var asrAngle = -Math.atan(1 / ((CFG.school === 1 ? 2 : 1) + Math.tan(Math.abs(lat - decl) * R))) / R;
-        var t = { fajr: span(19.5), sunrise: span(0.833), asr: span(asrAngle), maghrib: span(0.833), isha: span(17.5) };
-        if (t.fajr === null || t.sunrise === null || t.asr === null || t.maghrib === null || t.isha === null) return null;
+        var P = methodInfo();                                                           // v8.8.1: the method, the Asr rule and far-north cities
+        var asrAngle = -Math.atan(1 / ((schoolId() === 1 ? 2 : 1) + Math.tan(Math.abs(lat - decl) * R))) / R;
+        var sr = span(0.833);                                                           // sunrise and sunset are symmetrical around noon
+        var t = { fajr: span(P.fajr), sunrise: sr, asr: span(asrAngle), maghrib: P.mag ? span(P.mag) : sr, isha: P.ishaMin ? 0 : span(P.isha) };
+        if (sr === null || t.asr === null) return null;
+        var night = 24 - 2 * sr;                                                        // hours from sunset to the next sunrise
+        if (t.fajr === null) t.fajr = sr + night / 7;                                   // the sun never goes deep enough: one-seventh of the night
+        if (t.maghrib === null) t.maghrib = sr;
+        if (P.ishaMin) t.isha = t.maghrib + P.ishaMin / 60;
+        else if (t.isha === null) t.isha = sr + night / 7;
         function hm(h) { var m = Math.round(fix(h, 24) * 60) % 1440; return pad2(Math.floor(m / 60)) + ":" + pad2(m % 60); }
         return { fajr: hm(noon - t.fajr), sunrise: hm(noon - t.sunrise), dhuhr: hm(noon), asr: hm(noon + t.asr),
                  maghrib: hm(noon + t.maghrib), isha: hm(noon + t.isha), hijri: "", hijriAr: "", hijriEn: "", hijriDay: "", hijriYear: "", calc: true };
@@ -677,6 +717,15 @@
         city: city,
         cityKey: cityKey,
         cityName: cityName,
+        tz: tz,
+        methodId: methodId,
+        methodNote: methodNote,
+        reload: function () {
+            loadedMonths = {};
+            days = {};
+            syncedSig = "";
+            return loadAll(true).then(function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
+        },
         setCity: function (key) {
             loadedMonths = {};
             days = {};

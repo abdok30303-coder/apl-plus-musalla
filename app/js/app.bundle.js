@@ -714,6 +714,32 @@ window.APL_LANG_AR = {
     "Starts the Samsung AVPlay radio path again and shows any preparation error.": "يعيد تشغيل مسار راديو Samsung AVPlay ويعرض أي خطأ في التحضير.",
     "Background engine unavailable: the radio stops when an app opens.": "محرّك الخلفية غير متاح: يتوقف الراديو عند فتح تطبيق.",
     "Weather": "الطقس",
+    "Search for a city anywhere": "ابحث عن أي مدينة في العالم",
+    "Needs internet. Finds any city in the world for the prayer times and the weather.": "يحتاج إنترنت. يجد أي مدينة في العالم لمواقيت الصلاة والطقس.",
+    "Search for a city": "ابحث عن مدينة",
+    "Type the city name, then OK · Back to cancel": "اكتب اسم المدينة ثم OK · رجوع للإلغاء",
+    "Searching…": "جارٍ البحث…",
+    "No city found": "لم يتم العثور على مدينة",
+    "No internet connection": "لا يوجد اتصال بالإنترنت",
+    "City set: {name}": "تم ضبط المدينة: {name}",
+    "Calculation Method": "طريقة الحساب",
+    "Automatic (by country)": "تلقائي (حسب الدولة)",
+    "Automatic picks the usual method of the country.": "الوضع التلقائي يختار الطريقة المعتادة في دولة المدينة.",
+    "Asr Time": "وقت العصر",
+    "Standard (Shafi, Maliki, Hanbali)": "الجمهور (الشافعي والمالكي والحنبلي)",
+    "Hanafi (later Asr)": "الحنفي (عصر متأخر)",
+    "Hanafi Asr starts when the shadow is twice the object.": "العصر عند الحنفية حين يصير ظل الشيء مثليه.",
+    "High-Latitude Rule": "قاعدة خطوط العرض العالية",
+    "Middle of the night": "منتصف الليل",
+    "One-seventh of the night": "سُبع الليل",
+    "Angle-based": "حسب الزاوية",
+    "For far-north and far-south cities, where the sun does not go deep enough below the horizon.": "للمدن البعيدة شمالًا أو جنوبًا، حيث لا تنخفض الشمس بما يكفي تحت الأفق.",
+    "Same as prayer city": "نفس مدينة الصلاة",
+    "Temperature Unit": "وحدة الحرارة",
+    "Celsius (°C), km/h": "مئوية (°C)، كم/س",
+    "Fahrenheit (°F), mph": "فهرنهايت (°F)، ميل/س",
+    "Choose the unit of the temperature and the wind.": "اختر وحدة الحرارة والرياح.",
+    "Times from AlAdhan, {method}. Timezone {tz}.": "المواقيت من AlAdhan، {method}. المنطقة الزمنية {tz}.",
     "Weather Place": "مكان الطقس",
     "Uses Open-Meteo. The screen's location is never requested.": "يستخدم Open-Meteo. لا يُطلب موقع التلفاز أبدًا.",
     "Refresh": "تحديث",
@@ -4971,16 +4997,23 @@ window.APL_CATALOG = [
 })(window);
 /* === js/cities.js === */
 /* ============================================================
-   cities.js — the Egyptian places the prayer times and the weather
-   can use. Coordinates only: the AlAdhan API is asked by position,
-   so no city name has to match its database.
+   cities.js: the places the prayer times and the weather can use.
+   Coordinates only: the AlAdhan API is asked by position, so no city
+   name has to match its database. Each city also carries its country
+   code and its IANA time zone, so the times, the countdown and the
+   weather follow the city (and not Egypt) when you pick another one.
 
-   key, Arabic name, English name, latitude, longitude
+   v8.8.1: world cities (not only Egypt), the usual calculation method
+   of each country, and "custom": any city found with Settings > Search
+   for a city anywhere (Open-Meteo geocoding, needs internet).
+
+   key, Arabic name, English name, latitude, longitude, country, time zone
    ============================================================ */
 (function (global) {
     "use strict";
 
-    var LIST = [
+    var EGYPT = [
+        ["alexandria", "الإسكندرية",    "Alexandria",       31.2001, 29.9187],
         ["belqas",   "بلقاس",            "Belqas",           31.3567, 31.3936],
         ["mansoura", "المنصورة",          "Mansoura",         31.0409, 31.3785],
         ["mitghamr", "ميت غمر",           "Mit Ghamr",        30.7185, 31.2596],
@@ -5012,19 +5045,186 @@ window.APL_CATALOG = [
         ["kharga",   "الخارجة",           "Kharga",           25.4514, 30.5464]
     ];
 
-    var CITIES = LIST.map(function (c) {
-        return { key: c[0], ar: c[1], en: c[2], lat: c[3], lon: c[4] };
-    });
+    /* key, Arabic, English, latitude, longitude, country, IANA time zone */
+    var WORLD = [
+        ["makkah",   "مكة المكرمة",   "Makkah",          21.3891,  39.8579, "SA", "Asia/Riyadh"],
+        ["madinah",  "المدينة المنورة", "Madinah",        24.4686,  39.6142, "SA", "Asia/Riyadh"],
+        ["riyadh",   "الرياض",        "Riyadh",          24.7136,  46.6753, "SA", "Asia/Riyadh"],
+        ["jeddah",   "جدة",           "Jeddah",          21.4858,  39.1925, "SA", "Asia/Riyadh"],
+        ["dammam",   "الدمام",        "Dammam",          26.4207,  50.0888, "SA", "Asia/Riyadh"],
+        ["dubai",    "دبي",           "Dubai",           25.2048,  55.2708, "AE", "Asia/Dubai"],
+        ["abudhabi", "أبو ظبي",       "Abu Dhabi",       24.4539,  54.3773, "AE", "Asia/Dubai"],
+        ["sharjah",  "الشارقة",       "Sharjah",         25.3463,  55.4209, "AE", "Asia/Dubai"],
+        ["kuwait",   "مدينة الكويت",   "Kuwait City",     29.3759,  47.9774, "KW", "Asia/Kuwait"],
+        ["doha",     "الدوحة",        "Doha",            25.2854,  51.5310, "QA", "Asia/Qatar"],
+        ["manama",   "المنامة",       "Manama",          26.2285,  50.5860, "BH", "Asia/Bahrain"],
+        ["muscat",   "مسقط",          "Muscat",          23.5880,  58.3829, "OM", "Asia/Muscat"],
+        ["sanaa",    "صنعاء",         "Sanaa",           15.3694,  44.1910, "YE", "Asia/Aden"],
+        ["aden",     "عدن",           "Aden",            12.7855,  45.0187, "YE", "Asia/Aden"],
+        ["amman",    "عمّان",          "Amman",           31.9454,  35.9284, "JO", "Asia/Amman"],
+        ["jerusalem", "القدس",        "Jerusalem",       31.7683,  35.2137, "PS", "Asia/Jerusalem"],
+        ["gaza",     "غزة",           "Gaza",            31.5017,  34.4668, "PS", "Asia/Hebron"],
+        ["ramallah", "رام الله",      "Ramallah",        31.9038,  35.2034, "PS", "Asia/Hebron"],
+        ["beirut",   "بيروت",         "Beirut",          33.8938,  35.5018, "LB", "Asia/Beirut"],
+        ["damascus", "دمشق",          "Damascus",        33.5138,  36.2765, "SY", "Asia/Damascus"],
+        ["aleppo",   "حلب",           "Aleppo",          36.2021,  37.1343, "SY", "Asia/Damascus"],
+        ["baghdad",  "بغداد",         "Baghdad",         33.3152,  44.3661, "IQ", "Asia/Baghdad"],
+        ["basra",    "البصرة",        "Basra",           30.5085,  47.7804, "IQ", "Asia/Baghdad"],
+        ["mosul",    "الموصل",        "Mosul",           36.3400,  43.1300, "IQ", "Asia/Baghdad"],
+        ["tripoli",  "طرابلس",        "Tripoli",         32.8872,  13.1913, "LY", "Africa/Tripoli"],
+        ["benghazi", "بنغازي",        "Benghazi",        32.1167,  20.0667, "LY", "Africa/Tripoli"],
+        ["tunis",    "تونس",          "Tunis",           36.8065,  10.1815, "TN", "Africa/Tunis"],
+        ["algiers",  "الجزائر",       "Algiers",         36.7538,   3.0588, "DZ", "Africa/Algiers"],
+        ["casablanca", "الدار البيضاء", "Casablanca",    33.5731,  -7.5898, "MA", "Africa/Casablanca"],
+        ["rabat",    "الرباط",        "Rabat",           34.0209,  -6.8416, "MA", "Africa/Casablanca"],
+        ["marrakesh", "مراكش",        "Marrakesh",       31.6295,  -7.9811, "MA", "Africa/Casablanca"],
+        ["khartoum", "الخرطوم",       "Khartoum",        15.5007,  32.5599, "SD", "Africa/Khartoum"],
+        ["nouakchott", "نواكشوط",     "Nouakchott",      18.0735, -15.9582, "MR", "Africa/Nouakchott"],
+        ["mogadishu", "مقديشو",       "Mogadishu",        2.0469,  45.3182, "SO", "Africa/Mogadishu"],
+        ["istanbul", "إسطنبول",       "Istanbul",        41.0082,  28.9784, "TR", "Europe/Istanbul"],
+        ["ankara",   "أنقرة",         "Ankara",          39.9334,  32.8597, "TR", "Europe/Istanbul"],
+        ["izmir",    "إزمير",         "Izmir",           38.4237,  27.1428, "TR", "Europe/Istanbul"],
+        ["tehran",   "طهران",         "Tehran",          35.6892,  51.3890, "IR", "Asia/Tehran"],
+        ["mashhad",  "مشهد",          "Mashhad",         36.2972,  59.6067, "IR", "Asia/Tehran"],
+        ["qom",      "قم",            "Qom",             34.6416,  50.8746, "IR", "Asia/Tehran"],
+        ["karachi",  "كراتشي",        "Karachi",         24.8607,  67.0011, "PK", "Asia/Karachi"],
+        ["lahore",   "لاهور",         "Lahore",          31.5497,  74.3436, "PK", "Asia/Karachi"],
+        ["islamabad", "إسلام آباد",   "Islamabad",       33.6844,  73.0479, "PK", "Asia/Karachi"],
+        ["delhi",    "دلهي",          "Delhi",           28.6139,  77.2090, "IN", "Asia/Kolkata"],
+        ["mumbai",   "مومباي",        "Mumbai",          19.0760,  72.8777, "IN", "Asia/Kolkata"],
+        ["hyderabad", "حيدر آباد",    "Hyderabad",       17.3850,  78.4867, "IN", "Asia/Kolkata"],
+        ["dhaka",    "دكا",           "Dhaka",           23.8103,  90.4125, "BD", "Asia/Dhaka"],
+        ["kabul",    "كابل",          "Kabul",           34.5553,  69.2075, "AF", "Asia/Kabul"],
+        ["colombo",  "كولومبو",       "Colombo",          6.9271,  79.8612, "LK", "Asia/Colombo"],
+        ["jakarta",  "جاكرتا",        "Jakarta",         -6.2088, 106.8456, "ID", "Asia/Jakarta"],
+        ["surabaya", "سورابايا",      "Surabaya",        -7.2575, 112.7521, "ID", "Asia/Jakarta"],
+        ["kualalumpur", "كوالالمبور", "Kuala Lumpur",     3.1390, 101.6869, "MY", "Asia/Kuala_Lumpur"],
+        ["singapore", "سنغافورة",     "Singapore",        1.3521, 103.8198, "SG", "Asia/Singapore"],
+        ["tashkent", "طشقند",         "Tashkent",        41.2995,  69.2401, "UZ", "Asia/Tashkent"],
+        ["baku",     "باكو",          "Baku",            40.4093,  49.8671, "AZ", "Asia/Baku"],
+        ["moscow",   "موسكو",         "Moscow",          55.7558,  37.6173, "RU", "Europe/Moscow"],
+        ["kazan",    "قازان",         "Kazan",           55.7887,  49.1221, "RU", "Europe/Moscow"],
+        ["london",   "لندن",          "London",          51.5074,  -0.1278, "GB", "Europe/London"],
+        ["birmingham", "برمنغهام",    "Birmingham",      52.4862,  -1.8904, "GB", "Europe/London"],
+        ["manchester", "مانشستر",     "Manchester",      53.4808,  -2.2426, "GB", "Europe/London"],
+        ["paris",    "باريس",         "Paris",           48.8566,   2.3522, "FR", "Europe/Paris"],
+        ["marseille", "مرسيليا",      "Marseille",       43.2965,   5.3698, "FR", "Europe/Paris"],
+        ["berlin",   "برلين",         "Berlin",          52.5200,  13.4050, "DE", "Europe/Berlin"],
+        ["frankfurt", "فرانكفورت",    "Frankfurt",       50.1109,   8.6821, "DE", "Europe/Berlin"],
+        ["madrid",   "مدريد",         "Madrid",          40.4168,  -3.7038, "ES", "Europe/Madrid"],
+        ["rome",     "روما",          "Rome",            41.9028,  12.4964, "IT", "Europe/Rome"],
+        ["amsterdam", "أمستردام",     "Amsterdam",       52.3676,   4.9041, "NL", "Europe/Amsterdam"],
+        ["brussels", "بروكسل",        "Brussels",        50.8503,   4.3517, "BE", "Europe/Brussels"],
+        ["stockholm", "ستوكهولم",     "Stockholm",       59.3293,  18.0686, "SE", "Europe/Stockholm"],
+        ["sarajevo", "سراييفو",       "Sarajevo",        43.8563,  18.4131, "BA", "Europe/Sarajevo"],
+        ["newyork",  "نيويورك",       "New York",        40.7128, -74.0060, "US", "America/New_York"],
+        ["chicago",  "شيكاغو",        "Chicago",         41.8781, -87.6298, "US", "America/Chicago"],
+        ["houston",  "هيوستن",        "Houston",         29.7604, -95.3698, "US", "America/Chicago"],
+        ["detroit",  "ديترويت",       "Detroit",         42.3314, -83.0458, "US", "America/Detroit"],
+        ["losangeles", "لوس أنجلوس",  "Los Angeles",     34.0522,-118.2437, "US", "America/Los_Angeles"],
+        ["toronto",  "تورنتو",        "Toronto",         43.6532, -79.3832, "CA", "America/Toronto"],
+        ["montreal", "مونتريال",      "Montreal",        45.5017, -73.5673, "CA", "America/Toronto"],
+        ["vancouver", "فانكوفر",      "Vancouver",       49.2827,-123.1207, "CA", "America/Vancouver"],
+        ["saopaulo", "ساو باولو",     "Sao Paulo",      -23.5505, -46.6333, "BR", "America/Sao_Paulo"],
+        ["sydney",   "سيدني",         "Sydney",         -33.8688, 151.2093, "AU", "Australia/Sydney"],
+        ["melbourne", "ملبورن",       "Melbourne",      -37.8136, 144.9631, "AU", "Australia/Melbourne"],
+        ["auckland", "أوكلاند",       "Auckland",       -36.8485, 174.7633, "NZ", "Pacific/Auckland"],
+        ["johannesburg", "جوهانسبرغ", "Johannesburg",   -26.2041,  28.0473, "ZA", "Africa/Johannesburg"],
+        ["capetown", "كيب تاون",      "Cape Town",      -33.9249,  18.4241, "ZA", "Africa/Johannesburg"],
+        ["lagos",    "لاغوس",         "Lagos",            6.5244,   3.3792, "NG", "Africa/Lagos"],
+        ["kano",     "كانو",          "Kano",            12.0022,   8.5920, "NG", "Africa/Lagos"],
+        ["dakar",    "داكار",         "Dakar",           14.7167, -17.4677, "SN", "Africa/Dakar"],
+        ["addisababa", "أديس أبابا",  "Addis Ababa",      9.0300,  38.7400, "ET", "Africa/Addis_Ababa"],
+        ["nairobi",  "نيروبي",        "Nairobi",         -1.2921,  36.8219, "KE", "Africa/Nairobi"],
+        ["daressalaam", "دار السلام", "Dar es Salaam",   -6.7924,  39.2083, "TZ", "Africa/Dar_es_Salaam"]
+    ];
+
+    /* Country names (code, Arabic, English), for the label after each city. */
+    var COUNTRY = {
+        EG: ["مصر", "Egypt"], SA: ["السعودية", "Saudi Arabia"], AE: ["الإمارات", "UAE"], KW: ["الكويت", "Kuwait"],
+        QA: ["قطر", "Qatar"], BH: ["البحرين", "Bahrain"], OM: ["عُمان", "Oman"], YE: ["اليمن", "Yemen"],
+        JO: ["الأردن", "Jordan"], PS: ["فلسطين", "Palestine"], LB: ["لبنان", "Lebanon"], SY: ["سوريا", "Syria"],
+        IQ: ["العراق", "Iraq"], LY: ["ليبيا", "Libya"], TN: ["تونس", "Tunisia"], DZ: ["الجزائر", "Algeria"],
+        MA: ["المغرب", "Morocco"], SD: ["السودان", "Sudan"], MR: ["موريتانيا", "Mauritania"], SO: ["الصومال", "Somalia"],
+        TR: ["تركيا", "Turkey"], IR: ["إيران", "Iran"], PK: ["باكستان", "Pakistan"], IN: ["الهند", "India"],
+        BD: ["بنغلاديش", "Bangladesh"], AF: ["أفغانستان", "Afghanistan"], LK: ["سريلانكا", "Sri Lanka"],
+        ID: ["إندونيسيا", "Indonesia"], MY: ["ماليزيا", "Malaysia"], SG: ["سنغافورة", "Singapore"],
+        UZ: ["أوزبكستان", "Uzbekistan"], AZ: ["أذربيجان", "Azerbaijan"], RU: ["روسيا", "Russia"],
+        GB: ["بريطانيا", "United Kingdom"], FR: ["فرنسا", "France"], DE: ["ألمانيا", "Germany"], ES: ["إسبانيا", "Spain"],
+        IT: ["إيطاليا", "Italy"], NL: ["هولندا", "Netherlands"], BE: ["بلجيكا", "Belgium"], SE: ["السويد", "Sweden"],
+        BA: ["البوسنة", "Bosnia"], US: ["أمريكا", "USA"], CA: ["كندا", "Canada"], BR: ["البرازيل", "Brazil"],
+        AU: ["أستراليا", "Australia"], NZ: ["نيوزيلندا", "New Zealand"], ZA: ["جنوب أفريقيا", "South Africa"],
+        NG: ["نيجيريا", "Nigeria"], SN: ["السنغال", "Senegal"], ET: ["إثيوبيا", "Ethiopia"], KE: ["كينيا", "Kenya"],
+        TZ: ["تنزانيا", "Tanzania"]
+    };
+
+    /* AlAdhan calculation methods. id, English, Arabic, Fajr angle, Isha angle, Isha minutes after Maghrib (0 = by angle),
+       Maghrib angle (0 = at sunset). The angles are only used for the offline fallback (calcDay in prayer.js);
+       online, AlAdhan applies the method by its id. */
+    var METHODS = [
+        [3,  "Muslim World League",                          "رابطة العالم الإسلامي",                 18,   17,   0, 0],
+        [5,  "Egyptian General Authority of Survey",         "الهيئة المصرية العامة للمساحة",         19.5, 17.5, 0, 0],
+        [4,  "Umm Al-Qura University, Makkah",               "جامعة أم القرى، مكة المكرمة",           18.5, 0,    90, 0],
+        [2,  "Islamic Society of North America (ISNA)",      "الجمعية الإسلامية لأمريكا الشمالية",    15,   15,   0, 0],
+        [1,  "University of Islamic Sciences, Karachi",      "جامعة العلوم الإسلامية، كراتشي",        18,   18,   0, 0],
+        [15, "Moonsighting Committee Worldwide",             "لجنة رؤية الهلال العالمية",              18,   18,   0, 0],
+        [8,  "Gulf Region",                                  "منطقة الخليج",                          19.5, 0,    90, 0],
+        [9,  "Kuwait",                                       "الكويت",                                18,   17.5, 0, 0],
+        [10, "Qatar",                                        "قطر",                                   18,   0,    90, 0],
+        [16, "Dubai (experimental)",                         "دبي (تجريبي)",                          18.2, 18.2, 0, 0],
+        [23, "Jordan (Ministry of Awqaf)",                   "الأردن (وزارة الأوقاف)",                 18,   18,   0, 0],
+        [18, "Tunisia",                                      "تونس",                                  18,   18,   0, 0],
+        [19, "Algeria",                                      "الجزائر",                               18,   17,   0, 0],
+        [21, "Morocco",                                      "المغرب",                                19,   17,   0, 0],
+        [13, "Diyanet, Turkey (experimental)",               "ديانت، تركيا (تجريبي)",                 18,   17,   0, 0],
+        [7,  "Institute of Geophysics, University of Tehran", "معهد الجيوفيزياء، جامعة طهران",         17.7, 14,   0, 4.5],
+        [0,  "Shia Ithna-Ashari, Leva Institute, Qum",       "الشيعة الإثنا عشرية، معهد ليفا، قم",     16,   14,   0, 4],
+        [11, "Majlis Ugama Islam Singapura, Singapore",      "مجلس الشؤون الإسلامية، سنغافورة",        20,   18,   0, 0],
+        [17, "JAKIM, Malaysia",                              "جاكيم، ماليزيا",                        20,   18,   0, 0],
+        [20, "Kemenag, Indonesia",                           "وزارة الشؤون الدينية، إندونيسيا",        20,   18,   0, 0],
+        [12, "Union des organisations islamiques de France", "اتحاد المنظمات الإسلامية في فرنسا",     12,   12,   0, 0],
+        [14, "Spiritual Administration of Muslims of Russia", "الإدارة الروحية لمسلمي روسيا",          16,   15,   0, 0],
+        [22, "Comunidade Islamica de Lisboa, Portugal",      "الجالية الإسلامية في لشبونة",           18,   17,   0, 0]
+    ];
+    /* The usual method of a country (country code -> AlAdhan id). Everything else: Muslim World League. */
+    var METHOD_BY_CC = {
+        EG: 5, SD: 5, LY: 5, IQ: 5, SY: 5, LB: 5, PS: 5, SA: 4, YE: 4, AE: 16, KW: 9, QA: 10, BH: 8, OM: 8,
+        JO: 23, TN: 18, DZ: 19, MA: 21, TR: 13, IR: 7, PK: 1, IN: 1, BD: 1, AF: 1, LK: 1, ID: 20, MY: 17, SG: 11,
+        FR: 12, RU: 14, PT: 22, US: 2, CA: 2
+    };
+
+    var CITIES = EGYPT.map(function (c) {
+        return { key: c[0], ar: c[1], en: c[2], lat: c[3], lon: c[4], cc: "EG", tz: "Africa/Cairo" };
+    }).concat(WORLD.map(function (c) {
+        return { key: c[0], ar: c[1], en: c[2], lat: c[3], lon: c[4], cc: c[5], tz: c[6] };
+    }));
     var BY_KEY = {};
     CITIES.forEach(function (c) { BY_KEY[c.key] = c; });
 
+    /* The place found with "Search for a city anywhere" (saved as the setting customPlace). */
+    function custom() {
+        var o = null;
+        try { o = global.APL && global.APL.sys && global.APL.sys.pref("customPlace"); } catch (e) { o = null; }
+        if (!o || typeof o.lat !== "number" || typeof o.lon !== "number") return null;
+        return { key: "custom", ar: o.name || "", en: o.name || "", lat: o.lat, lon: o.lon, cc: o.cc || "", tz: o.tz || "" };
+    }
+
     global.APL_CITIES = CITIES;
-    global.APL_CITY = function (key) { return BY_KEY[key] || BY_KEY.cairo; };
+    global.APL_CITY = function (key) { return (key === "custom" && custom()) || BY_KEY[key] || BY_KEY.cairo; };
+    global.APL_CITY_CUSTOM = custom;
     /* The name in the launcher's language (Arabic names in Arabic). */
     global.APL_CITY_NAME = function (key) {
         var c = global.APL_CITY(key);
         return (global.APL && global.APL.lang === "ar") ? c.ar : c.en;
     };
+    global.APL_COUNTRY_NAME = function (cc) {
+        var n = COUNTRY[cc];
+        return n ? ((global.APL && global.APL.lang === "ar") ? n[0] : n[1]) : "";
+    };
+    global.APL_METHODS = METHODS.map(function (m) {
+        return { id: m[0], en: m[1], ar: m[2], fajr: m[3], isha: m[4], ishaMin: m[5], mag: m[6] };
+    });
+    global.APL_METHOD_AUTO = function (cc) { return METHOD_BY_CC[cc] || 3; };
 })(window);
 
 /* === js/light-mode.js === */
@@ -5502,8 +5702,16 @@ window.APL_CATALOG = [
 
     function place() {
         var key = sys.pref("weatherPlace") || CFG.place || "cairo";
+        /* v8.8.1: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
+        if (key === "same" || !userChoseWeather()) key = sys.pref("prayerCity") || CFG.city || key;
         return global.APL_CITY ? global.APL_CITY(key) : { key: "cairo", ar: "القاهرة", en: "Cairo", lat: 30.0444, lon: 31.2357 };
     }
+
+    function userChoseWeather() {
+        try { return Object.prototype.hasOwnProperty.call(JSON.parse(global.localStorage.getItem("apl.prefs") || "{}"), "weatherPlace"); } catch (e) { return false; }
+    }
+    function unitF() { return sys.pref("weatherUnit") === "F"; }
+    function unitParams() { return unitF() ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""; }
 
     function readSaved() {
         try { return JSON.parse(global.localStorage.getItem(KEY) || "null"); } catch (e) { return null; }
@@ -5520,7 +5728,7 @@ window.APL_CATALOG = [
                   "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure" +
                   "&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_probability_max,wind_speed_10m_max" +
                   "&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code" +
-                  "&timezone=" + encodeURIComponent((SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo");
+                  "&timezone=" + encodeURIComponent(p.tz || (SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo") + unitParams();
         busy = true;
         return APL.fetchJSON(url, 12000).then(function (j) {   // v1.2.115: 12 s limit (a stalled request left busy = true for ever)
             busy = false;
@@ -5673,10 +5881,13 @@ window.APL_CATALOG = [
         refresh: fetchNow,
         start: start,
         placeName: function () { var p = place(); return APL.lang === "ar" ? p.ar : p.en; },
+        windUnit: function () { return unitF() ? "mph" : "km/h"; },
         describe: describe
     };
 
     sys.onPref("weatherPlace", function () { fetchNow(); });
+    sys.onPref("weatherUnit", function () { fetchNow(); });
+    sys.onPref("prayerCity", function () { if (sys.pref("weatherPlace") === "same" || !userChoseWeather()) fetchNow(); });
     sys.onPref("clockFormat", function () { render(); });
     sys.onPref("digitStyle", function () { render(); });
 
@@ -7563,6 +7774,32 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     function cityKey() { return sys.pref("prayerCity") || CFG.city || "cairo"; }
     function city() { return global.APL_CITY ? global.APL_CITY(cityKey()) : { key: "cairo", lat: 30.0444, lon: 31.2357, ar: "القاهرة", en: "Cairo" }; }
     function cityName() { var c = city(); return APL.lang === "ar" ? c.ar : c.en; }
+    /* v8.8.1: world support. The time zone, the calculation method, the Asr rule and the high-latitude rule follow the chosen city. */
+    function tz() { var c = city(); return (c && c.tz) || CFG.timezone || "Africa/Cairo"; }
+    function methodId() {
+        var v = sys.pref("prayerMethod"), n = parseInt(v, 10);
+        if (v !== undefined && v !== null && v !== "auto" && !isNaN(n)) return n;
+        var c = city();
+        return (global.APL_METHOD_AUTO && c && c.cc) ? global.APL_METHOD_AUTO(c.cc) : (CFG.method || 5);
+    }
+    function schoolId() { var n = parseInt(sys.pref("prayerSchool"), 10); return isNaN(n) ? (CFG.school === 1 ? 1 : 0) : (n === 1 ? 1 : 0); }
+    function hlNum() { var n = parseInt(sys.pref("prayerHighLat"), 10); return (n >= 1 && n <= 3) ? n : 0; }
+    function hlParam() { return hlNum() ? "&latitudeAdjustmentMethod=" + hlNum() : ""; }
+    function methodInfo() {
+        var id = methodId(), L = global.APL_METHODS || [];
+        for (var i = 0; i < L.length; i++) if (L[i].id === id) return L[i];
+        return { id: id, en: "Method " + id, ar: "طريقة " + id, fajr: 18, isha: 17, ishaMin: 0, mag: 0 };
+    }
+    /* What the saved month belongs to: the city, the method, the Asr rule and the high-latitude rule. */
+    function locSig() {
+        var c = city();
+        return c.key + (c.key === "custom" ? "@" + c.lat.toFixed(3) + "," + c.lon.toFixed(3) : "") + "|" + methodId() + "|" + schoolId() + "|" + hlNum();
+    }
+    function methodNote() {
+        var m = methodInfo();
+        return APL.t("Times from AlAdhan, {method}. Timezone {tz}.", { method: APL.lang === "ar" ? m.ar : m.en, tz: tz() });
+    }
+    function tzHours(isoDay) { var o = at(isoDay, "12:00"); return o ? cairoOffset(o) / 3600000 : 2; }
     function alertsOn() { return sys.pref("prayerAlerts") !== false; }
     function nameOf(key) {
         for (var i = 0; i < NAMES.length; i++) if (NAMES[i][0] === key) return APL.lang === "ar" ? NAMES[i][2] : APL.t(NAMES[i][1]);
@@ -7605,16 +7842,23 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         return o;
     }
 
-    var fmt = null;
-    try {
-        fmt = new global.Intl.DateTimeFormat("en-GB", {
-            timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
-            hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
-        });
-    } catch (e) { fmt = null; }
+    /* v8.8.1: one formatter per time zone (the zone of the chosen city), made when first needed. */
+    var fmtCache = {};
+    function fmtFor(zone) {
+        if (fmtCache[zone] !== undefined) return fmtCache[zone];
+        var f = null;
+        try {
+            f = new global.Intl.DateTimeFormat("en-GB", {
+                timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+            });
+        } catch (e) { f = null; }
+        fmtCache[zone] = f;
+        return f;
+    }
 
     function cairoParts(when) {
-        var d = when || new Date();
+        var d = when || new Date(), fmt = fmtFor(tz());
         if (!fmt) {
             return { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate(), H: d.getHours(), M: d.getMinutes(), S: d.getSeconds(), month: d.getMonth() + 1 };
         }
@@ -7661,7 +7905,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var key = monthKey(y, m), raw = null;
         try { raw = JSON.parse(global.localStorage.getItem(key) || "null"); } catch (e) { raw = null; }
         if (!raw || !raw.days) return false;
-        if (raw.city && raw.city !== cityKey()) return false;
+        if (raw.city && raw.city !== locSig()) return false;
         Object.keys(raw.days).forEach(function (d) { days[d] = raw.days[d]; });
         loadedMonths[y + "-" + (m < 10 ? "0" : "") + m] = true;
         return true;
@@ -7686,7 +7930,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         if (!force && readMonth(y, m)) return Promise.resolve(true);
         var c = city();
         var url = "https://api.aladhan.com/v1/calendar?latitude=" + c.lat + "&longitude=" + c.lon +
-                  "&method=" + (CFG.method || 5) + "&school=" + (CFG.school || 0) +
+                  "&method=" + methodId() + "&school=" + schoolId() + hlParam() +
                   "&month=" + m + "&year=" + y;
         return APL.fetchJSON(url, 15000).then(function (j) {   // v1.2.115: 15 s limit
             var list = (j && j.data) || [];
@@ -7712,7 +7956,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                 store[isoDay] = out;
                 days[isoDay] = out;
             });
-            try { global.localStorage.setItem(monthKey(y, m), JSON.stringify({ at: Date.now(), city: c.key, days: store })); } catch (e) {}
+            try { global.localStorage.setItem(monthKey(y, m), JSON.stringify({ at: Date.now(), city: locSig(), days: store })); } catch (e) {}
             loadedMonths[mk] = true;
             lastError = "";
             syncedSig = "";
@@ -7803,15 +8047,22 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var ra = fix(Math.atan2(cos(e) * sin(L), cos(L)) / R, 360) / 15;
         var eqt = qq / 15 - ra, decl = Math.asin(sin(e) * sin(L)) / R;
         eqt = eqt - 24 * Math.round(eqt / 24);
-        var noon = 12 - eqt - lon / 15 + 2;                                             // local solar noon, UTC+2
+        var noon = 12 - eqt - lon / 15 + tzHours(isoDay);   // local solar noon in the city's own time zone (v8.8.1)
         function span(angle) {                                                          // hours from noon to the sun at -angle (angle > 0 = below the horizon)
             var c = (-sin(angle) - sin(decl) * sin(lat)) / (cos(decl) * cos(lat));
             if (c < -1 || c > 1) return null;
             return Math.acos(c) / R / 15;
         }
-        var asrAngle = -Math.atan(1 / ((CFG.school === 1 ? 2 : 1) + Math.tan(Math.abs(lat - decl) * R))) / R;
-        var t = { fajr: span(19.5), sunrise: span(0.833), asr: span(asrAngle), maghrib: span(0.833), isha: span(17.5) };
-        if (t.fajr === null || t.sunrise === null || t.asr === null || t.maghrib === null || t.isha === null) return null;
+        var P = methodInfo();                                                           // v8.8.1: the method, the Asr rule and far-north cities
+        var asrAngle = -Math.atan(1 / ((schoolId() === 1 ? 2 : 1) + Math.tan(Math.abs(lat - decl) * R))) / R;
+        var sr = span(0.833);                                                           // sunrise and sunset are symmetrical around noon
+        var t = { fajr: span(P.fajr), sunrise: sr, asr: span(asrAngle), maghrib: P.mag ? span(P.mag) : sr, isha: P.ishaMin ? 0 : span(P.isha) };
+        if (sr === null || t.asr === null) return null;
+        var night = 24 - 2 * sr;                                                        // hours from sunset to the next sunrise
+        if (t.fajr === null) t.fajr = sr + night / 7;                                   // the sun never goes deep enough: one-seventh of the night
+        if (t.maghrib === null) t.maghrib = sr;
+        if (P.ishaMin) t.isha = t.maghrib + P.ishaMin / 60;
+        else if (t.isha === null) t.isha = sr + night / 7;
         function hm(h) { var m = Math.round(fix(h, 24) * 60) % 1440; return pad2(Math.floor(m / 60)) + ":" + pad2(m % 60); }
         return { fajr: hm(noon - t.fajr), sunrise: hm(noon - t.sunrise), dhuhr: hm(noon), asr: hm(noon + t.asr),
                  maghrib: hm(noon + t.maghrib), isha: hm(noon + t.isha), hijri: "", hijriAr: "", hijriEn: "", hijriDay: "", hijriYear: "", calc: true };
@@ -8203,6 +8454,15 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         city: city,
         cityKey: cityKey,
         cityName: cityName,
+        tz: tz,
+        methodId: methodId,
+        methodNote: methodNote,
+        reload: function () {
+            loadedMonths = {};
+            days = {};
+            syncedSig = "";
+            return loadAll(true).then(function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
+        },
         setCity: function (key) {
             loadedMonths = {};
             days = {};
@@ -13090,7 +13350,7 @@ window.APL_KEYS = {
 
         var windCard = card(
             APL.t("Wind"),
-            (w.wind !== undefined ? '<span dir="ltr">' + dg(w.wind) + " km/h</span>" : "—"),
+            (w.wind !== undefined ? '<span dir="ltr">' + dg(w.wind) + " " + (APL.weather && APL.weather.windUnit ? APL.weather.windUnit() : "km/h") + "</span>" : "—"),
             APL.t("Surface wind speed"),
             function () {}
         );
@@ -13230,7 +13490,7 @@ window.APL_KEYS = {
         bodyEl.innerHTML = "";
         tiles = [];
         titleEl.textContent = APL.t("Choose City");
-        subEl.textContent = APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.");
+        subEl.textContent = (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."));
         var list = el("div", "aplx-list");
         (global.APL_CITIES || []).forEach(function (c) {
             var on = c.key === p().cityKey();
@@ -14988,7 +15248,64 @@ window.APL_KEYS = {
     function openAudio() { APL.settings.close(); APL.controlCenter.openAudio(); }
     /* The Egyptian places of js/cities.js, for the prayer times and the weather. */
     function cityOptions() {
-        return (global.APL_CITIES || []).map(function (c) { return [c.key, APL.lang === "ar" ? c.ar : c.en]; });
+        var list = [], cu = global.APL_CITY_CUSTOM && global.APL_CITY_CUSTOM();
+        if (cu) list.push(["custom", "\u2605 " + cu.en + (cu.cc && global.APL_COUNTRY_NAME ? " \u00b7 " + global.APL_COUNTRY_NAME(cu.cc) : "")]);
+        (global.APL_CITIES || []).forEach(function (c) {
+            var nm = APL.lang === "ar" ? c.ar : c.en;
+            list.push([c.key, c.cc === "EG" ? nm : nm + " \u00b7 " + (global.APL_COUNTRY_NAME ? global.APL_COUNTRY_NAME(c.cc) : c.cc)]);
+        });
+        return list;
+    }
+    /* v8.8.1: world support for the prayer times and the weather. */
+    function weatherOptions() { return [["same", APL.t("Same as prayer city")]].concat(cityOptions()); }
+    function methodOptions() {
+        var list = [["auto", APL.t("Automatic (by country)")]];
+        (global.APL_METHODS || []).forEach(function (m) { list.push([m.id, APL.lang === "ar" ? m.ar : m.en]); });
+        return list;
+    }
+    function reloadPrayer() { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); }
+    /* Search for a city anywhere: Open-Meteo geocoding (internet), then the list of answers. Same text field as the profile name. */
+    function searchCity() {
+        var box = document.createElement("div");
+        box.className = "pprompt";
+        box.innerHTML = '<div class="pprompt__box"><h2 class="pprompt__title">' + APL.t("Search for a city") + '</h2>' +
+            '<input class="pprompt__input" type="text" maxlength="40"><p class="pprompt__hint">' + APL.t("Type the city name, then OK \u00b7 Back to cancel") + '</p></div>';
+        document.body.appendChild(box);
+        var input = box.querySelector("input"), done = false;
+        function finish(ok) {
+            if (done) return;
+            done = true;
+            var q = input.value.trim();
+            if (box.parentNode) box.parentNode.removeChild(box);
+            if (ok && q.length > 1) lookupCity(q);
+        }
+        input.addEventListener("keydown", function (e) {
+            if (e.keyCode === 13) { e.preventDefault(); e.stopPropagation(); finish(true); }
+            else if (e.keyCode === 27 || e.keyCode === 10009) { e.preventDefault(); e.stopPropagation(); finish(false); }
+        });
+        input.addEventListener("blur", function () { setTimeout(function () { finish(true); }, 0); });
+        setTimeout(function () { input.focus(); }, 50);
+    }
+    function lookupCity(q) {
+        APL.toast(APL.t("Searching\u2026"), true);
+        APL.fetchJSON("https://geocoding-api.open-meteo.com/v1/search?name=" + encodeURIComponent(q) + "&count=8&format=json&language=" + (APL.lang === "ar" ? "ar" : "en"), 12000).then(function (j) {
+            var r = (j && j.results) || [];
+            if (!r.length) { APL.toast(APL.t("No city found"), true); return; }
+            var items = r.map(function (x) {
+                var label = x.name + (x.admin1 ? ", " + x.admin1 : "") + (x.country ? " \u00b7 " + x.country : "");
+                return { label: label, icon: "sparkle", run: function () { useCity(x); } };
+            });
+            APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
+        }).catch(function () { APL.toast(APL.t("No internet connection"), true); });
+    }
+    function useCity(x) {
+        var c = { name: x.name, lat: +x.latitude, lon: +x.longitude, cc: String(x.country_code || "").toUpperCase(), tz: x.timezone || "" };
+        APL.sys.setPref("customPlace", c);
+        APL.sys.setPref("weatherPlace", "same");
+        APL.sys.setPref("prayerCity", "custom");
+        if (APL.prayer) APL.prayer.setCity("custom");
+        if (APL.weather) APL.weather.refresh();
+        APL.toast(APL.t("City set: {name}", { name: x.name }), true);
     }
     function openDuck() { APL.settings.close(); if (APL.openUrl) APL.openUrl("https://duck.ai/").catch(function (e) { if (APL.toast) APL.toast(e.message); }); }
     function openPrayer() { APL.settings.close(); if (APL.prayerPage) APL.prayerPage.open(); }
@@ -15130,8 +15447,12 @@ window.APL_KEYS = {
                             if (typeof APL.prayerPage.openWeather === "function") APL.prayerPage.openWeather();
                         }
                     }, APL.t("Opens detailed 7-day forecast, humidity, wind, and live conditions."), "sun"),
-                    choice(APL.t("Weather Place"), "weatherPlace", cityOptions(),
+                    choice(APL.t("Weather Place"), "weatherPlace", weatherOptions(),
                         APL.t("Uses Open-Meteo. The screen's location is never requested."),
+                        function () { if (APL.weather) APL.weather.refresh(); }),
+                    choice(APL.t("Temperature Unit"), "weatherUnit",
+                        [["C", APL.t("Celsius (\u00b0C), km/h")], ["F", APL.t("Fahrenheit (\u00b0F), mph")]],
+                        APL.t("Choose the unit of the temperature and the wind."),
                         function () { if (APL.weather) APL.weather.refresh(); }),
                     info(APL.t("Weather"), function () {
                         var w = APL.weather && APL.weather.get();
@@ -15265,10 +15586,20 @@ window.APL_KEYS = {
                     var n = APL.prayer && APL.prayer.next();
                     if (!n) return APL.t("Loading…");
                     return n.name + " " + APL.prayer.hhmm(n.time) + " · " + APL.prayer.left(n.ms);
-                }, APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.")),
+                }, (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."))),
                 choice(APL.t("City"), "prayerCity", cityOptions(),
-                    APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."),
+                    (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.")),
                     function (v) { if (APL.prayer) APL.prayer.setCity(v); }),
+                action(APL.t("Search for a city anywhere"), searchCity,
+                    APL.t("Needs internet. Finds any city in the world for the prayer times and the weather."), "sparkle"),
+                choice(APL.t("Calculation Method"), "prayerMethod", methodOptions(),
+                    APL.t("Automatic picks the usual method of the country."), reloadPrayer),
+                choice(APL.t("Asr Time"), "prayerSchool",
+                    [[0, APL.t("Standard (Shafi, Maliki, Hanbali)")], [1, APL.t("Hanafi (later Asr)")]],
+                    APL.t("Hanafi Asr starts when the shadow is twice the object."), reloadPrayer),
+                choice(APL.t("High-Latitude Rule"), "prayerHighLat",
+                    [["auto", APL.t("Automatic")], [1, APL.t("Middle of the night")], [2, APL.t("One-seventh of the night")], [3, APL.t("Angle-based")]],
+                    APL.t("For far-north and far-south cities, where the sun does not go deep enough below the horizon."), reloadPrayer),
                 choice(APL.t("Prayer Widget Size"), "prayerWidgetScale",
                     [[0, APL.t("Current size") + " 100%"], [25, "125%"], [50, "150%"], [75, "175%"], [100, "200%"], [150, "250%"], [200, "300%"]],
                     APL.t("Makes the prayer widget on the Home Screen bigger than its current size.")),
@@ -24234,6 +24565,7 @@ window.APL_DEVICES = [
             toolsEl.appendChild(button("↕ تباعد", "spacing", cycleSpacing));
             toolsEl.appendChild(button("◐ ورقي", "paper", togglePaper));
             toolsEl.appendChild(button("◉ لون", "color", cycleColor));
+            toolsEl.appendChild(button("⇔ حواف الشاشة", "safe", cycleSafe));
             toolsEl.appendChild(button("✓ قرأت الصفحة", "mark-read", markRead, "mq__button--green mq__tool--wide"));
         } else if (mode === "tafsir") {
             toolsEl.appendChild(button("◄ التالية", "tf-next", function () { tfGo(1); }));
@@ -24255,6 +24587,7 @@ window.APL_DEVICES = [
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
                 if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
             }, "mq__tool--wide"));
+            toolsEl.appendChild(button("⇔ حواف الشاشة", "tf-safe", cycleSafe, "mq__tool--wide"));
         }
     }
     function step(id) { if (focusID(id) && APL.sound && APL.sound.tick) APL.sound.tick(); }
@@ -24401,7 +24734,22 @@ window.APL_DEVICES = [
         }
         readBody.style.fontSize = best + "px"; fitSize = best; readBody.scrollTop = 0;
     }
+    /* v8.8.1: a margin from the screen's edges (TVs hide a few pixels at the sides), shared by the Mushaf and the tafsir. */
+    var SAFE = [0, 24, 44, 64, 88];
+    function safeIdx() { var v = prefs.safe; return (typeof v === "number" && v >= 0 && v < SAFE.length) ? v : 1; }
+    function applySafe() {
+        if (!root) return;
+        var x = SAFE[safeIdx()];
+        root.style.setProperty("--mq-safe-x", x + "px");
+        root.style.setProperty("--mq-safe-y", Math.round(x * 0.6) + "px");
+    }
+    function cycleSafe() {
+        prefs.safe = (safeIdx() + 1) % SAFE.length; savePrefs(); applySafe();
+        if (readBody && prefs.fit !== false) fit();
+        if (APL.toast) APL.toast("حواف الشاشة: " + (SAFE[safeIdx()] ? SAFE[safeIdx()] + " بكسل" : "بدون"), true);
+    }
     function applyLook() {
+        applySafe();
         if (!readBody) return;
         readBody.style.lineHeight = String(LH[prefs.lh]);
         readBody.classList.toggle("is-paper", !!prefs.paper);
@@ -24823,7 +25171,7 @@ window.APL_DEVICES = [
     function tfLook() {
         if (!tfBody) return;
         tfBody.style.fontFamily = global.getComputedStyle(document.body).fontFamily;
-        tfBody.style.fontSize = (prefs.tfont || 34) + "px"; tfBody.style.lineHeight = String(LH[prefs.lh]); tfBody.style.overflowY = "auto";
+        tfBody.style.fontSize = (prefs.tfont || 34) + "px"; tfBody.style.lineHeight = String(LH[prefs.lh]); tfBody.style.overflowY = "auto"; applySafe();
         tfBody.classList.toggle("is-paper", !!prefs.paper);
         var hex = (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
         tfBody.style.color = hex; tfBody.classList.toggle("has-color", !!hex);

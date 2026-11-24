@@ -3681,3 +3681,15 @@ body.quran-audio-active .qa-widget-slot .statusx--qa {
     visibility: visible !important;
     display: flex !important;
 }
+
+/* v8.8.1: the Mushaf and the tafsir page were cut at the sides: the general ".is-focused" rule above scales every focused
+   element by 5.5 %, and the page (always focused) grew wider than its pane, which clips the overflow, so a word or two
+   disappeared at each side. The reading page is never scaled now. */
+.mq__paper.is-focused,
+.mq__paper.mq__focus.is-focused { transform: none !important; box-shadow: inset 0 0 0 1px var(--mq-green, #a6e22e) !important; }
+
+/* Screen-edge safety for the Mushaf reading view and the tafsir: the page keeps a margin from the TV's edges
+   (some TVs hide a few pixels). Its size is set with the "حواف الشاشة" button (quran.js). */
+.mq--read { padding: var(--mq-safe-y, 14px) var(--mq-safe-x, 24px); }
+.mq--read .mq__side { top: var(--mq-safe-y, 14px); bottom: var(--mq-safe-y, 14px); right: var(--mq-safe-x, 24px); }
+.mq--read .mq__handle { right: var(--mq-safe-x, 24px); }

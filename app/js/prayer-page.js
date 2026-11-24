@@ -1079,7 +1079,7 @@
 
         var windCard = card(
             APL.t("Wind"),
-            (w.wind !== undefined ? '<span dir="ltr">' + dg(w.wind) + " km/h</span>" : "—"),
+            (w.wind !== undefined ? '<span dir="ltr">' + dg(w.wind) + " " + (APL.weather && APL.weather.windUnit ? APL.weather.windUnit() : "km/h") + "</span>" : "—"),
             APL.t("Surface wind speed"),
             function () {}
         );
@@ -1219,7 +1219,7 @@
         bodyEl.innerHTML = "";
         tiles = [];
         titleEl.textContent = APL.t("Choose City");
-        subEl.textContent = APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.");
+        subEl.textContent = (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."));
         var list = el("div", "aplx-list");
         (global.APL_CITIES || []).forEach(function (c) {
             var on = c.key === p().cityKey();
