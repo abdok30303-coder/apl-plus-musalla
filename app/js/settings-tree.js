@@ -26,6 +26,61 @@
 
     /* v8.7.22: English text for strings that were written in Arabic only */
     var HT_D = {
+        /* v8.7.24: English for rows that were Arabic only (applied to the whole tree by enTree) */
+        "آخر نسخة شغالة": "Last Working Version",
+        "نسخة احتياطية من اللانشر على التلفزيون، والرجوع ليها لو النسخة الجديدة وقفت في التشغيل.": "A backup copy of the launcher on the TV, to go back to if the new version stops at startup.",
+        "أيقونات أونلاين": "Online Icons",
+        "أيقونات حقيقية من كتالوج التطبيقات. محتاج نت.": "Real icons from the app catalog. Needs internet.",
+        "استماع تلاوة القرآن في الخلفية": "Quran Recitation in the Background",
+        "استمرار تشغيل تلاوة القرآن الكريم عند الخروج من اللانشر أو فتح تطبيقات أخرى (يتطلب دعم الشاشة).": "Keeps the Quran recitation playing when you leave the launcher or open other apps (needs support from the TV).",
+        "المصحف والختمة": "Mushaf & Khatma",
+        "افتح المصحف، سجّل اللي قرأته، هدف يومي، أيام متتالية، وسورة الكهف يوم الجمعة.": "Open the Mushaf, log what you read, a daily goal, streak days, and Surat Al-Kahf on Friday.",
+        "اقفل كل الميزات الثقيلة": "Turn Off All Heavy Features",
+        "بتقفل كل الميزات اللي فوق مرة واحدة.": "Turns off every feature above at once.",
+        "التمويه والزجاج": "Blur & Glass",
+        "تمويه وزجاج على الواجهة. أحلى شكلًا بس أبطأ.": "Blur and glass on the interface. Looks nicer but slower.",
+        "الخط": "Font",
+        "بيغيّر خط اللانشر كله (الودجات والقوايم والساعة) ماعدا نص المصحف. الخطوط جوّه الحزمة فعلًا ومش بتعتمد على خطوط الشاشة، فالتغيير بيبان على طول.": "Changes the font of the whole launcher (widgets, menus and the clock) except the Mushaf text. The fonts are inside the package and do not depend on the TV's fonts, so the change shows at once.",
+        "تجوّل · الافتراضي": "Tajawal (default)",
+        "نسخ كلاسيك": "Classic Naskh",
+        "مضغوط": "Compact",
+        "عريض": "Bold",
+        "خط الشاشة (القديم)": "TV font (old)",
+        "الراديو في الخلفية": "Radio in the Background",
+        "الراديو يكمّل لما تفتح HDMI أو تطبيق تاني (لو اتقطع هيرجع لوحده). لو مش شغال على شاشتك اقفله.": "The radio keeps playing when you open HDMI or another app (it comes back by itself if it drops). Turn it off if it does not work on your TV.",
+        "الراديو يكمّل من مشغّل الخلفية": "Radio Continues from the Background Player",
+        "لو الشاشة قطعت الراديو وانت على HDMI أو يوتيوب، بيتحوّل لمشغّل الخلفية (بيتخلط مع أي صوت) ويرجع لوحده لما تفتح اللانشر. تجريبي.": "If the TV cuts the radio while you are on HDMI or YouTube, it moves to the background player (mixed with any sound) and returns by itself when you open the launcher. Experimental.",
+        "الرف المباشر": "Live Shelf",
+        "محتوى اللحظة فوق الرئيسية (أفلام/يوتيوب). محتاج نت.": "What is on right now, above the Home Screen (movies/YouTube). Needs internet.",
+        "المحراب الحي": "Living Mihrab",
+        "تدفق الصلاة": "Prayer Flow",
+        "عدّاد الإقامة بعد الأذان، وبعدها الشاشة بتهدى وترجع لوحدها (مقفول افتراضيًا).": "An iqama countdown after the adhan, then the screen goes quiet and comes back by itself (off by default).",
+        "بوستر للتطبيق اللي معندوش خلفية. محتاج نت.": "A poster for an app that has no background. Needs internet.",
+        "خلفيات ديناميكية (بوسترات)": "Dynamic Backgrounds (Posters)",
+        "لون من الخلفية": "Color from the Wallpaper",
+        "بيطلّع لمسة لون خفيفة من صورة الخلفية المحلية على الشاشة الرئيسية.": "Adds a light touch of color taken from the local wallpaper on the Home Screen.",
+        "لمسة لون خفيفة من صورة الخلفية المحلية.": "A light touch of color from the local wallpaper.",
+        "تلقائي في رمضان: عدّاد السحور والإفطار، مدفع، تنبيه التراويح، وختمة ٣٠ يوم.": "Automatic in Ramadan: suhoor and iftar countdown, cannon, Taraweeh reminder, and a 30-day khatma.",
+        "وضع رمضان": "Ramadan Mode",
+        "تدرّج السما ولمعة الأذان المتحركة.": "The moving sky gradient and the adhan glow.",
+        "حركة المحراب الحي": "Living Mihrab Motion",
+        "حركة الخلفية البطيئة": "Slow Background Motion",
+        "كاميرا بطيئة فوق صور الرئيسية. بتشغّل الشاشة كتير.": "A slow camera move over the Home Screen pictures. It works the TV hard.",
+        "حلقة حوالين الأيقونة المحددة وتعتيم الباقي.": "A ring around the selected icon and a dimmed background.",
+        "تمييز العنصر المحدد": "Highlight the Selected Item",
+        "زجاج وحركة محسّنة": "Enhanced Glass & Motion",
+        "زجاج مموّه وحركة انسيابية. للمعالجات السريعة بس.": "Frosted glass and smooth motion. For fast processors only.",
+        "ميزات التحسين الثقيلة": "Heavy Enhancement Features",
+        "كل ميزة لوحدها، وكلها مقفولة افتراضيًا.": "Each feature on its own, all off by default.",
+        "مؤقتات خفيفة": "Light Timers",
+        "مؤقتات شاشة المحراب الحية تعمل على مؤقت مشترك وتتوقف وقت غياب اللانشر (يوتيوب أو HDMI). مفعّل افتراضياً. لا يمس الأذان ولا الراديو ولا المهام. التغيير يسري عند فتح الشاشة المرة القادمة.": "The Living Mihrab screen timers run on one shared timer and pause while the launcher is away (YouTube or HDMI). On by default. It does not touch the adhan, the radio or the tasks. A change takes effect the next time the screen opens.",
+        "وقت تشغيل اللانشر": "Launcher Startup Time",
+        "تحميل = وصول كود اللانشر، جاهزية = ظهور الشاشة الرئيسية. أرقام آخر 5 تشغيلات على هذا التلفزيون، للمقارنة قبل أي تعديل وبعده.": "Load = the launcher code arrived, ready = the Home Screen is shown. Numbers from the last 5 starts on this TV, to compare before and after any change.",
+        "لم يُسجَّل بعد: يُسجَّل في التشغيل التالي": "Not recorded yet: it is recorded on the next start",
+        "ويدجت الصلاة في صفحة الاستماع": "Prayer Widget on the Listening Page",
+        "يظهر ويدجت الصلاة الكامل (المواقيت والطقس والمهام والمناسبات) أسفل مشغل القرآن. مفعّل افتراضياً.": "Shows the full prayer widget (times, weather, tasks and occasions) below the Quran player. On by default.",
+        "قيود وضع الطفل": "Kid Mode Limits",
+        "تطبيقات مسموحة، حد يومي، قفل الصلاة والنوم. للكبار فقط.": "Allowed apps, a daily limit, and a prayer and sleep lock. For adults only.",
         "ويدجت حكم ومواعظ بالرئيسية": "Wisdom & Sermons Home Widget",
         "ويدجت حكم ومواعظ (٥ دقائق)": "Wisdom & Sermons Widget (5 min)",
         "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).": "Shows a separate wisdom or sermon card on the Home Screen, changing every 5 minutes (offline).",
@@ -63,6 +118,21 @@
         "عرض الويدجت بالشاشة كاملة": "Full-Screen-Width Widget",
         "الويدجت بياخد عرض الشاشة الرئيسية فوق صف التطبيقات، ومعاه أقرب ٤ مناسبات والمهام والطقس.": "The widget takes the full width of the Home Screen above the app row, with the next 4 occasions, tasks and weather."
     };
+    /* v8.7.24: with English selected, no Arabic-only row may reach the screen: every label, hint, choice and value is mapped. */
+    function enStr(s) {
+        if (typeof s !== "string" || APL.lang === "ar" || !/[\u0600-\u06FF]/.test(s)) return s;
+        if (Object.prototype.hasOwnProperty.call(HT_D, s)) return HT_D[s];
+        var m = /^([A-Za-z][A-Za-z ]*?) \u00B7 /.exec(s);      /* "Cairo \u00B7 <arabic name>" -> "Cairo" */
+        return m ? m[1] : s;
+    }
+    function enTree(nd) {
+        if (!nd || APL.lang === "ar") return nd;
+        nd.label = enStr(nd.label); nd.desc = enStr(nd.desc);
+        if (nd.options) nd.options = nd.options.map(function (o) { return (o && o.length > 1) ? [o[0], enStr(o[1])].concat(o.slice(2)) : o; });
+        if (typeof nd.get === "function") { var g = nd.get; nd.get = function () { var r = g.apply(this, arguments); return typeof r === "string" ? enStr(r) : r; }; }
+        if (nd.children) nd.children.forEach(enTree);
+        return nd;
+    }
     function HT(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(HT_D, s)) ? HT_D[s] : s; }
 
     function menu(label, icon, children, desc) { return { type: "menu", label: label, icon: icon, children: children, desc: desc }; }
@@ -213,7 +283,8 @@
         };
     }
 
-    function build() {
+    function build() { return enTree(build0()); }
+    function build0() {
         var apps = ((APL.allApps && APL.allApps()) || []).filter(function (a) { return !a.virtual; });
         /* The language is fixed when the launcher starts (i18n.js): changing it reloads the launcher. */
         var language = sys.pref("language");

@@ -48,7 +48,7 @@
         if (q && sk(q.key) !== skip) {
             pending = { key: q.key, end: q.at.getTime() };
             var prevPhase = shown;
-            show("iqama", "الإقامة بعد " + mmss(q.ms), q.name);
+            show("iqama", APL.enx("الإقامة بعد ") + mmss(q.ms), q.name);
             if (!sec || prevPhase !== "iqama") {
                 if (sec) global.clearInterval(sec);
                 sec = global.setInterval(check, 1000);
@@ -58,7 +58,7 @@
         if (pending && now >= pending.end && now < pending.end + S.min * 60000 && sk(pending.key) !== skip) {
             var left = pending.end + S.min * 60000 - now;
             var prevPhaseDim = shown;
-            show("dim", "الصلاة", "تعود الشاشة بعد " + dg(Math.ceil(left / 60000)) + " د");
+            show("dim", APL.enx("الصلاة"), APL.lang === "ar" ? "تعود الشاشة بعد " + dg(Math.ceil(left / 60000)) + " د" : "The screen returns in " + dg(Math.ceil(left / 60000)) + " min");
             if (!sec || prevPhaseDim !== "dim") {
                 if (sec) global.clearInterval(sec);
                 sec = global.setInterval(check, 15000);

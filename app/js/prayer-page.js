@@ -353,7 +353,7 @@
                     if (mode === "hekam") render();
                 }
             });
-            hintEl.textContent = "رجوع للقائمة الرئيسية";
+            hintEl.textContent = HK("رجوع للقائمة الرئيسية");
             return;
         }
 
@@ -362,7 +362,7 @@
             var row = el("div", "aplx-row",
                 '<div class="aplx-row__main">' +
                     '<span class="aplx-row__label">' + sec.name + '</span>' +
-                    '<span class="aplx-row__sub num">' + dg(sec.count) + " مادة وفائدة · " + dg(sec.subs) + " باب" + '</span>' +
+                    '<span class="aplx-row__sub num">' + dg(sec.count) + " " + HK("مادة وفائدة") + " · " + dg(sec.subs) + " " + HK("باب") + '</span>' +
                 '</div>' +
                 '<span class="aplx-badge aplx-badge--on num">‹</span>');
             var run = function () {
@@ -379,7 +379,7 @@
         });
 
         bodyEl.appendChild(list);
-        hintEl.textContent = "OK لفتح القسم وقراءة الحكم · 🎲 حكمة عشوائية · رجوع للصلاة والقرآن";
+        hintEl.textContent = HK("OK لفتح القسم وقراءة الحكم · 🎲 حكمة عشوائية · رجوع للصلاة والقرآن");
     }
 
     function buildHekamItems() {
@@ -1359,6 +1359,10 @@
     /* v7.2.0: two half-size buttons, one above the other, between the Al-Kahf and the Eid Takbeer tiles */
     /* v8.7.22: English text for strings that were written in Arabic only */
     var HK_D = {
+        "رجوع للقائمة الرئيسية": "Back to the main list",
+        "مادة وفائدة": "items",
+        "باب": "chapters",
+        "OK لفتح القسم وقراءة الحكم · 🎲 حكمة عشوائية · رجوع للصلاة والقرآن": "OK to open the section and read · 🎲 random wisdom · Back to Prayer & Quran",
         "حكم ومواعظ الكلم الطيب": "Wisdom & Sermons (Kalem Tayeb)",
         "موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)": "Encyclopedia of wisdom, sermons, benefits and sayings · fully offline (35 thousand items in 53 sections) · text in Arabic",
         "🎲 حكمة اليوم العشوائية": "🎲 Random wisdom",
@@ -1421,7 +1425,7 @@
             if (m === "stopped") return;
             if (APL.toast) {
                 APL.toast(e && e.noFile
-                    ? APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick.")
+                    ? (e.triedOnline ? APL.t("Not found on the TV, and the online recording would not play. Check the internet, or copy the file into a folder named APL-Audio.") : APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick."))
                     : APL.t("Could not play the file: {why}", { why: m || "?" }));
             }
             render();
@@ -1456,7 +1460,7 @@
             if (m === "stopped") return;
             if (APL.toast) {
                 APL.toast(e && e.noFile
-                    ? APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick.")
+                    ? (e.triedOnline ? APL.t("Not found on the TV, and the online recording would not play. Check the internet, or copy the file into a folder named APL-Audio.") : APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick."))
                     : APL.t("Could not play the file: {why}", { why: m || "?" }));
             }
             render();

@@ -45,7 +45,7 @@
     }
     function hm(ms) {
         var m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60);
-        return h ? dg(h + ":" + p2(m % 60)) : dg(m) + " د";
+        return h ? dg(h + ":" + p2(m % 60)) : dg(m) + (APL.lang === "ar" ? " د" : " min");
     }
     function status(now) {
         var t = times();
@@ -73,7 +73,7 @@
         ensureUi();
         wash.style.display = ""; chip.style.display = "";
         var s = status(Date.now());
-        chip.textContent = "\uD83C\uDF19 رمضان • يوم " + dg(dayNo()) + (s ? " • " + s : "");
+        chip.textContent = APL.enx("\uD83C\uDF19 رمضان • يوم " + dg(dayNo()) + (s ? " • " + s : ""));
     }
 
     var cannonAudio = null, cannonLast = "لسه ما اتجرّبش على التلفزيون", cannonPending = false;

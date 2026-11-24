@@ -139,12 +139,12 @@
     function paint() {
         if (!open) return;
         var j = juzOf(S.page), kahf = S.page >= KAHF_FROM && S.page <= KAHF_TO;
-        el.juz.textContent = "الجزء " + dg(j) + " • صفحة " + dg(S.page) + " / " + dg(PAGES);
-        el.kahf.textContent = kahf ? (isFriday() ? "سورة الكهف • يوم الجمعة" : "سورة الكهف") : "";
-        el.goal.textContent = "النهاردة " + dg(today()) + " / " + dg(S.plan);
-        el.ph.innerHTML = "<div class=\"khr__num\">" + dg(S.page) + "</div><div class=\"khr__sub\">ضع صور المصحف في مجلد " + FOLDER + " (001.jpg ... 604.jpg) لعرض الصفحة هنا</div>";
+        el.juz.textContent = APL.enx("الجزء " + dg(j) + " • صفحة " + dg(S.page) + " / " + dg(PAGES));
+        el.kahf.textContent = kahf ? APL.enx(isFriday() ? "سورة الكهف • يوم الجمعة" : "سورة الكهف") : "";
+        el.goal.textContent = APL.enx("النهاردة " + dg(today()) + " / " + dg(S.plan));
+        el.ph.innerHTML = "<div class=\"khr__num\">" + dg(S.page) + "</div><div class=\"khr__sub\">" + APL.enx("ضع صور المصحف في مجلد ") + FOLDER + " (001.jpg ... 604.jpg)" + APL.enx(" لعرض الصفحة هنا") + "</div>";
         el.bar.style.width = (S.page / PAGES * 100).toFixed(1) + "%";
-        el.hint.textContent = "OK: قرأت الصفحة • ◄ ► صفحة • ▲ ▼ جزء • رجوع: خروج";
+        el.hint.textContent = APL.enx("OK: قرأت الصفحة • ◄ ► صفحة • ▲ ▼ جزء • رجوع: خروج");
         loadPicture(S.page);
     }
     function openReader(page) {
@@ -166,7 +166,7 @@
     /* ---------- the Khatma panel (Settings > Prayer and Quran) ---------- */
     function remainingText() {
         var left = PAGES - S.page + 1, days = Math.ceil(left / S.plan);
-        return "باقي " + dg(left) + " صفحة (حوالي " + dg(days) + " يوم بالمعدّل ده)";
+        return APL.enx("باقي " + dg(left) + " صفحة (حوالي " + dg(days) + " يوم بالمعدّل ده)");
     }
     function panel(focus) {
         var kahfDone = !!S.kahf[dayKey()];

@@ -1352,6 +1352,7 @@ window.APL_LANG_AR_EXTRA = {
     "Eid Takbeer": "تكبيرات العيد",
     "Opening {name}\u2026": "جارٍ فتح {name}\u2026",
     "File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick.": "الملف غير موجود. انسخه إلى مجلد اسمه APL-Audio في التلفزيون أو على فلاشة USB.",
+    "Not found on the TV, and the online recording would not play. Check the internet, or copy the file into a folder named APL-Audio.": "الملف مش موجود على التلفزيون، والتسجيل أونلاين ماشتغلش. اتأكد من النت، أو انسخ الملف في مجلد اسمه APL-Audio.",
     "Could not play the file: {why}": "تعذّر تشغيل الملف: {why}",
     "Recording resumed": "استُؤنف التشغيل",
     "Every {day}": "كل {day}",

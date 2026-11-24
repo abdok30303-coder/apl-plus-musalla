@@ -1906,6 +1906,7 @@ window.APL_LANG_AR_EXTRA = {
     "Eid Takbeer": "تكبيرات العيد",
     "Opening {name}\u2026": "جارٍ فتح {name}\u2026",
     "File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick.": "الملف غير موجود. انسخه إلى مجلد اسمه APL-Audio في التلفزيون أو على فلاشة USB.",
+    "Not found on the TV, and the online recording would not play. Check the internet, or copy the file into a folder named APL-Audio.": "الملف مش موجود على التلفزيون، والتسجيل أونلاين ماشتغلش. اتأكد من النت، أو انسخ الملف في مجلد اسمه APL-Audio.",
     "Could not play the file: {why}": "تعذّر تشغيل الملف: {why}",
     "Recording resumed": "استُؤنف التشغيل",
     "Every {day}": "كل {day}",
@@ -2032,6 +2033,253 @@ window.APL_LANG_AR_EXTRA = {
     APL.deg = function (x) {
         var s = digits(x) + "\u00b0";
         return lang === "ar" ? "\u2066" + s + "\u2069" : s;
+    };
+
+    /* v8.7.24: English for the few panels, toasts and cards that were written in Arabic only.
+       APL.enx(text) returns the English text when English is selected (exact words, then known phrases, longest first);
+       in Arabic, or for text with no Arabic in it, it returns the text unchanged. */
+    var ENX_EXACT = {
+"رجوع": "Back",
+"خلاص": "Done",
+"الصلاة": "Prayer",
+"بكرة": "Tomorrow",
+"مناسباتي": "My Occasions",
+"النوع": "Type",
+"اليوم": "Day",
+"الشهر": "Month",
+"السنة": "Year",
+"إلغاء": "Cancel",
+"تخرّج": "Graduation",
+"خطوبة": "Engagement",
+"احتفال": "Celebration",
+"أنا": "Me",
+"أمي": "Mom",
+"أبي": "Dad",
+"زوجتي": "My wife",
+"زوجي": "My husband",
+"ابني": "My son",
+"ابنتي": "My daughter",
+"أخي": "My brother",
+"أختي": "My sister",
+"جدي": "My grandfather",
+"جدتي": "My grandmother",
+"صديقي": "My friend",
+"زواجي": "My wedding",
+"تخرّجي": "My graduation",
+"خطوبتي": "My engagement",
+"رحلة": "Trip",
+"عزومة": "Dinner invitation",
+"يناير": "January",
+"فبراير": "February",
+"مارس": "March",
+"أبريل": "April",
+"مايو": "May",
+"يونيو": "June",
+"يوليو": "July",
+"أغسطس": "August",
+"سبتمبر": "September",
+"أكتوبر": "October",
+"نوفمبر": "November",
+"ديسمبر": "December",
+"(يدوي)": "(manual)",
+"بدون": "none",
+"تلقائي": "Auto",
+"أبيض": "White",
+"ذهبي": "Gold",
+"سماوي": "Sky blue",
+"كريمي": "Cream",
+"أسود": "Black",
+"بني": "Brown",
+"كحلي": "Navy",
+"عنابي": "Maroon"
+};
+    var ENX_FRAG = {
+"السحور ينتهي بعد ": "Suhoor ends in ",
+"الإفطار بعد ": "Iftar in ",
+"العشاء بعد ": "Isha in ",
+"وقت التراويح": "Taraweeh time",
+"الفجر بعد ": "Fajr in ",
+"رمضان • يوم ": "Ramadan • Day ",
+"لسه ما اتجرّبش على التلفزيون": "Not tested on the TV yet",
+"طلب تشغيل HTML5؛ سماعه على التلفزيون مش مؤكّد": "HTML5 play requested; hearing it on the TV is not confirmed",
+"HTML5 رفض التشغيل؛ جرّب Vetro": "HTML5 refused to play; try Vetro",
+"تعذّر تشغيل المدفع من HTML5": "Could not play the cannon from HTML5",
+"بنطلب تشغيل المدفع؛ الأذان ليه الأولوية": "Asking to play the cannon; the adhan has priority",
+"CANNON_QUEUED — طلب التشغيل اتبعت؛ ده مش تأكيد سماع الصوت": "CANNON_QUEUED: the play request was sent; this does not confirm the sound was heard",
+"🌙 باقي ": "🌙 ",
+" على الفجر: وقت السحور": " left to Fajr: suhoor time",
+"🌙 حان موعد الإفطار، تقبّل الله صيامكم": "🌙 It is time for iftar. May Allah accept your fast",
+"🌙 حان وقت صلاة التراويح": "🌙 It is time for Taraweeh prayer",
+"تلقائي (في رمضان بس)": "Automatic (Ramadan only)",
+"شغّال دايمًا": "Always on",
+"مقفول": "Off",
+"شغّال": "On",
+"الحالة: ": "Status: ",
+"مش في رمضان دلوقتي": "not in Ramadan now",
+" • يوم ": " • Day ",
+" من رمضان": " of Ramadan",
+"\nالختمة: صفحة ": "\nKhatma: page ",
+" (المفروض توصل صفحة ": " (you should reach page ",
+" النهاردة لو ختمة ٣٠ يوم)": " today for a 30-day khatma)",
+"\nمدفع أوفلاين بمسار Pulse مستقل عن الأذان وباقي الأصوات، والأذان ليه الأولوية. مفيش تغيير في صوت التلفزيون أو ملفاته.\nالحالة: ": "\nOffline cannon on its own Pulse path, separate from the adhan and the other sounds; the adhan has priority. No change to the TV's sound or files.\nStatus: ",
+"وضع رمضان": "Ramadan Mode",
+"الوضع: ": "Mode: ",
+"مدفع الإفطار: ": "Iftar cannon: ",
+"تنبيه السحور: ": "Suhoor alert: ",
+"تنبيه التراويح: ": "Taraweeh alert: ",
+"ختمة رمضان (٣٠ يوم)": "Ramadan khatma (30 days)",
+"هدف الختمة: ٢١ صفحة في اليوم": "Khatma goal: 21 pages a day",
+"جرّبه دلوقتي (مدفع + تنبيه)": "Try it now (cannon + alert)",
+"جرّبه دلوقتي (المدفع بس)": "Try it now (cannon only)",
+"حالة تشغيل المدفع": "Cannon playback status",
+"حالة المدفع": "Cannon status",
+"\nطلب تشغيل ناجح مش ضمان إن الصوت مسموع؛ جرّبه على الشاشة.\nCANNON_FINISHED = مسار Pulse خلّص الطلب.\nNO_PACTL / NO_PULSE = المسار مش متاح.\nSKIPPED_ALERT_BUSY = الأذان ليه الأولوية.": "\nA successful play request does not guarantee the sound is heard; try it on the TV.\nCANNON_FINISHED = the Pulse path finished the request.\nNO_PACTL / NO_PULSE = the path is not available.\nSKIPPED_ALERT_BUSY = the adhan has priority.",
+"افتح المصحف": "Open the Mushaf",
+"الإقامة بعد ": "Iqama in ",
+"تعود الشاشة بعد ": "The screen returns in ",
+"تقبّل الله صلاتكم": "May Allah accept your prayers",
+"تدفق الصلاة: ": "Prayer Flow: ",
+"تدفق الصلاة": "Prayer Flow",
+"عدّاد الإقامة بعد الأذان، وبعدها الشاشة بتهدى ويرجع كل شيء لوحده.\nلازم تحدد دقايق الإقامة الأول (صفحة الصلاة > ضبط المواقيت).\nأي زرار بيرجّع الشاشة فورًا.": "An iqama countdown after the adhan, then the screen goes quiet and everything returns by itself.\nSet the iqama minutes first (Prayer page > Adjust the times).\nAny button brings the screen back at once.",
+"مدة هدوء الشاشة: ": "Quiet screen time: ",
+" دقيقة": " min",
+"تمّت سورة الكهف النهاردة، جمعة مباركة": "Surat Al-Kahf is done for today. Blessed Friday",
+"مبروك! ختمة كاملة. عدد الختمات: ": "Congratulations! A full khatma. Khatmas: ",
+"وصلت هدف النهاردة: ": "You reached today's goal: ",
+" صفحة": " pages",
+"الجزء ": "Juz ",
+" • صفحة ": " • page ",
+"سورة الكهف • يوم الجمعة": "Surat Al-Kahf • Friday",
+"سورة الكهف: ": "Surat Al-Kahf: ",
+"سورة الكهف": "Surat Al-Kahf",
+"النهاردة ": "Today ",
+"ضع صور المصحف في مجلد ": "Put the Mushaf images in the folder ",
+" لعرض الصفحة هنا": " to show the page here",
+"OK: قرأت الصفحة • ◄ ► صفحة • ▲ ▼ جزء • رجوع: خروج": "OK: page read • ◄ ► page • ▲ ▼ juz • Back: exit",
+"باقي ": "Left: ",
+" (حوالي ": " (about ",
+" يوم بالمعدّل ده)": " days at this rate)",
+"الصفحة ": "Page ",
+"\nقرأت النهاردة: ": "\nRead today: ",
+" (الهدف ": " (goal ",
+"\nأيام متتالية: ": "\nStreak days: ",
+" • ختمات كاملة: ": " • full khatmas: ",
+"\nالنهاردة الجمعة: سورة الكهف": "\nToday is Friday: Surat Al-Kahf",
+" (صفحات ٢٩٣ – ٣٠٤)": " (pages 293 to 304)",
+"المصحف والختمة": "Mushaf & Khatma",
+"قرأت صفحة": "Page read",
+"قرأت جزء كامل": "Full juz read",
+"هدف اليوم: ": "Today's goal: ",
+" (ختمة في ": " (a khatma in ",
+" يوم)": " days)",
+"شغّل التلاوة": "Play the recitation",
+"الجمعة بس (شغّل برضه)": "Friday only (play anyway)",
+"روح لصفحة الكهف": "Go to the Al-Kahf page",
+"ابدأ ختمة جديدة": "Start a new khatma",
+"تلاوة الكهف مش متاحة": "Al-Kahf recitation is not available",
+"النهاردة الجمعة: سورة الكهف (الإعدادات > الصلاة والقرآن > المصحف والختمة)": "Today is Friday: Surat Al-Kahf (Settings > Prayer & Quran > Mushaf & Khatma)",
+"مش قادر أحدد مكان اللانشر": "Cannot locate the launcher folder",
+"اتحفظت نسخة ": "Saved version ",
+"مفيش مساحة كفاية على التلفزيون": "Not enough space on the TV",
+"ماقدرتش أحفظ النسخة (Vetro مش متصل؟)": "Could not save the version (Vetro not connected?)",
+"ماقدرتش أحفظ النسخة": "Could not save the version",
+"الرجوع ماتمّش (المجلد مقفول أو مفيش نسخة)": "Restore failed (the folder is locked or there is no saved version)",
+"الرجوع ماتمّش (Vetro مش متصل؟)": "Restore failed (Vetro not connected?)",
+"اتعمل رجوع لآخر نسخة شغالة، بعيد التشغيل...": "Went back to the last working version, restarting...",
+"آخر نسخة شغالة": "Last Working Version",
+"النسخة الحالية: ": "Current version: ",
+"\nالنسخة المحفوظة: ": "\nSaved version: ",
+"مفيش": "none",
+"\nبتتحفظ لوحدها بعد ما نسخة تشتغل كويس مرتين. الرجوع بيستبدل ملفات اللانشر بس، وملفات الصوت (الكهف والتكبيرات) مابتتلمسش.": "\nA version is saved automatically after it runs well twice. Going back replaces only the launcher files; the audio files (Al-Kahf and the takbeerat) are not touched.",
+"احفظ نسخة دلوقتي": "Save a version now",
+"ارجع للنسخة ": "Go back to version ",
+"الرجوع مش متاح (مفيش نسخة مختلفة)": "Going back is not available (no different version)",
+"النسخة ": "Version ",
+" ماوصلتش للرئيسية: برجّع النسخة ": " did not reach the Home Screen: going back to version ",
+"الوضع الآمن": "Safe Mode",
+"اللانشر وقف في التشغيل أكتر من مرة. فيه نسخة ": "The launcher stopped at startup more than once. Version ",
+" كانت شغّالة. أرجع ليها؟": " was working. Go back to it?",
+"كمّل بالوضع الآمن": "Continue in Safe Mode",
+"النهارده! 🎉": "Today! 🎉",
+"🎉 النهارده: ": "🎉 Today: ",
+"⏰ بكرة: ": "⏰ Tomorrow: ",
+"⏰ بعد ": "⏰ In ",
+" أيام: ": " days: ",
+" يوم": " days",
+" سنة · ": " years · ",
+" شهر · ": " months · ",
+" يوم · ": " days · ",
+" ساعة · ": " hours · ",
+" يوم و": " days and ",
+" ساعة و": " hours and ",
+"العمر: ": "Age: ",
+"مرّ: ": "Elapsed: ",
+"عيد ميلاد · ذكرى زواج · تخرّج · احتفال… بتتحسب فورًا أول ما تفتح الصفحة": "Birthday · anniversary · graduation · celebration… counted at once when you open the page",
+"＋ إضافة مناسبة": "＋ Add an occasion",
+"مفيش مناسبات لسه. دوس «إضافة مناسبة» واختار النوع والاسم والتاريخ بالريموت.": "No occasions yet. Press “Add an occasion” and pick the type, name and date with the remote.",
+"مناسبة جديدة": "New Occasion",
+"تعديل المناسبة": "Edit Occasion",
+"الاسم (اختار من المقترحات)": "Name (pick a suggestion)",
+"أو اكتب اسم آخر…": "Or type another name…",
+"التاريخ (▲ ▼ تغيّر القيمة)": "Date (▲ ▼ change the value)",
+"✓ حفظ": "✓ Save",
+"🗑 حذف": "🗑 Delete",
+"اختار اسم من المقترحات أو اكتب اسم": "Pick a name from the suggestions or type one",
+"عيد ميلاد": "Birthday",
+"ذكرى زواج": "Anniversary",
+"ميلاد مولود": "New baby",
+"مناسبة أخرى": "Other occasion",
+"زواج أبي وأمي": "My parents' wedding",
+"زواج أخي": "My brother's wedding",
+"زواج أختي": "My sister's wedding",
+"زواج صديقي": "My friend's wedding",
+"مولودنا الجديد": "Our new baby",
+"مولود أخي": "My brother's baby",
+"مولود أختي": "My sister's baby",
+"تخرّج ابني": "My son's graduation",
+"تخرّج ابنتي": "My daughter's graduation",
+"تخرّج أخي": "My brother's graduation",
+"تخرّج أختي": "My sister's graduation",
+"خطوبة أخي": "My brother's engagement",
+"خطوبة أختي": "My sister's engagement",
+"حفلة عائلية": "Family party",
+"لمّة الأصحاب": "Friends gathering",
+"مناسبة عائلية": "Family occasion",
+"ذكرى عزيزة": "Dear memory",
+"يوم مميّز": "Special day",
+"سورة ": "Surah ",
+" · آية ": " · Ayah ",
+"تفسير الآية": "Tafsir of the ayah",
+"مفيش مناسبات شخصية متسجّلة": "No personal occasions saved",
+"ضيف من صفحة الصلاة والقرآن › مناسباتي": "Add one from Prayer & Quran page › My Occasions",
+"حكمة اليوم": "Wisdom of the Day",
+"تباعد السطور ": "Line spacing ",
+"لون الخط: ": "Text color: ",
+"حجم الخط ": "Font size ",
+"حواف الشاشة: ": "Screen margins: ",
+" بكسل": " px",
+"حجم خط التفسير ": "Tafsir font size ",
+"أخضر فاتح": "Light green",
+"أخضر غامق": "Dark green",
+"الوضع الورقي مفعّل": "Paper mode on",
+"الوضع الليلي مفعّل": "Night mode on",
+"الصفحة كاملة على الشاشة": "The whole page fits the screen",
+"حجم الخط يدوي، والصفحة بتتمرّر": "Manual font size, the page scrolls",
+"ثيم ورقي هادي": "Calm paper theme",
+"ثيم داكن": "Dark theme",
+"نهاية المصحف الشريف": "End of the Noble Mushaf",
+"بداية المصحف الشريف": "Start of the Noble Mushaf",
+"سرعة التلاوة: ": "Recitation speed: ",
+"تم تفعيل التفسير": "Tafsir on",
+"تم إخفاء التفسير": "Tafsir hidden"
+};
+    var ENX_KEYS = Object.keys(ENX_FRAG).sort(function (a, b) { return b.length - a.length; });
+    APL.enx = function (s) {
+        if (lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
+        if (Object.prototype.hasOwnProperty.call(ENX_EXACT, s)) return ENX_EXACT[s];
+        var out = s;
+        for (var i = 0; i < ENX_KEYS.length; i++) { if (out.indexOf(ENX_KEYS[i]) >= 0) out = out.split(ENX_KEYS[i]).join(ENX_FRAG[ENX_KEYS[i]]); }
+        return out;
     };
 
     APL.t = t;
@@ -5407,7 +5655,7 @@ window.APL_CATALOG = [
     }
     function ayahBlock() {
         var a = ayahCache; if (!a) return "";
-        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">\uFD3F ' + a.text + ' \uFD3E</div><div class="sx-ayah__s">سورة ' + a.name + ' · آية ' + APL.digits(String(a.n)) + '</div></div>';
+        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">\uFD3F ' + a.text + ' \uFD3E</div><div class="sx-ayah__s">' + APL.enx("سورة ") + a.name + APL.enx(" · آية ") + APL.digits(String(a.n)) + '</div></div>';
     }
 
     /* v8.2.0/v8.5.0: fifth choice, today's ayah + its Saadi tafsir excerpt (verified data/tafsir/NN.json). */
@@ -5427,14 +5675,14 @@ window.APL_CATALOG = [
     function tafHtml() {
         var h = ayahHtml(), a = ayahCache; if (!a) return h;
         if (!tfxCache || tfxCache.day !== a.day) { loadTfx(); return h; }
-        return h + '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + (tfxCache.text || "تفسير الآية") + '</div><div class="sx-ayah__s">تيسير الكريم الرحمن في تفسير كلام المنان · الشيخ السعدي</div></div>';
+        return h + '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + (tfxCache.text || APL.enx("تفسير الآية")) + '</div><div class="sx-ayah__s">تيسير الكريم الرحمن في تفسير كلام المنان · الشيخ السعدي</div></div>';
     }
 
     /* v8.1.0: nearest personal occasion (js/personal.js) */
     function persHtml() {
         var n = APL.personal && APL.personal.nearest ? APL.personal.nearest() : null;
-        if (!n) return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">مفيش مناسبات شخصية متسجّلة</div><div class="sx-ayah__s">ضيف من صفحة الصلاة والقرآن › مناسباتي</div></div>';
-        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + n.name + '</div><div class="sx-ayah__s">' + (n.days === 0 ? "النهارده! 🎉" : n.days === 1 ? "بكرة" : "باقي " + APL.digits(String(n.days)) + " يوم") + '</div></div>';
+        if (!n) return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + APL.enx("مفيش مناسبات شخصية متسجّلة") + '</div><div class="sx-ayah__s">' + APL.enx("ضيف من صفحة الصلاة والقرآن › مناسباتي") + '</div></div>';
+        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + n.name + '</div><div class="sx-ayah__s">' + APL.enx(n.days === 0 ? "النهارده! 🎉" : n.days === 1 ? "بكرة" : "باقي " + APL.digits(String(n.days)) + " يوم") + '</div></div>';
     }
 
     /* v8.5.0: wisdom from Kalem Tayeb (data/hekam/excerpts.json)
@@ -5534,7 +5782,7 @@ window.APL_CATALOG = [
             var html = '<div class="statusx__card hc__row hc__row--hekam" style="--hekam-s:' + (scale / 100) + '">' +
                 '<div class="hc__cell">' +
                     '<span class="hc__time"><span class="hc__t">💎</span></span>' +
-                    '<span class="hc__label hc__label--hekam">حكمة اليوم</span>' +
+                    '<span class="hc__label hc__label--hekam">' + APL.enx("حكمة اليوم") + '</span>' +
                 '</div>' +
                 '<div class="hc__date hc__date--hekam">' +
                     '<span class="hc__greg hc__greg--hekam hc__text--green">' + esc(it.text) + '</span>' +
@@ -7595,7 +7843,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                 changed();
                 return tryChain(ONLINE[id], id, token).then(null, function (e2) {
                     if (token !== session) throw e2;
-                    if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; throw nf; }
+                    if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; nf.triedOnline = true; throw nf; }
                     throw localErr;
                 });
             });
@@ -12650,7 +12898,7 @@ window.APL_KEYS = {
                     if (mode === "hekam") render();
                 }
             });
-            hintEl.textContent = "رجوع للقائمة الرئيسية";
+            hintEl.textContent = HK("رجوع للقائمة الرئيسية");
             return;
         }
 
@@ -12659,7 +12907,7 @@ window.APL_KEYS = {
             var row = el("div", "aplx-row",
                 '<div class="aplx-row__main">' +
                     '<span class="aplx-row__label">' + sec.name + '</span>' +
-                    '<span class="aplx-row__sub num">' + dg(sec.count) + " مادة وفائدة · " + dg(sec.subs) + " باب" + '</span>' +
+                    '<span class="aplx-row__sub num">' + dg(sec.count) + " " + HK("مادة وفائدة") + " · " + dg(sec.subs) + " " + HK("باب") + '</span>' +
                 '</div>' +
                 '<span class="aplx-badge aplx-badge--on num">‹</span>');
             var run = function () {
@@ -12676,7 +12924,7 @@ window.APL_KEYS = {
         });
 
         bodyEl.appendChild(list);
-        hintEl.textContent = "OK لفتح القسم وقراءة الحكم · 🎲 حكمة عشوائية · رجوع للصلاة والقرآن";
+        hintEl.textContent = HK("OK لفتح القسم وقراءة الحكم · 🎲 حكمة عشوائية · رجوع للصلاة والقرآن");
     }
 
     function buildHekamItems() {
@@ -13656,6 +13904,10 @@ window.APL_KEYS = {
     /* v7.2.0: two half-size buttons, one above the other, between the Al-Kahf and the Eid Takbeer tiles */
     /* v8.7.22: English text for strings that were written in Arabic only */
     var HK_D = {
+        "رجوع للقائمة الرئيسية": "Back to the main list",
+        "مادة وفائدة": "items",
+        "باب": "chapters",
+        "OK لفتح القسم وقراءة الحكم · 🎲 حكمة عشوائية · رجوع للصلاة والقرآن": "OK to open the section and read · 🎲 random wisdom · Back to Prayer & Quran",
         "حكم ومواعظ الكلم الطيب": "Wisdom & Sermons (Kalem Tayeb)",
         "موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)": "Encyclopedia of wisdom, sermons, benefits and sayings · fully offline (35 thousand items in 53 sections) · text in Arabic",
         "🎲 حكمة اليوم العشوائية": "🎲 Random wisdom",
@@ -13718,7 +13970,7 @@ window.APL_KEYS = {
             if (m === "stopped") return;
             if (APL.toast) {
                 APL.toast(e && e.noFile
-                    ? APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick.")
+                    ? (e.triedOnline ? APL.t("Not found on the TV, and the online recording would not play. Check the internet, or copy the file into a folder named APL-Audio.") : APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick."))
                     : APL.t("Could not play the file: {why}", { why: m || "?" }));
             }
             render();
@@ -13753,7 +14005,7 @@ window.APL_KEYS = {
             if (m === "stopped") return;
             if (APL.toast) {
                 APL.toast(e && e.noFile
-                    ? APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick.")
+                    ? (e.triedOnline ? APL.t("Not found on the TV, and the online recording would not play. Check the internet, or copy the file into a folder named APL-Audio.") : APL.t("File not found. Copy it into a folder named APL-Audio on the TV or on a USB stick."))
                     : APL.t("Could not play the file: {why}", { why: m || "?" }));
             }
             render();
@@ -15311,6 +15563,61 @@ window.APL_KEYS = {
 
     /* v8.7.22: English text for strings that were written in Arabic only */
     var HT_D = {
+        /* v8.7.24: English for rows that were Arabic only (applied to the whole tree by enTree) */
+        "آخر نسخة شغالة": "Last Working Version",
+        "نسخة احتياطية من اللانشر على التلفزيون، والرجوع ليها لو النسخة الجديدة وقفت في التشغيل.": "A backup copy of the launcher on the TV, to go back to if the new version stops at startup.",
+        "أيقونات أونلاين": "Online Icons",
+        "أيقونات حقيقية من كتالوج التطبيقات. محتاج نت.": "Real icons from the app catalog. Needs internet.",
+        "استماع تلاوة القرآن في الخلفية": "Quran Recitation in the Background",
+        "استمرار تشغيل تلاوة القرآن الكريم عند الخروج من اللانشر أو فتح تطبيقات أخرى (يتطلب دعم الشاشة).": "Keeps the Quran recitation playing when you leave the launcher or open other apps (needs support from the TV).",
+        "المصحف والختمة": "Mushaf & Khatma",
+        "افتح المصحف، سجّل اللي قرأته، هدف يومي، أيام متتالية، وسورة الكهف يوم الجمعة.": "Open the Mushaf, log what you read, a daily goal, streak days, and Surat Al-Kahf on Friday.",
+        "اقفل كل الميزات الثقيلة": "Turn Off All Heavy Features",
+        "بتقفل كل الميزات اللي فوق مرة واحدة.": "Turns off every feature above at once.",
+        "التمويه والزجاج": "Blur & Glass",
+        "تمويه وزجاج على الواجهة. أحلى شكلًا بس أبطأ.": "Blur and glass on the interface. Looks nicer but slower.",
+        "الخط": "Font",
+        "بيغيّر خط اللانشر كله (الودجات والقوايم والساعة) ماعدا نص المصحف. الخطوط جوّه الحزمة فعلًا ومش بتعتمد على خطوط الشاشة، فالتغيير بيبان على طول.": "Changes the font of the whole launcher (widgets, menus and the clock) except the Mushaf text. The fonts are inside the package and do not depend on the TV's fonts, so the change shows at once.",
+        "تجوّل · الافتراضي": "Tajawal (default)",
+        "نسخ كلاسيك": "Classic Naskh",
+        "مضغوط": "Compact",
+        "عريض": "Bold",
+        "خط الشاشة (القديم)": "TV font (old)",
+        "الراديو في الخلفية": "Radio in the Background",
+        "الراديو يكمّل لما تفتح HDMI أو تطبيق تاني (لو اتقطع هيرجع لوحده). لو مش شغال على شاشتك اقفله.": "The radio keeps playing when you open HDMI or another app (it comes back by itself if it drops). Turn it off if it does not work on your TV.",
+        "الراديو يكمّل من مشغّل الخلفية": "Radio Continues from the Background Player",
+        "لو الشاشة قطعت الراديو وانت على HDMI أو يوتيوب، بيتحوّل لمشغّل الخلفية (بيتخلط مع أي صوت) ويرجع لوحده لما تفتح اللانشر. تجريبي.": "If the TV cuts the radio while you are on HDMI or YouTube, it moves to the background player (mixed with any sound) and returns by itself when you open the launcher. Experimental.",
+        "الرف المباشر": "Live Shelf",
+        "محتوى اللحظة فوق الرئيسية (أفلام/يوتيوب). محتاج نت.": "What is on right now, above the Home Screen (movies/YouTube). Needs internet.",
+        "المحراب الحي": "Living Mihrab",
+        "تدفق الصلاة": "Prayer Flow",
+        "عدّاد الإقامة بعد الأذان، وبعدها الشاشة بتهدى وترجع لوحدها (مقفول افتراضيًا).": "An iqama countdown after the adhan, then the screen goes quiet and comes back by itself (off by default).",
+        "بوستر للتطبيق اللي معندوش خلفية. محتاج نت.": "A poster for an app that has no background. Needs internet.",
+        "خلفيات ديناميكية (بوسترات)": "Dynamic Backgrounds (Posters)",
+        "لون من الخلفية": "Color from the Wallpaper",
+        "بيطلّع لمسة لون خفيفة من صورة الخلفية المحلية على الشاشة الرئيسية.": "Adds a light touch of color taken from the local wallpaper on the Home Screen.",
+        "لمسة لون خفيفة من صورة الخلفية المحلية.": "A light touch of color from the local wallpaper.",
+        "تلقائي في رمضان: عدّاد السحور والإفطار، مدفع، تنبيه التراويح، وختمة ٣٠ يوم.": "Automatic in Ramadan: suhoor and iftar countdown, cannon, Taraweeh reminder, and a 30-day khatma.",
+        "وضع رمضان": "Ramadan Mode",
+        "تدرّج السما ولمعة الأذان المتحركة.": "The moving sky gradient and the adhan glow.",
+        "حركة المحراب الحي": "Living Mihrab Motion",
+        "حركة الخلفية البطيئة": "Slow Background Motion",
+        "كاميرا بطيئة فوق صور الرئيسية. بتشغّل الشاشة كتير.": "A slow camera move over the Home Screen pictures. It works the TV hard.",
+        "حلقة حوالين الأيقونة المحددة وتعتيم الباقي.": "A ring around the selected icon and a dimmed background.",
+        "تمييز العنصر المحدد": "Highlight the Selected Item",
+        "زجاج وحركة محسّنة": "Enhanced Glass & Motion",
+        "زجاج مموّه وحركة انسيابية. للمعالجات السريعة بس.": "Frosted glass and smooth motion. For fast processors only.",
+        "ميزات التحسين الثقيلة": "Heavy Enhancement Features",
+        "كل ميزة لوحدها، وكلها مقفولة افتراضيًا.": "Each feature on its own, all off by default.",
+        "مؤقتات خفيفة": "Light Timers",
+        "مؤقتات شاشة المحراب الحية تعمل على مؤقت مشترك وتتوقف وقت غياب اللانشر (يوتيوب أو HDMI). مفعّل افتراضياً. لا يمس الأذان ولا الراديو ولا المهام. التغيير يسري عند فتح الشاشة المرة القادمة.": "The Living Mihrab screen timers run on one shared timer and pause while the launcher is away (YouTube or HDMI). On by default. It does not touch the adhan, the radio or the tasks. A change takes effect the next time the screen opens.",
+        "وقت تشغيل اللانشر": "Launcher Startup Time",
+        "تحميل = وصول كود اللانشر، جاهزية = ظهور الشاشة الرئيسية. أرقام آخر 5 تشغيلات على هذا التلفزيون، للمقارنة قبل أي تعديل وبعده.": "Load = the launcher code arrived, ready = the Home Screen is shown. Numbers from the last 5 starts on this TV, to compare before and after any change.",
+        "لم يُسجَّل بعد: يُسجَّل في التشغيل التالي": "Not recorded yet: it is recorded on the next start",
+        "ويدجت الصلاة في صفحة الاستماع": "Prayer Widget on the Listening Page",
+        "يظهر ويدجت الصلاة الكامل (المواقيت والطقس والمهام والمناسبات) أسفل مشغل القرآن. مفعّل افتراضياً.": "Shows the full prayer widget (times, weather, tasks and occasions) below the Quran player. On by default.",
+        "قيود وضع الطفل": "Kid Mode Limits",
+        "تطبيقات مسموحة، حد يومي، قفل الصلاة والنوم. للكبار فقط.": "Allowed apps, a daily limit, and a prayer and sleep lock. For adults only.",
         "ويدجت حكم ومواعظ بالرئيسية": "Wisdom & Sermons Home Widget",
         "ويدجت حكم ومواعظ (٥ دقائق)": "Wisdom & Sermons Widget (5 min)",
         "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).": "Shows a separate wisdom or sermon card on the Home Screen, changing every 5 minutes (offline).",
@@ -15348,6 +15655,21 @@ window.APL_KEYS = {
         "عرض الويدجت بالشاشة كاملة": "Full-Screen-Width Widget",
         "الويدجت بياخد عرض الشاشة الرئيسية فوق صف التطبيقات، ومعاه أقرب ٤ مناسبات والمهام والطقس.": "The widget takes the full width of the Home Screen above the app row, with the next 4 occasions, tasks and weather."
     };
+    /* v8.7.24: with English selected, no Arabic-only row may reach the screen: every label, hint, choice and value is mapped. */
+    function enStr(s) {
+        if (typeof s !== "string" || APL.lang === "ar" || !/[\u0600-\u06FF]/.test(s)) return s;
+        if (Object.prototype.hasOwnProperty.call(HT_D, s)) return HT_D[s];
+        var m = /^([A-Za-z][A-Za-z ]*?) \u00B7 /.exec(s);      /* "Cairo \u00B7 <arabic name>" -> "Cairo" */
+        return m ? m[1] : s;
+    }
+    function enTree(nd) {
+        if (!nd || APL.lang === "ar") return nd;
+        nd.label = enStr(nd.label); nd.desc = enStr(nd.desc);
+        if (nd.options) nd.options = nd.options.map(function (o) { return (o && o.length > 1) ? [o[0], enStr(o[1])].concat(o.slice(2)) : o; });
+        if (typeof nd.get === "function") { var g = nd.get; nd.get = function () { var r = g.apply(this, arguments); return typeof r === "string" ? enStr(r) : r; }; }
+        if (nd.children) nd.children.forEach(enTree);
+        return nd;
+    }
     function HT(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(HT_D, s)) ? HT_D[s] : s; }
 
     function menu(label, icon, children, desc) { return { type: "menu", label: label, icon: icon, children: children, desc: desc }; }
@@ -15498,7 +15820,8 @@ window.APL_KEYS = {
         };
     }
 
-    function build() {
+    function build() { return enTree(build0()); }
+    function build0() {
         var apps = ((APL.allApps && APL.allApps()) || []).filter(function (a) { return !a.virtual; });
         /* The language is fixed when the launcher starts (i18n.js): changing it reloads the launcher. */
         var language = sys.pref("language");
@@ -18679,8 +19002,8 @@ window.APL_DEVICES = [
     function openAlert(spec) {
         if (!alertRoot) buildAlert();
         alertSpec = spec;
-        alertTitle.textContent = spec.title || "";
-        alertMsg.textContent = spec.message || "";
+        alertTitle.textContent = APL.enx ? APL.enx(spec.title || "") : (spec.title || "");
+        alertMsg.textContent = APL.enx ? APL.enx(spec.message || "") : (spec.message || "");
         alertMsg.style.display = spec.message ? "" : "none";
         alertExtra.innerHTML = "";
         if (spec.node) alertExtra.appendChild(spec.node);
@@ -18688,7 +19011,7 @@ window.APL_DEVICES = [
         alertBtns.innerHTML = "";
         var btns = spec.buttons.map(function (b) {
             var e = el("div", "aplalert__btn" + (b.destructive ? " is-destructive" : ""));
-            e.textContent = b.label;
+            e.textContent = APL.enx ? APL.enx(b.label) : b.label;
             alertBtns.appendChild(e);
             return e;
         });
@@ -20559,7 +20882,7 @@ window.APL_DEVICES = [
     /* info = secondary message, hidden when "Do Not Disturb" is on */
     function toast(msg, info) {
         if (info && APL.sys.pref("dnd")) return;
-        dom.toast.textContent = msg;
+        dom.toast.textContent = APL.enx ? APL.enx(msg) : msg;
         dom.toast.classList.add("is-visible");
         clearTimeout(toast._t);
         toast._t = setTimeout(function () { dom.toast.classList.remove("is-visible"); }, 2600);
@@ -23252,27 +23575,25 @@ window.APL_DEVICES = [
     APL.safeMode = { active: !!global.APL_SAFE };
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
-    var NEWS = [
-        "✔ 7.0.0: مصحف حفص كامل مُشكّل وأوفلاين، بفهرس سور وفهرس أجزاء",
-        "✔ بحث فوري من أول حرف؛ الآيات بالترتيب، وفتح الآية في صفحتها",
-        "✔ أخضر الأذكار زي المصلّي، ومدفع رمضان بمسار مستقل عن باقي الأصوات",
-        "⚠ Untested on the TV — محتاج تجربة على الشاشة",
-        "\u2714 \u0627\u0644\u0645\u0635\u062D\u0641 \u0648\u0627\u0644\u062E\u062A\u0645\u0629 \u0648\u0633\u0648\u0631\u0629 \u0627\u0644\u0643\u0647\u0641 \u064A\u0648\u0645 \u0627\u0644\u062C\u0645\u0639\u0629",
-        "\u2714 \u0648\u0636\u0639 \u0631\u0645\u0636\u0627\u0646 \u0627\u0644\u0643\u0627\u0645\u0644 \u0648\u062A\u062F\u0641\u0642 \u0627\u0644\u0635\u0644\u0627\u0629",
-        "\u2714 \u0627\u0644\u0631\u062C\u0648\u0639 \u0644\u0622\u062E\u0631 \u0646\u0633\u062E\u0629 \u0634\u063A\u0627\u0644\u0629 \u0641\u064A \u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0622\u0645\u0646",
-        "\u2714 \u0645\u064A\u0632\u0627\u062A \u0627\u0644\u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u062B\u0642\u064A\u0644\u0629: \u0643\u0644 \u0645\u064A\u0632\u0629 \u0644\u0648\u062D\u062F\u0647\u0627 \u0648\u0643\u0644\u0647\u0627 \u0645\u0642\u0641\u0648\u0644\u0629 (\u0627\u0644\u0623\u062F\u0627\u0621)",
-        "\u2714 \u0627\u0644\u0645\u062D\u0631\u0627\u0628 \u0627\u0644\u062D\u064A: \u0634\u0627\u0634\u0629 \u062A\u0648\u0642\u0641 \u0628\u0633\u0645\u0627 \u0628\u062A\u062A\u0628\u0639 \u0627\u0644\u0645\u0648\u0627\u0642\u064A\u062A \u0648\u0639\u062F\u0651\u0627\u062F \u0627\u0644\u0635\u0644\u0627\u0629",
-        "\u2714 \u0634\u0627\u0631\u0629 \u0645\u0635\u062F\u0631 \u0627\u0644\u0645\u0648\u0627\u0642\u064A\u062A \u0641\u064A \u0635\u0641\u062D\u0629 \u0627\u0644\u0635\u0644\u0627\u0629",
-        "\u2714 \u0644\u0648\u0646 \u0645\u0646 \u0627\u0644\u062E\u0644\u0641\u064A\u0629 (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)",
-        "\u2714 \u0642\u064A\u0648\u062F \u0648\u0636\u0639 \u0627\u0644\u0637\u0641\u0644: \u062A\u0637\u0628\u064A\u0642\u0627\u062A \u0645\u0633\u0645\u0648\u062D\u0629 \u0648\u062D\u062F \u064A\u0648\u0645\u064A \u0648\u0642\u0641\u0644 \u0627\u0644\u0635\u0644\u0627\u0629 \u0648\u0627\u0644\u0646\u0648\u0645",
-        "\u2714 \u0634\u0627\u0634\u0629 \u0641\u062D\u0635 \u0627\u0644\u062A\u0644\u0641\u0632\u064A\u0648\u0646 (\u0627\u0644\u0625\u0639\u062F\u0627\u062F\u0627\u062A > \u0627\u0644\u0623\u062F\u0627\u0621)",
-        "\u2714 \u062A\u062D\u062F\u064A\u062B \u0627\u0644\u0648\u064A\u062F\u062C\u062A \u0641\u0648\u0631\u064B\u0627 \u0639\u0646\u062F \u0627\u0644\u0631\u062C\u0648\u0639 \u0644\u0644\u0631\u0626\u064A\u0633\u064A\u0629",
-        "\u2714 \u0648\u0636\u0639 \u0627\u0644\u0637\u0641\u0644 (\u0627\u0644\u062E\u0631\u0648\u062C \u0628\u0636\u063A\u0637\u0629 \u0645\u0637\u0648\u0651\u0644\u0629 3 \u062B\u0648\u0627\u0646\u064A \u0639\u0644\u0649 \u0627\u0644\u0643\u062A\u0645)",
-        "\u2714 \u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0622\u0645\u0646 \u0628\u0639\u062F 3 \u0623\u0639\u0637\u0627\u0644",
-        "\u2714 \u0646\u0635 \u0623\u0643\u0628\u0631 \u0648\u062A\u0628\u0627\u064A\u0646 \u0639\u0627\u0644\u064A (\u0625\u0645\u0643\u0627\u0646\u064A\u0629 \u0627\u0644\u0648\u0635\u0648\u0644)"
+    var NEWS_AR = [
+        "\u2714 \u0623\u0648\u0642\u0627\u062a \u0627\u0644\u0635\u0644\u0627\u0629 \u0648\u0627\u0644\u0637\u0642\u0633 \u0644\u0644\u0639\u0627\u0644\u0645 \u0643\u0644\u0647 (\u0645\u062f\u0646 \u0648\u062f\u0648\u0644 \u0628\u0637\u0631\u064a\u0642\u0629 \u062d\u0633\u0627\u0628 \u0643\u0644 \u0628\u0644\u062f)",
+        "\u2714 \u0645\u062f\u0641\u0639 \u0631\u0645\u0636\u0627\u0646 \u0627\u062a\u0635\u0644\u062d \u0641\u064a \u062c\u062f\u0648\u0644 \u0627\u0644\u062e\u062f\u0645\u0629 \u0627\u0644\u062e\u0644\u0641\u064a\u0629\u060c \u0648\u0632\u0631\u0651 \u0645\u0633\u062a\u0642\u0644 \u0644\u062a\u062c\u0631\u0628\u0629 \u0627\u0644\u0645\u062f\u0641\u0639 \u0644\u0648\u062d\u062f\u0647",
+        "\u2714 \u0633\u0648\u0631\u0629 \u0627\u0644\u0643\u0647\u0641 \u0648\u062a\u0643\u0628\u064a\u0631\u0627\u062a \u0627\u0644\u0639\u064a\u062f: \u0645\u0646 \u0645\u0644\u0641 APL-Audio \u0623\u0648\u0644\u0627\u064b\u060c \u0648\u0644\u0648 \u0645\u0634 \u0645\u0648\u062c\u0648\u062f \u062a\u0634\u063a\u0644 \u0623\u0648\u0646\u0644\u0627\u064a\u0646",
+        "\u2714 \u0643\u0644\u0627\u0645 \u0627\u0644\u0645\u0635\u062d\u0641 \u0648\u0627\u0644\u062a\u0641\u0633\u064a\u0631 \u0645\u0634 \u0628\u064a\u062a\u0642\u0637\u0639 \u0645\u0646 \u0627\u0644\u062c\u0646\u0628",
+        "\u2714 \u0643\u0644 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0648\u0627\u0644\u0634\u0627\u0634\u0627\u062a \u0644\u0647\u0627 \u0646\u0635 \u0625\u0646\u062c\u0644\u064a\u0632\u064a \u0643\u0627\u0645\u0644 \u0644\u0645\u0627 \u062a\u0627\u062e\u062f \u0627\u0644\u0644\u063a\u0629 English",
+        "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
+    var NEWS_EN = [
+        "\u2714 8.7.24: every setting and page now has full English text when the language is English",
+        "\u2714 Prayer times and weather for the whole world (cities and countries, each with its usual calculation method)",
+        "\u2714 Ramadan cannon fixed in the background schedule; the cannon switch decides cannon + adhan or adhan only; separate button to test the cannon alone",
+        "\u2714 Al-Kahf and Eid takbeer: the file in APL-Audio is used first, and if it is missing they play online (with a message if both fail)",
+        "\u2714 Mushaf and tafsir words are no longer cut at the sides",
+        "\u26a0 Untested on the TV \u2014 needs a test on the screen"
+    ];
+    function newsList() { return (APL.lang === "ar") ? NEWS_AR : NEWS_EN; }
     function showNews() {
-        APL.alert({ title: APL.t("What's New"), message: NEWS.join("\n"), buttons: [{ label: APL.t("OK") }] });
+        APL.alert({ title: APL.t("What's New"), message: newsList().join("\n"), buttons: [{ label: APL.t("OK") }] });
     }
     /* v7.0.4: "What's New" only shows on the bare home screen. If something is open (a page, Settings,
        the Mushaf reader, a menu) it waits and tries again; the version is marked seen only once shown. */
@@ -23925,12 +24246,12 @@ window.APL_DEVICES = [
     function paint() {
         if (!open) return;
         var j = juzOf(S.page), kahf = S.page >= KAHF_FROM && S.page <= KAHF_TO;
-        el.juz.textContent = "الجزء " + dg(j) + " • صفحة " + dg(S.page) + " / " + dg(PAGES);
-        el.kahf.textContent = kahf ? (isFriday() ? "سورة الكهف • يوم الجمعة" : "سورة الكهف") : "";
-        el.goal.textContent = "النهاردة " + dg(today()) + " / " + dg(S.plan);
-        el.ph.innerHTML = "<div class=\"khr__num\">" + dg(S.page) + "</div><div class=\"khr__sub\">ضع صور المصحف في مجلد " + FOLDER + " (001.jpg ... 604.jpg) لعرض الصفحة هنا</div>";
+        el.juz.textContent = APL.enx("الجزء " + dg(j) + " • صفحة " + dg(S.page) + " / " + dg(PAGES));
+        el.kahf.textContent = kahf ? APL.enx(isFriday() ? "سورة الكهف • يوم الجمعة" : "سورة الكهف") : "";
+        el.goal.textContent = APL.enx("النهاردة " + dg(today()) + " / " + dg(S.plan));
+        el.ph.innerHTML = "<div class=\"khr__num\">" + dg(S.page) + "</div><div class=\"khr__sub\">" + APL.enx("ضع صور المصحف في مجلد ") + FOLDER + " (001.jpg ... 604.jpg)" + APL.enx(" لعرض الصفحة هنا") + "</div>";
         el.bar.style.width = (S.page / PAGES * 100).toFixed(1) + "%";
-        el.hint.textContent = "OK: قرأت الصفحة • ◄ ► صفحة • ▲ ▼ جزء • رجوع: خروج";
+        el.hint.textContent = APL.enx("OK: قرأت الصفحة • ◄ ► صفحة • ▲ ▼ جزء • رجوع: خروج");
         loadPicture(S.page);
     }
     function openReader(page) {
@@ -23952,7 +24273,7 @@ window.APL_DEVICES = [
     /* ---------- the Khatma panel (Settings > Prayer and Quran) ---------- */
     function remainingText() {
         var left = PAGES - S.page + 1, days = Math.ceil(left / S.plan);
-        return "باقي " + dg(left) + " صفحة (حوالي " + dg(days) + " يوم بالمعدّل ده)";
+        return APL.enx("باقي " + dg(left) + " صفحة (حوالي " + dg(days) + " يوم بالمعدّل ده)");
     }
     function panel(focus) {
         var kahfDone = !!S.kahf[dayKey()];
@@ -24051,7 +24372,7 @@ window.APL_DEVICES = [
     }
     function hm(ms) {
         var m = Math.max(0, Math.round(ms / 60000)), h = Math.floor(m / 60);
-        return h ? dg(h + ":" + p2(m % 60)) : dg(m) + " د";
+        return h ? dg(h + ":" + p2(m % 60)) : dg(m) + (APL.lang === "ar" ? " د" : " min");
     }
     function status(now) {
         var t = times();
@@ -24079,7 +24400,7 @@ window.APL_DEVICES = [
         ensureUi();
         wash.style.display = ""; chip.style.display = "";
         var s = status(Date.now());
-        chip.textContent = "\uD83C\uDF19 رمضان • يوم " + dg(dayNo()) + (s ? " • " + s : "");
+        chip.textContent = APL.enx("\uD83C\uDF19 رمضان • يوم " + dg(dayNo()) + (s ? " • " + s : ""));
     }
 
     var cannonAudio = null, cannonLast = "لسه ما اتجرّبش على التلفزيون", cannonPending = false;
@@ -24376,7 +24697,7 @@ window.APL_DEVICES = [
         if (q && sk(q.key) !== skip) {
             pending = { key: q.key, end: q.at.getTime() };
             var prevPhase = shown;
-            show("iqama", "الإقامة بعد " + mmss(q.ms), q.name);
+            show("iqama", APL.enx("الإقامة بعد ") + mmss(q.ms), q.name);
             if (!sec || prevPhase !== "iqama") {
                 if (sec) global.clearInterval(sec);
                 sec = global.setInterval(check, 1000);
@@ -24386,7 +24707,7 @@ window.APL_DEVICES = [
         if (pending && now >= pending.end && now < pending.end + S.min * 60000 && sk(pending.key) !== skip) {
             var left = pending.end + S.min * 60000 - now;
             var prevPhaseDim = shown;
-            show("dim", "الصلاة", "تعود الشاشة بعد " + dg(Math.ceil(left / 60000)) + " د");
+            show("dim", APL.enx("الصلاة"), APL.lang === "ar" ? "تعود الشاشة بعد " + dg(Math.ceil(left / 60000)) + " د" : "The screen returns in " + dg(Math.ceil(left / 60000)) + " min");
             if (!sec || prevPhaseDim !== "dim") {
                 if (sec) global.clearInterval(sec);
                 sec = global.setInterval(check, 15000);
@@ -24770,7 +25091,7 @@ window.APL_DEVICES = [
             toolsEl.appendChild(button(T("+ أ"), "tf-larger", function () { tfSize(1); }));
             toolsEl.appendChild(button(T("↕ تباعد"), "tf-spacing", function () {
                 prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); tfLook();
-                if (APL.toast) APL.toast("تباعد السطور " + dg(prefs.lh + 1) + " من " + dg(LH.length), true);
+                if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
             }));
             toolsEl.appendChild(button(T("◐ ورقي"), "tf-paper", function () {
                 prefs.paper = !prefs.paper; savePrefs(); tfLook();
@@ -24778,7 +25099,7 @@ window.APL_DEVICES = [
             }));
             toolsEl.appendChild(button(T("◉ لون"), "tf-color", function () {
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
-                if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
+                if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
             }, "mq__tool--wide"));
             toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "tf-safe", cycleSafe, "mq__tool--wide"));
         }
@@ -24911,7 +25232,7 @@ window.APL_DEVICES = [
         prefs.fit = false;      /* a size chosen by hand: the page may scroll again */
         prefs.font = SIZES[Math.max(0, Math.min(SIZES.length - 1, at + delta))]; savePrefs();
         applyLook();
-        if (APL.toast) APL.toast("حجم الخط " + dg(prefs.font) + " (يدوي)", true);
+        if (APL.toast) APL.toast(APL.enx("حجم الخط ") + dg(prefs.font) + APL.enx(" (يدوي)"), true);
     }
     function toggleFit() {
         prefs.fit = prefs.fit === false; savePrefs(); applyLook();
@@ -24940,7 +25261,7 @@ window.APL_DEVICES = [
     function cycleSafe() {
         prefs.safe = (safeIdx() + 1) % SAFE.length; savePrefs(); applySafe();
         if (readBody && prefs.fit !== false) fit();
-        if (APL.toast) APL.toast("حواف الشاشة: " + (SAFE[safeIdx()] ? SAFE[safeIdx()] + " بكسل" : "بدون"), true);
+        if (APL.toast) APL.toast(APL.enx("حواف الشاشة: ") + (SAFE[safeIdx()] ? SAFE[safeIdx()] + APL.enx(" بكسل") : APL.enx("بدون")), true);
     }
     function applyLook() {
         applySafe();
@@ -24954,11 +25275,11 @@ window.APL_DEVICES = [
     }
     function cycleColor() {
         prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); applyLook();
-        if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
+        if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
     }
     function cycleSpacing() {
         prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); applyLook();
-        if (APL.toast) APL.toast("تباعد السطور " + dg(prefs.lh + 1) + " من " + dg(LH.length), true);
+        if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
     }
     function togglePaper() {
         prefs.paper = !prefs.paper; savePrefs(); applyLook();
@@ -25373,7 +25694,7 @@ window.APL_DEVICES = [
     function tfSize(d) {
         var at = SIZES.indexOf(prefs.tfont || 34); if (at < 0) at = 2;
         prefs.tfont = SIZES[Math.max(0, Math.min(SIZES.length - 1, at + d))]; savePrefs(); tfLook();
-        if (APL.toast) APL.toast("حجم خط التفسير " + dg(prefs.tfont), true);
+        if (APL.toast) APL.toast(APL.enx("حجم خط التفسير ") + dg(prefs.tfont), true);
     }
     function tfGo(d) {
         var n = tfSurah + d;
@@ -25838,7 +26159,7 @@ window.APL_DEVICES = [
     function load() { try { var a = JSON.parse(global.localStorage.getItem(STORE) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
     function save() { try { global.localStorage.setItem(STORE, JSON.stringify(items)); } catch (e) {} }
     function dg(n) { return APL.digits ? APL.digits(String(n)) : String(n); }
-    function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+    function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = APL.enx(text); return n; }
     function typeOf(k) { for (var i = 0; i < TYPES.length; i++) if (TYPES[i][0] === k) return TYPES[i]; return TYPES[6]; }
     function dim(y, m) { return new Date(y, m + 1, 0).getDate(); }
     /* calendar difference: years, months, days, then hours and minutes (a birth hour is unknown, so it counts from midnight) */
@@ -25865,7 +26186,7 @@ window.APL_DEVICES = [
     }
     function refresh() {
         var now = new Date(), i;
-        for (i = 0; i < ageEls.length; i++) { ageEls[i].a.textContent = (typeOf(ageEls[i].it.type)[0] === "birthday" ? "العمر: " : "مرّ: ") + ageText(ageEls[i].it, now); ageEls[i].l.textContent = leftText(ageEls[i].it, now); }
+        for (i = 0; i < ageEls.length; i++) { ageEls[i].a.textContent = APL.enx((typeOf(ageEls[i].it.type)[0] === "birthday" ? "العمر: " : "مرّ: ") + ageText(ageEls[i].it, now)); ageEls[i].l.textContent = APL.enx(leftText(ageEls[i].it, now)); }
     }
     function btn(text, run, cls) { var b = el("div", "pe__f pe__btn" + (cls ? " " + cls : ""), text); b._run = run; return b; }
     function setNav(focus) {
@@ -25891,7 +26212,7 @@ window.APL_DEVICES = [
         items.slice().sort(function (a, b) { return nextDate(a, new Date()) - nextDate(b, new Date()); }).forEach(function (it) {
             var c = el("div", "pe__f pe__card"); c._id = "i-" + it.id; c._run = function () { draft = JSON.parse(JSON.stringify(it)); mode = "form"; paint("name-0"); };
             var ty = typeOf(it.type);
-            c.appendChild(el("div", "pe__cname", ty[2] + " " + it.name + " · " + ty[1]));
+            c.appendChild(el("div", "pe__cname", ty[2] + " " + APL.enx(it.name) + " · " + APL.enx(ty[1])));
             c.appendChild(el("div", "pe__cdate", dg(it.d) + " " + MONTHS[it.m] + " " + dg(it.y)));
             var a = el("div", "pe__age"), l = el("div", "pe__left"); c.appendChild(a); c.appendChild(l); ageEls.push({ it: it, a: a, l: l });
             grid.appendChild(c);
@@ -25912,10 +26233,10 @@ window.APL_DEVICES = [
     }
     function form() {
         var head = el("div", "pe__head"); head.appendChild(el("h1", "pe__title", draft.isNew ? "مناسبة جديدة" : "تعديل المناسبة")); body.appendChild(head);
-        chips("النوع", TYPES.map(function (t) { return [t[0], t[2] + " " + t[1]]; }), draft.type, function (v) { draft.type = v; if (draft.isNew) draft.name = ""; paint("type-" + TYPES.map(function (t) { return t[0]; }).indexOf(v)); }, "type-");
+        chips("النوع", TYPES.map(function (t) { return [t[0], t[2] + " " + APL.enx(t[1])]; }), draft.type, function (v) { draft.type = v; if (draft.isNew) draft.name = ""; paint("type-" + TYPES.map(function (t) { return t[0]; }).indexOf(v)); }, "type-");
         var sug = NAMES[draft.type] || NAMES.other;
         chips("الاسم (اختار من المقترحات)", sug.map(function (n) { return [n, n]; }), draft.name, function (v) { draft.name = v; paint("name-" + sug.indexOf(v)); }, "name-");
-        var inp = el("input", "pe__f pe__input"); inp.type = "text"; inp.maxLength = 30; inp.placeholder = "أو اكتب اسم آخر…"; inp.value = sug.indexOf(draft.name) < 0 ? draft.name : ""; inp._id = "custom";
+        var inp = el("input", "pe__f pe__input"); inp.type = "text"; inp.maxLength = 30; inp.placeholder = APL.enx("أو اكتب اسم آخر…"); inp.value = sug.indexOf(draft.name) < 0 ? draft.name : ""; inp._id = "custom";
         inp.dir = "rtl"; inp._run = function () { inp.focus(); };
         inp.addEventListener("input", function () { draft.name = inp.value; });
         inp.addEventListener("keydown", function (e) { if (e.keyCode === K.ENTER || e.keyCode === K.UP || e.keyCode === K.DOWN || e.keyCode === K.ESC) { e.stopPropagation(); inp.blur(); } });
@@ -25978,7 +26299,7 @@ window.APL_DEVICES = [
                 key = String(it.id || (it.type + it.m + "-" + it.d));
                 if (seen[key] === today) continue;
                 seen[key] = today;
-                name = typeOf(it.type)[2] + " " + it.name;
+                name = typeOf(it.type)[2] + " " + APL.enx(it.name);
                 msgs.push({ d: days, t: days === 0 ? "🎉 النهارده: " + name : days === 1 ? "⏰ بكرة: " + name : "⏰ بعد " + dg(days) + " أيام: " + name });
             }
             if (!msgs.length) return;
@@ -25995,7 +26316,7 @@ window.APL_DEVICES = [
             if (!it || typeof it.m !== "number" || typeof it.d !== "number") continue;
             d = Math.round((nextDate(it, now).getTime() - mid) / 86400000);
             if (d < 0) continue;
-            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + it.name };
+            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + APL.enx(it.name) };
         }
         return best;
     }
@@ -26316,10 +26637,14 @@ window.APL_DEVICES = [
         "مكية","مكية","مكية","مكية"
     ];
 
+    /* v8.7.24: English surah names and display helper (Arabic stays when the language is Arabic) */
+    var S_NAMES_EN = ["Al-Fatihah", "Al-Baqarah", "Aal-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat", "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
+    function NM(o) { return (APL.lang === "ar" || !o) ? (o && o.name_ar) : (o.name_en || o.name_ar); }
     for (var sIdx = 0; sIdx < 114; sIdx++) {
         SURAHS.push({
             id: sIdx + 1,
             name_ar: S_NAMES[sIdx],
+            name_en: S_NAMES_EN[sIdx],
             verses: S_COUNTS[sIdx],
             type: S_TYPES[sIdx]
         });
@@ -27099,7 +27424,7 @@ window.APL_DEVICES = [
                     curAyah = 1;
                     closeModal();
                     loadAndPlayCurrent();
-                    if (APL.toast) APL.toast("سورة " + s.name_ar, true);
+                    if (APL.toast) APL.toast(APL.lang === "ar" ? "سورة " + s.name_ar : "Surah " + NM(s), true);
                 });
                 list.appendChild(item);
             })(SURAHS[i]);
@@ -27156,7 +27481,7 @@ window.APL_DEVICES = [
                     closeModal();
                     renderHeader();
                     playCurrentAyah();
-                    if (APL.toast) APL.toast("القارئ: " + r.name_ar, true);
+                    if (APL.toast) APL.toast(APL.lang === "ar" ? "القارئ: " + r.name_ar : "Reciter: " + (r.name_en || r.name_ar), true);
                 });
                 list.appendChild(item);
             })(RECITERS[i], i);
@@ -27698,7 +28023,7 @@ window.APL_DEVICES = [
             if (s) {
                 var sTitle = document.getElementById("qa-sb-title");
                 var sMeta = document.getElementById("qa-sb-meta");
-                if (sTitle) sTitle.textContent = "سورة " + s.name_ar;
+                if (sTitle) sTitle.textContent = APL.lang === "ar" ? "سورة " + s.name_ar : "Surah " + NM(s);
                 if (sMeta) sMeta.textContent = "رقم " + toEastern(s.id) + " من ١١٤ · " + s.type + " · " + toEastern(s.verses) + " آية";
             }
         } else if (activeModal === "reciter") {
@@ -27706,7 +28031,7 @@ window.APL_DEVICES = [
             if (r) {
                 var rTitle = document.getElementById("qa-rb-title");
                 var rMeta = document.getElementById("qa-rb-meta");
-                if (rTitle) rTitle.textContent = r.name_ar;
+                if (rTitle) rTitle.textContent = APL.lang === "ar" ? r.name_ar : (r.name_en || r.name_ar);
                 if (rMeta) rMeta.textContent = "القارئ رقم " + toEastern(modalFocusIdx + 1) + " من ٤٢ قارئاً معتمداً";
             }
         }

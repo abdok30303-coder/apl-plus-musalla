@@ -119,7 +119,7 @@
     }
     function ayahBlock() {
         var a = ayahCache; if (!a) return "";
-        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">\uFD3F ' + a.text + ' \uFD3E</div><div class="sx-ayah__s">سورة ' + a.name + ' · آية ' + APL.digits(String(a.n)) + '</div></div>';
+        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">\uFD3F ' + a.text + ' \uFD3E</div><div class="sx-ayah__s">' + APL.enx("سورة ") + a.name + APL.enx(" · آية ") + APL.digits(String(a.n)) + '</div></div>';
     }
 
     /* v8.2.0/v8.5.0: fifth choice, today's ayah + its Saadi tafsir excerpt (verified data/tafsir/NN.json). */
@@ -139,14 +139,14 @@
     function tafHtml() {
         var h = ayahHtml(), a = ayahCache; if (!a) return h;
         if (!tfxCache || tfxCache.day !== a.day) { loadTfx(); return h; }
-        return h + '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + (tfxCache.text || "تفسير الآية") + '</div><div class="sx-ayah__s">تيسير الكريم الرحمن في تفسير كلام المنان · الشيخ السعدي</div></div>';
+        return h + '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + (tfxCache.text || APL.enx("تفسير الآية")) + '</div><div class="sx-ayah__s">تيسير الكريم الرحمن في تفسير كلام المنان · الشيخ السعدي</div></div>';
     }
 
     /* v8.1.0: nearest personal occasion (js/personal.js) */
     function persHtml() {
         var n = APL.personal && APL.personal.nearest ? APL.personal.nearest() : null;
-        if (!n) return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">مفيش مناسبات شخصية متسجّلة</div><div class="sx-ayah__s">ضيف من صفحة الصلاة والقرآن › مناسباتي</div></div>';
-        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + n.name + '</div><div class="sx-ayah__s">' + (n.days === 0 ? "النهارده! 🎉" : n.days === 1 ? "بكرة" : "باقي " + APL.digits(String(n.days)) + " يوم") + '</div></div>';
+        if (!n) return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + APL.enx("مفيش مناسبات شخصية متسجّلة") + '</div><div class="sx-ayah__s">' + APL.enx("ضيف من صفحة الصلاة والقرآن › مناسباتي") + '</div></div>';
+        return '<div class="sx-ev sx-ayah"><div class="sx-ayah__t">' + n.name + '</div><div class="sx-ayah__s">' + APL.enx(n.days === 0 ? "النهارده! 🎉" : n.days === 1 ? "بكرة" : "باقي " + APL.digits(String(n.days)) + " يوم") + '</div></div>';
     }
 
     /* v8.5.0: wisdom from Kalem Tayeb (data/hekam/excerpts.json)
@@ -246,7 +246,7 @@
             var html = '<div class="statusx__card hc__row hc__row--hekam" style="--hekam-s:' + (scale / 100) + '">' +
                 '<div class="hc__cell">' +
                     '<span class="hc__time"><span class="hc__t">💎</span></span>' +
-                    '<span class="hc__label hc__label--hekam">حكمة اليوم</span>' +
+                    '<span class="hc__label hc__label--hekam">' + APL.enx("حكمة اليوم") + '</span>' +
                 '</div>' +
                 '<div class="hc__date hc__date--hekam">' +
                     '<span class="hc__greg hc__greg--hekam hc__text--green">' + esc(it.text) + '</span>' +

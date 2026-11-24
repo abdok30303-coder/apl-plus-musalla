@@ -25,7 +25,7 @@
     function load() { try { var a = JSON.parse(global.localStorage.getItem(STORE) || "[]"); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
     function save() { try { global.localStorage.setItem(STORE, JSON.stringify(items)); } catch (e) {} }
     function dg(n) { return APL.digits ? APL.digits(String(n)) : String(n); }
-    function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = text; return n; }
+    function el(tag, cls, text) { var n = document.createElement(tag); if (cls) n.className = cls; if (text !== undefined) n.textContent = APL.enx(text); return n; }
     function typeOf(k) { for (var i = 0; i < TYPES.length; i++) if (TYPES[i][0] === k) return TYPES[i]; return TYPES[6]; }
     function dim(y, m) { return new Date(y, m + 1, 0).getDate(); }
     /* calendar difference: years, months, days, then hours and minutes (a birth hour is unknown, so it counts from midnight) */
@@ -52,7 +52,7 @@
     }
     function refresh() {
         var now = new Date(), i;
-        for (i = 0; i < ageEls.length; i++) { ageEls[i].a.textContent = (typeOf(ageEls[i].it.type)[0] === "birthday" ? "العمر: " : "مرّ: ") + ageText(ageEls[i].it, now); ageEls[i].l.textContent = leftText(ageEls[i].it, now); }
+        for (i = 0; i < ageEls.length; i++) { ageEls[i].a.textContent = APL.enx((typeOf(ageEls[i].it.type)[0] === "birthday" ? "العمر: " : "مرّ: ") + ageText(ageEls[i].it, now)); ageEls[i].l.textContent = APL.enx(leftText(ageEls[i].it, now)); }
     }
     function btn(text, run, cls) { var b = el("div", "pe__f pe__btn" + (cls ? " " + cls : ""), text); b._run = run; return b; }
     function setNav(focus) {
@@ -78,7 +78,7 @@
         items.slice().sort(function (a, b) { return nextDate(a, new Date()) - nextDate(b, new Date()); }).forEach(function (it) {
             var c = el("div", "pe__f pe__card"); c._id = "i-" + it.id; c._run = function () { draft = JSON.parse(JSON.stringify(it)); mode = "form"; paint("name-0"); };
             var ty = typeOf(it.type);
-            c.appendChild(el("div", "pe__cname", ty[2] + " " + it.name + " · " + ty[1]));
+            c.appendChild(el("div", "pe__cname", ty[2] + " " + APL.enx(it.name) + " · " + APL.enx(ty[1])));
             c.appendChild(el("div", "pe__cdate", dg(it.d) + " " + MONTHS[it.m] + " " + dg(it.y)));
             var a = el("div", "pe__age"), l = el("div", "pe__left"); c.appendChild(a); c.appendChild(l); ageEls.push({ it: it, a: a, l: l });
             grid.appendChild(c);
@@ -99,10 +99,10 @@
     }
     function form() {
         var head = el("div", "pe__head"); head.appendChild(el("h1", "pe__title", draft.isNew ? "مناسبة جديدة" : "تعديل المناسبة")); body.appendChild(head);
-        chips("النوع", TYPES.map(function (t) { return [t[0], t[2] + " " + t[1]]; }), draft.type, function (v) { draft.type = v; if (draft.isNew) draft.name = ""; paint("type-" + TYPES.map(function (t) { return t[0]; }).indexOf(v)); }, "type-");
+        chips("النوع", TYPES.map(function (t) { return [t[0], t[2] + " " + APL.enx(t[1])]; }), draft.type, function (v) { draft.type = v; if (draft.isNew) draft.name = ""; paint("type-" + TYPES.map(function (t) { return t[0]; }).indexOf(v)); }, "type-");
         var sug = NAMES[draft.type] || NAMES.other;
         chips("الاسم (اختار من المقترحات)", sug.map(function (n) { return [n, n]; }), draft.name, function (v) { draft.name = v; paint("name-" + sug.indexOf(v)); }, "name-");
-        var inp = el("input", "pe__f pe__input"); inp.type = "text"; inp.maxLength = 30; inp.placeholder = "أو اكتب اسم آخر…"; inp.value = sug.indexOf(draft.name) < 0 ? draft.name : ""; inp._id = "custom";
+        var inp = el("input", "pe__f pe__input"); inp.type = "text"; inp.maxLength = 30; inp.placeholder = APL.enx("أو اكتب اسم آخر…"); inp.value = sug.indexOf(draft.name) < 0 ? draft.name : ""; inp._id = "custom";
         inp.dir = "rtl"; inp._run = function () { inp.focus(); };
         inp.addEventListener("input", function () { draft.name = inp.value; });
         inp.addEventListener("keydown", function (e) { if (e.keyCode === K.ENTER || e.keyCode === K.UP || e.keyCode === K.DOWN || e.keyCode === K.ESC) { e.stopPropagation(); inp.blur(); } });
@@ -165,7 +165,7 @@
                 key = String(it.id || (it.type + it.m + "-" + it.d));
                 if (seen[key] === today) continue;
                 seen[key] = today;
-                name = typeOf(it.type)[2] + " " + it.name;
+                name = typeOf(it.type)[2] + " " + APL.enx(it.name);
                 msgs.push({ d: days, t: days === 0 ? "🎉 النهارده: " + name : days === 1 ? "⏰ بكرة: " + name : "⏰ بعد " + dg(days) + " أيام: " + name });
             }
             if (!msgs.length) return;
@@ -182,7 +182,7 @@
             if (!it || typeof it.m !== "number" || typeof it.d !== "number") continue;
             d = Math.round((nextDate(it, now).getTime() - mid) / 86400000);
             if (d < 0) continue;
-            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + it.name };
+            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + APL.enx(it.name) };
         }
         return best;
     }

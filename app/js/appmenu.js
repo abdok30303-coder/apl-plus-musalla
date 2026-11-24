@@ -109,8 +109,8 @@
     function openAlert(spec) {
         if (!alertRoot) buildAlert();
         alertSpec = spec;
-        alertTitle.textContent = spec.title || "";
-        alertMsg.textContent = spec.message || "";
+        alertTitle.textContent = APL.enx ? APL.enx(spec.title || "") : (spec.title || "");
+        alertMsg.textContent = APL.enx ? APL.enx(spec.message || "") : (spec.message || "");
         alertMsg.style.display = spec.message ? "" : "none";
         alertExtra.innerHTML = "";
         if (spec.node) alertExtra.appendChild(spec.node);
@@ -118,7 +118,7 @@
         alertBtns.innerHTML = "";
         var btns = spec.buttons.map(function (b) {
             var e = el("div", "aplalert__btn" + (b.destructive ? " is-destructive" : ""));
-            e.textContent = b.label;
+            e.textContent = APL.enx ? APL.enx(b.label) : b.label;
             alertBtns.appendChild(e);
             return e;
         });

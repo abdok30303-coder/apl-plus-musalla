@@ -304,7 +304,7 @@
                 changed();
                 return tryChain(ONLINE[id], id, token).then(null, function (e2) {
                     if (token !== session) throw e2;
-                    if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; throw nf; }
+                    if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; nf.triedOnline = true; throw nf; }
                     throw localErr;
                 });
             });

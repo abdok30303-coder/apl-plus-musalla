@@ -1033,7 +1033,7 @@
     /* info = secondary message, hidden when "Do Not Disturb" is on */
     function toast(msg, info) {
         if (info && APL.sys.pref("dnd")) return;
-        dom.toast.textContent = msg;
+        dom.toast.textContent = APL.enx ? APL.enx(msg) : msg;
         dom.toast.classList.add("is-visible");
         clearTimeout(toast._t);
         toast._t = setTimeout(function () { dom.toast.classList.remove("is-visible"); }, 2600);

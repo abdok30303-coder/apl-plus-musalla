@@ -343,7 +343,7 @@
             toolsEl.appendChild(button(T("+ أ"), "tf-larger", function () { tfSize(1); }));
             toolsEl.appendChild(button(T("↕ تباعد"), "tf-spacing", function () {
                 prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); tfLook();
-                if (APL.toast) APL.toast("تباعد السطور " + dg(prefs.lh + 1) + " من " + dg(LH.length), true);
+                if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
             }));
             toolsEl.appendChild(button(T("◐ ورقي"), "tf-paper", function () {
                 prefs.paper = !prefs.paper; savePrefs(); tfLook();
@@ -351,7 +351,7 @@
             }));
             toolsEl.appendChild(button(T("◉ لون"), "tf-color", function () {
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
-                if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
+                if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
             }, "mq__tool--wide"));
             toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "tf-safe", cycleSafe, "mq__tool--wide"));
         }
@@ -484,7 +484,7 @@
         prefs.fit = false;      /* a size chosen by hand: the page may scroll again */
         prefs.font = SIZES[Math.max(0, Math.min(SIZES.length - 1, at + delta))]; savePrefs();
         applyLook();
-        if (APL.toast) APL.toast("حجم الخط " + dg(prefs.font) + " (يدوي)", true);
+        if (APL.toast) APL.toast(APL.enx("حجم الخط ") + dg(prefs.font) + APL.enx(" (يدوي)"), true);
     }
     function toggleFit() {
         prefs.fit = prefs.fit === false; savePrefs(); applyLook();
@@ -513,7 +513,7 @@
     function cycleSafe() {
         prefs.safe = (safeIdx() + 1) % SAFE.length; savePrefs(); applySafe();
         if (readBody && prefs.fit !== false) fit();
-        if (APL.toast) APL.toast("حواف الشاشة: " + (SAFE[safeIdx()] ? SAFE[safeIdx()] + " بكسل" : "بدون"), true);
+        if (APL.toast) APL.toast(APL.enx("حواف الشاشة: ") + (SAFE[safeIdx()] ? SAFE[safeIdx()] + APL.enx(" بكسل") : APL.enx("بدون")), true);
     }
     function applyLook() {
         applySafe();
@@ -527,11 +527,11 @@
     }
     function cycleColor() {
         prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); applyLook();
-        if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
+        if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
     }
     function cycleSpacing() {
         prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); applyLook();
-        if (APL.toast) APL.toast("تباعد السطور " + dg(prefs.lh + 1) + " من " + dg(LH.length), true);
+        if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
     }
     function togglePaper() {
         prefs.paper = !prefs.paper; savePrefs(); applyLook();
@@ -946,7 +946,7 @@
     function tfSize(d) {
         var at = SIZES.indexOf(prefs.tfont || 34); if (at < 0) at = 2;
         prefs.tfont = SIZES[Math.max(0, Math.min(SIZES.length - 1, at + d))]; savePrefs(); tfLook();
-        if (APL.toast) APL.toast("حجم خط التفسير " + dg(prefs.tfont), true);
+        if (APL.toast) APL.toast(APL.enx("حجم خط التفسير ") + dg(prefs.tfont), true);
     }
     function tfGo(d) {
         var n = tfSurah + d;

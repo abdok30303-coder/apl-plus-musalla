@@ -1,3 +1,9 @@
+## 8.7.24 (English everywhere in the settings; What's New message updated; Untested on physical TV)
+- **English:** every settings page and option now has English text when the language is English (about 55 new entries in the settings tree). Toasts, alerts, the prayer flow, khatma, personal pages, the Ramadan chip, the home ayah and occasion labels and the Quran reader messages now go through a shared translator (`APL.enx`). Surah and reciter names show in English in English mode.
+- **Audio:** a clear message when both the local APL-Audio file and the online fallback fail.
+- **What's New:** the message after installation now lists this version's changes, in Arabic or English by app language.
+- Left in Arabic on purpose: the "العربية" language option and the Arabic digits option.
+
 ## 8.7.23 (Al-Kahf and Eid takbeer: local file first, online fallback; Untested on physical TV)
 - **Order:** `audio-pack.js` still looks for `alkahf.mp3` and `takbeerat-eid.mp3` in the APL-Audio folder (TV storage or USB) first. Only if the file is not found, or will not open, it streams the recording online with Samsung AVPlay (status text: "Not found on the TV, trying online...").
 - **Online sources (archive.org, HTTPS, byte ranges so Al-Kahf can seek and resume):** Al-Kahf: Sheikh Mahmoud Khalil Al-Husary, Egyptian Radio recording, `https://archive.org/download/MahmoudKhalilAl-husary/018.mp3` (MP3 128 kbps, 36 min). Eid takbeer: Egyptian Radio takbeerat, `https://archive.org/download/f-2mp-download-sd/F2mp_download_sd.mp3` (10 min, AAC in an MP4 container; it repeats until stopped like the local file).
