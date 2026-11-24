@@ -3,9 +3,9 @@
 </p>
 
 <p align="center">
-  <img alt="version" src="https://img.shields.io/badge/version-8.7.20-c9973b?style=for-the-badge">
+  <img alt="version" src="https://img.shields.io/badge/version-8.7.26-c9973b?style=for-the-badge">
   <img alt="platform" src="https://img.shields.io/badge/Samsung%20Tizen-6.5%2B-1b1f4a?style=for-the-badge">
-  <img alt="ui" src="https://img.shields.io/badge/UI-Arabic%20%C2%B7%20RTL-0b6e4f?style=for-the-badge">
+  <img alt="ui" src="https://img.shields.io/badge/UI-Arabic%20%2B%20English-0b6e4f?style=for-the-badge">
   <img alt="offline" src="https://img.shields.io/badge/Mushaf%20%26%20tafsir-offline-8a5cf6?style=for-the-badge">
 </p>
 
@@ -80,9 +80,12 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 
 ### Prayer and worship
 - **Prayer times** for the day with a live countdown, calculated on the TV and corrected from the AlAdhan service when online. The Egyptian General Authority method is the default.
+- **Prayer times and weather for any city in the world:** pick a city or search for one, with the usual calculation method for its country, Asr and high-latitude rules, and weather that follows the prayer city (Celsius or Fahrenheit). Umm Al-Qura uses the 120-minute Isha in Ramadan.
+- **Arabic and English:** every setting, the Quran reader and player, the Wisdom pages and the alerts show English when the app language is English. Verse, tafsir and wisdom texts stay Arabic.
 - **Spoken alerts** at each prayer, a *test alert* button, an option to pause the radio while the alert plays, and a *Friday reminders* option.
 - **Hijri and Gregorian dates**, the *last third of the night* and *midnight* times, and countdown cards for **Ramadan**, **the last ten nights**, **mid-Sha'ban** and **Isra and Mi'raj**.
-- **Quran radio** from Cairo, **Surat Al-Kahf** with one press, **Eid takbeerat** and a **Ramadan cannon** sound.
+- **Quran radio** from Cairo, **Surat Al-Kahf** with one press and **Eid takbeerat**. Both play the local file from the `APL-Audio` folder first and stream online (archive.org) only if it is not found.
+- **Ramadan cannon** at Maghrib, with its own switch and a cannon-only test button.
 - **Azkar**, a **Khatma** tracker and a **Wisdom** widget with sayings and reminders.
 - **"My occasions"** for birthdays, anniversaries and family dates, with live ages and reminders.
 
@@ -92,7 +95,7 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 - **Instant search** while you type, results in Mushaf order, with an on-screen Arabic keyboard made for a remote.
 - **Tafsir al-Sa'di** for every surah, plus search inside the tafsir.
 - **Quran listening page** with online reciters.
-- **Reading comfort:** font size, line spacing, paper and text colour options, and a page that fits the whole screen.
+- **Reading comfort:** font size, line spacing, paper and text colour options, and a page that fits the whole screen, and a screen-margins button so words are not cut at the edges.
 
 ### A real launcher
 - **Apple TV–style home** with a glass look, a Top Shelf, a dynamic sky and compact local wallpapers.
@@ -113,7 +116,7 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 **The easy way: Apps2Samsung** (free, no programming needed)
 
 1. On the TV, turn on **Developer Mode**: **Home › Apps**, type **12345**, switch Developer mode **On**, enter your computer's IP address, then **restart the TV**.
-2. Download `salah-launcher-v8.7.20.wgt` from the [Releases page](../../releases) (or directly: [`releases/salah-launcher-v8.7.20.wgt`](releases/salah-launcher-v8.7.20.wgt)).
+2. Download `salah-launcher-v8.7.26.wgt` from the [Releases page](../../releases) (or directly: [`releases/salah-launcher-v8.7.26.wgt`](releases/salah-launcher-v8.7.26.wgt)).
 3. Open [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer, select your TV, choose a **custom `.wgt`**, pick the file and press **Install**.
 4. Open **Salah Launcher** from the TV's **Apps** list.
 
