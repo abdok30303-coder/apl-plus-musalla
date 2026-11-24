@@ -108,6 +108,58 @@
     /* v8.7.24: English surah names and display helper (Arabic stays when the language is Arabic) */
     var S_NAMES_EN = ["Al-Fatihah", "Al-Baqarah", "Aal-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat", "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
     function NM(o) { return (APL.lang === "ar" || !o) ? (o && o.name_ar) : (o.name_en || o.name_ar); }
+    /* v8.7.25: English for the Quran player. In English mode every label, tooltip and placeholder inside the player is translated
+       (exact texts, surah and reciter names, a few phrases); verse and tafsir text is never touched. */
+    var QA_D = {"تشغيل متواصل": "Continuous play", "تكرار الآية الحالية": "Repeat the current verse", "تكرار السورة كاملة": "Repeat the whole surah", "إيقاف التكرار": "Repeat off", "البحث في الآيات": "Search verses", "إذاعة القرآن الكريم من القاهرة": "Holy Quran Radio from Cairo", "إذاعة القرآن": "Quran Radio", "إذاعة القرآن · مباشر": "Quran Radio · Live", "وضع التكرار": "Repeat mode", "الآية السابقة": "Previous verse", "تشغيل / إيقاف مؤقت": "Play / Pause", "الآية التالية": "Next verse", "سرعة التلاوة": "Recitation speed", "خيارات إضافية": "More options", "جاري تحميل نص الآية الكريمة…": "Loading the verse…", "جاري تحميل التفسير…": "Loading the tafsir…", "جاري الاتصال…": "Connecting…", "اختر سورة من المصحف الشريف": "Choose a surah", "تنقل بالأسهم واضغط OK للاختيار والاستماع": "Move with the arrows and press OK to choose and listen", "السورة المحددة بالريموت:": "Surah selected with the remote:", "اضغط زر [ OK ] لتشغيل السورة والاستماع فوراً ◀": "Press [ OK ] to play the surah now ◀", "اختر القارئ (٤٢ قارئ معتمد)": "Choose a reciter (42 approved reciters)", "القارئ المحدد بالريموت:": "Reciter selected with the remote:", "اضغط زر [ OK ] لتشغيل القارئ والاستماع فوراً ◀": "Press [ OK ] to play with this reciter now ◀", "البحث الفوري في نصوص الآيات": "Instant search in the verses", "اكتب كلمة أو جزءاً من الآية للبحث...": "Type a word or part of a verse to search...", "أدخل كلمتين على الأقل لبدء البحث الفوري": "Enter at least two letters to start the instant search", "جاري تحميل فهرس وبيانات البحث…": "Loading the search index and data…", "تعذر تحميل بيانات البحث": "Could not load the search data", "لم يتم العثور على نتائج مطابقة": "No matching results", "خيارات مشغل القرآن الكريم": "Quran player options", "سرعة التلاوة:": "Recitation speed:", "1.0× (عادي)": "1.0× (normal)", "مفعّل": "On", "معطّل": "Off", "إظهار التفسير أسفل الآية:": "Show the tafsir under the verse:", "حفظ وإغلاق": "Save and close"};
+    var QA_FR = {"سورة ": "Surah ", "الآية ": "Verse ", " آية": " verses", "مكية": "Meccan", "مدنية": "Medinan", "القارئ رقم ": "Reciter no. ", "رقم ": "No. ", " من ١١٤ · ": " of 114 · ", " من ٤٢ قارئاً معتمداً": " of 42 approved reciters"};
+    function qaMaps() {
+        if (QA_D._ready) return;
+        QA_D._ready = true;
+        for (var i = 0; i < SURAHS.length; i++) QA_D[SURAHS[i].name_ar] = SURAHS[i].name_en;
+        for (var j = 0; j < RECITERS.length; j++) if (RECITERS[j].name_en) QA_D[RECITERS[j].name_ar] = RECITERS[j].name_en;
+    }
+    function qaText(s) {
+        var t = s.replace(/^\s+|\s+$/g, "");
+        if (!t || !/[\u0600-\u06FF\u0660-\u0669]/.test(t) || t.length > 90) return s;
+        qaMaps();
+        if (Object.prototype.hasOwnProperty.call(QA_D, t)) return s.replace(t, QA_D[t]);
+        var out = s, k;
+        for (k in QA_FR) if (out.indexOf(k) >= 0) out = out.split(k).join(QA_FR[k]);
+        for (var i = 0; i < SURAHS.length; i++) if (out.indexOf("Surah " + SURAHS[i].name_ar) >= 0) out = out.split("Surah " + SURAHS[i].name_ar).join("Surah " + SURAHS[i].name_en);
+        return out.replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 1632); });
+    }
+    function qaSkip(n) {
+        var e = n.nodeType === 1 ? n : n.parentNode;
+        if (!e) return true;
+        if ((verseTextEl && verseTextEl.contains(e)) || (tafsirTextEl && tafsirTextEl.contains(e))) return true;
+        return !!(e.closest && e.closest(".qa-sr-body, .qa-verse-main, .qa-tafsir-main"));
+    }
+    function qaWalk(n) {
+        if (n.nodeType === 3) { if (!qaSkip(n)) { var v = qaText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; } return; }
+        if (n.nodeType !== 1 || qaSkip(n)) return;
+        var at = ["title", "placeholder", "aria-label"];
+        for (var a = 0; a < at.length; a++) { var av = n.getAttribute(at[a]); if (av) { var nv = qaText(av); if (nv !== av) n.setAttribute(at[a], nv); } }
+        for (var c = n.firstChild; c; c = c.nextSibling) qaWalk(c);
+    }
+    function qaWatch(el) {
+        if (APL.lang === "ar" || !global.MutationObserver) return;
+        var busy = false;
+        var mo = new global.MutationObserver(function (recs) {
+            if (busy) return;
+            busy = true;
+            try {
+                for (var i = 0; i < recs.length; i++) {
+                    var r = recs[i];
+                    if (r.type === "childList") { for (var j = 0; j < r.addedNodes.length; j++) qaWalk(r.addedNodes[j]); }
+                    else if (r.type === "characterData") qaWalk(r.target);
+                    else qaWalk(r.target);
+                }
+            } catch (e) {}
+            busy = false;
+        });
+        mo.observe(el, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["title", "placeholder", "aria-label"] });
+        qaWalk(el);
+    }
     for (var sIdx = 0; sIdx < 114; sIdx++) {
         SURAHS.push({
             id: sIdx + 1,
@@ -760,6 +812,7 @@
         rootEl.appendChild(modalOverlay);
 
         document.body.appendChild(rootEl);
+        qaWatch(rootEl);
         return rootEl;
     }
 

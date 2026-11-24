@@ -159,7 +159,7 @@
         });
         return list;
     }
-    /* v8.8.1: world support for the prayer times and the weather. */
+    /* v8.7.21: world support for the prayer times and the weather. */
     function weatherOptions() { return [["same", APL.t("Same as prayer city")]].concat(cityOptions()); }
     function methodOptions() {
         var list = [["auto", APL.t("Automatic (by country)")]];

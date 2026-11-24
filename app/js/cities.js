@@ -5,7 +5,7 @@
    code and its IANA time zone, so the times, the countdown and the
    weather follow the city (and not Egypt) when you pick another one.
 
-   v8.8.1: world cities (not only Egypt), the usual calculation method
+   v8.7.21: world cities (not only Egypt), the usual calculation method
    of each country, and "custom": any city found with Settings > Search
    for a city anywhere (Open-Meteo geocoding, needs internet).
 

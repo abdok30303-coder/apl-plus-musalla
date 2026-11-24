@@ -20,7 +20,7 @@
     var SITE = global.APL_SITE || {};
     var CFG = SITE.weather || {};
     var KEY = "apl.weather.last";
-    var last = null, busy = false, failed = false;
+    var last = null, busy = false, failed = false, again = false;
 
     /* WMO weather codes → a word and an icon (Open-Meteo's own table, grouped). */
     var CODES = [
@@ -61,7 +61,7 @@
 
     function place() {
         var key = sys.pref("weatherPlace") || CFG.place || "cairo";
-        /* v8.8.1: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
+        /* v8.7.21: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
         if (key === "same" || !userChoseWeather()) key = sys.pref("prayerCity") || CFG.city || key;
         return global.APL_CITY ? global.APL_CITY(key) : { key: "cairo", ar: "القاهرة", en: "Cairo", lat: 30.0444, lon: 31.2357 };
     }
@@ -72,15 +72,19 @@
     function unitF() { return sys.pref("weatherUnit") === "F"; }
     function unitParams() { return unitF() ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""; }
 
+    /* v8.7.25: a saved reading counts only for the same place and unit it was made for */
     function readSaved() {
-        try { return JSON.parse(global.localStorage.getItem(KEY) || "null"); } catch (e) { return null; }
+        var w = null;
+        try { w = JSON.parse(global.localStorage.getItem(KEY) || "null"); } catch (e) { return null; }
+        if (w && (w.placeKey !== place().key || (w.unit || "C") !== (unitF() ? "F" : "C"))) return null;
+        return w;
     }
     function saveSaved(w) {
         try { global.localStorage.setItem(KEY, JSON.stringify(w)); } catch (e) {}
     }
 
     function fetchNow() {
-        if (busy) return Promise.resolve(last);
+        if (busy) { again = true; return Promise.resolve(last); }
         var p = place();
         var url = "https://api.open-meteo.com/v1/forecast?latitude=" + p.lat.toFixed(4) +
                   "&longitude=" + p.lon.toFixed(4) +
@@ -159,18 +163,21 @@
                 textAr: d.ar, textEn: d.en, icon: d.icon,
                 isDay: cur.is_day === 1,
                 placeKey: p.key,
+                unit: unitF() ? "F" : "C",
                 days: daysForecast,
                 hours: hoursForecast,
                 at: Date.now()
             };
             saveSaved(last);
             render();
+            if (again) { again = false; global.setTimeout(fetchNow, 0); }
             return last;
         }).catch(function (e) {
             busy = false;
             failed = true;
-            last = readSaved() || last;
+            last = readSaved() || (last && last.placeKey === place().key ? last : null);
             render(true);
+            if (again) { again = false; global.setTimeout(fetchNow, 0); }
             return last;
         });
     }

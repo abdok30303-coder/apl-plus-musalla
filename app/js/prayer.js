@@ -37,7 +37,7 @@
     function cityKey() { return sys.pref("prayerCity") || CFG.city || "cairo"; }
     function city() { return global.APL_CITY ? global.APL_CITY(cityKey()) : { key: "cairo", lat: 30.0444, lon: 31.2357, ar: "القاهرة", en: "Cairo" }; }
     function cityName() { var c = city(); return APL.lang === "ar" ? c.ar : c.en; }
-    /* v8.8.1: world support. The time zone, the calculation method, the Asr rule and the high-latitude rule follow the chosen city. */
+    /* v8.7.21: world support. The time zone, the calculation method, the Asr rule and the high-latitude rule follow the chosen city. */
     function tz() { var c = city(); return (c && c.tz) || CFG.timezone || "Africa/Cairo"; }
     function methodId() {
         var v = sys.pref("prayerMethod"), n = parseInt(v, 10);
@@ -105,7 +105,7 @@
         return o;
     }
 
-    /* v8.8.1: one formatter per time zone (the zone of the chosen city), made when first needed. */
+    /* v8.7.21: one formatter per time zone (the zone of the chosen city), made when first needed. */
     var fmtCache = {};
     function fmtFor(zone) {
         if (fmtCache[zone] !== undefined) return fmtCache[zone];
@@ -271,7 +271,7 @@
         var pauseRad = sys.pref("radioDuringAlert") !== false;
         var vol = parseFloat(sys.pref("prayerAlertVolume"));
         if (!(vol >= 0.1 && vol <= 1.5)) vol = 0.92;
-        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0].join("|");
+        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0, methodId(), schoolId(), hlNum()].join("|");
         if (!force && sig === syncedSig && entries.length > 0) return;
 
         if (!force && Date.now() < retryAt) return;          // Vetro was not ready: wait before asking again
@@ -312,13 +312,13 @@
         var ra = fix(Math.atan2(cos(e) * sin(L), cos(L)) / R, 360) / 15;
         var eqt = qq / 15 - ra, decl = Math.asin(sin(e) * sin(L)) / R;
         eqt = eqt - 24 * Math.round(eqt / 24);
-        var noon = 12 - eqt - lon / 15 + tzHours(isoDay);   // local solar noon in the city's own time zone (v8.8.1)
+        var noon = 12 - eqt - lon / 15 + tzHours(isoDay);   // local solar noon in the city's own time zone (v8.7.21)
         function span(angle) {                                                          // hours from noon to the sun at -angle (angle > 0 = below the horizon)
             var c = (-sin(angle) - sin(decl) * sin(lat)) / (cos(decl) * cos(lat));
             if (c < -1 || c > 1) return null;
             return Math.acos(c) / R / 15;
         }
-        var P = methodInfo();                                                           // v8.8.1: the method, the Asr rule and far-north cities
+        var P = methodInfo();                                                           // v8.7.21: the method, the Asr rule and far-north cities
         var asrAngle = -Math.atan(1 / ((schoolId() === 1 ? 2 : 1) + Math.tan(Math.abs(lat - decl) * R))) / R;
         var sr = span(0.833);                                                           // sunrise and sunset are symmetrical around noon
         var t = { fajr: span(P.fajr), sunrise: sr, asr: span(asrAngle), maghrib: P.mag ? span(P.mag) : sr, isha: P.ishaMin ? 0 : span(P.isha) };

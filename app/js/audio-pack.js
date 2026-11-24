@@ -194,6 +194,7 @@
     /* v7.0.8: Eid Takbeer plays again as soon as it ends, until the person stops it. If two endings come less than
        4 s apart three times (a broken or empty file) it stops instead of looping forever. */
     var loopAt = 0, loopFast = 0;
+    var playedOnline = {};
     function loopAgain(id) {
         var now = Date.now();
         loopFast = (loopAt && now - loopAt < 4000) ? loopFast + 1 : 0;
@@ -201,7 +202,7 @@
         if (loopFast >= 3) { stop(true, "The recording finished.", true); return; }
         closeAv();
         playing = false; preparing = false; current = "";
-        play(id).then(null, function () {});
+        play(id, { online: !!playedOnline[id] }).then(null, function () {});
     }
     function openOne(path, id, token) {
         return new Promise(function (resolve, reject) {
@@ -297,12 +298,14 @@
             changed();
             /* v8.7.23: the local APL-Audio file is tried FIRST; only if it is not found (or will not open) the recording
                is streamed from the online source (ONLINE below). */
-            return tryChain(blind ? blindPaths(id) : paths, id, token).then(null, function (e) {
+            /* v8.7.25: a repeat (Eid takbeer loop) of a recording that was already playing online goes straight to the online source, so there is no wait on the local paths between repeats. */
+            var skipLocal = !!(opts && opts.online);
+            return (skipLocal ? Promise.reject(new Error("online repeat")) : tryChain(blind ? blindPaths(id) : paths, id, token)).then(function (r) { playedOnline[id] = false; return r; }, function (e) {
                 if (token !== session) throw e;
                 var localErr = e;
                 why = "Not found on the TV, trying online…";
                 changed();
-                return tryChain(ONLINE[id], id, token).then(null, function (e2) {
+                return tryChain(ONLINE[id], id, token).then(function (r2) { playedOnline[id] = true; return r2; }, function (e2) {
                     if (token !== session) throw e2;
                     if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; nf.triedOnline = true; throw nf; }
                     throw localErr;

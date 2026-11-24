@@ -10,7 +10,18 @@
     if (!APL || !sys) return;
 
     var OK = "\u2714", WARN = "\u26A0", BAD = "\u2716";
-    function line(mark, name, why) { return mark + " " + name + (why ? " \u2014 " + why : ""); }
+    /* v8.7.25: English for the diagnostics lines (exact texts first, then phrases, longest first) */
+    var TE_D = {"الإصدار": "Version", "مواقيت الصلاة": "Prayer times", "متحمّلة": "Loaded", "مفيش بيانات": "No data", "خطأ": "Error", "معايرة المواقيت": "Prayer time calibration", "مش محسوبة لسه": "Not calculated yet", "تحديث الويدجت": "Widget refresh", "موجود": "Present", "مش متسجل": "Not registered", "قفل الطفل": "Child lock", "جاهز": "Ready", "مش متحمّل": "Not loaded", "المحراب الحي": "Live mihrab", "المصحف والختمة": "Mushaf and khatma", "مصحف حفص أوفلاين": "Hafs Mushaf offline", "قارئ وفهارس وبحث؛ تجربة الشاشة لسه مطلوبة": "Reader, indexes and search; a test on the screen is still needed", "مصحف حفص": "Hafs Mushaf", "وضع رمضان": "Ramadan mode", "شغّال": "On", "مش في رمضان": "Not in Ramadan", "الراديو": "Radio", "الصوت (AVPlay)": "Audio (AVPlay)", "مش جاهز": "Not ready", "الذاكرة": "Memory", "مش متاحة": "Not available", "سجل الأخطاء": "Error log", "الجسر": "Bridge", "شغال": "Running", "مش بيرد": "Not answering", "حارس التنبيهات": "Alert guard", "مفيش فحص ناجح": "No successful check", "فشل متكرر": "Repeated failure", "ماردّش لسه": "No answer yet", "مفيش رد": "No answer", "مش متاح هنا": "Not available here", "مفيش فلاشة": "No USB stick", "USB مش متاح": "USB not available", "مفيش فلاشة USB": "No USB stick", "مقدرتش أكتب على USB": "Could not write to USB"};
+    var TE_F = {" MB عالية": " MB (high)", "المرحلة: ": "Phase: ", "صفحة ": "Page ", "آخر فحص من ": "Last check ", "آخر رد من ": "Last reply ", " · من ": " · ", "من ": "", " د": " min", " يوم": " days", " خطأ": " errors", " مش شغال": " not running", " محتاج انتباه": " needs attention", " كله تمام": " all good", "اتحفظ:\n": "Saved:\n"};
+    var TE_K = Object.keys(TE_F).sort(function (a, b) { return b.length - a.length; });
+    function TE(s) {
+        if (APL.lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
+        if (Object.prototype.hasOwnProperty.call(TE_D, s)) return TE_D[s];
+        var out = s;
+        for (var i = 0; i < TE_K.length; i++) if (out.indexOf(TE_K[i]) >= 0) out = out.split(TE_K[i]).join(TE_F[TE_K[i]]);
+        return out;
+    }
+    function line(mark, name, why) { return mark + " " + TE(name) + (why ? " \u2014 " + TE(why) : ""); }
 
     function syncChecks() {
         var L = [], v = (global.APL_BUILD && global.APL_BUILD.version) || "?";

@@ -2224,7 +2224,7 @@ window.APL_LANG_AR_EXTRA = {
 "التاريخ (▲ ▼ تغيّر القيمة)": "Date (▲ ▼ change the value)",
 "✓ حفظ": "✓ Save",
 "🗑 حذف": "🗑 Delete",
-"اختار اسم من المقترحات أو اكتب اسم": "Pick a name from the suggestions or type one",
+"اختار اسم من المقترحات أو اكتب اسم": "Choose a name from the suggestions or type one",
 "عيد ميلاد": "Birthday",
 "ذكرى زواج": "Anniversary",
 "ميلاد مولود": "New baby",
@@ -5251,7 +5251,7 @@ window.APL_CATALOG = [
    code and its IANA time zone, so the times, the countdown and the
    weather follow the city (and not Egypt) when you pick another one.
 
-   v8.8.1: world cities (not only Egypt), the usual calculation method
+   v8.7.21: world cities (not only Egypt), the usual calculation method
    of each country, and "custom": any city found with Settings > Search
    for a city anywhere (Open-Meteo geocoding, needs internet).
 
@@ -5909,7 +5909,7 @@ window.APL_CATALOG = [
     var SITE = global.APL_SITE || {};
     var CFG = SITE.weather || {};
     var KEY = "apl.weather.last";
-    var last = null, busy = false, failed = false;
+    var last = null, busy = false, failed = false, again = false;
 
     /* WMO weather codes → a word and an icon (Open-Meteo's own table, grouped). */
     var CODES = [
@@ -5950,7 +5950,7 @@ window.APL_CATALOG = [
 
     function place() {
         var key = sys.pref("weatherPlace") || CFG.place || "cairo";
-        /* v8.8.1: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
+        /* v8.7.21: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
         if (key === "same" || !userChoseWeather()) key = sys.pref("prayerCity") || CFG.city || key;
         return global.APL_CITY ? global.APL_CITY(key) : { key: "cairo", ar: "القاهرة", en: "Cairo", lat: 30.0444, lon: 31.2357 };
     }
@@ -5961,15 +5961,19 @@ window.APL_CATALOG = [
     function unitF() { return sys.pref("weatherUnit") === "F"; }
     function unitParams() { return unitF() ? "&temperature_unit=fahrenheit&wind_speed_unit=mph" : ""; }
 
+    /* v8.7.25: a saved reading counts only for the same place and unit it was made for */
     function readSaved() {
-        try { return JSON.parse(global.localStorage.getItem(KEY) || "null"); } catch (e) { return null; }
+        var w = null;
+        try { w = JSON.parse(global.localStorage.getItem(KEY) || "null"); } catch (e) { return null; }
+        if (w && (w.placeKey !== place().key || (w.unit || "C") !== (unitF() ? "F" : "C"))) return null;
+        return w;
     }
     function saveSaved(w) {
         try { global.localStorage.setItem(KEY, JSON.stringify(w)); } catch (e) {}
     }
 
     function fetchNow() {
-        if (busy) return Promise.resolve(last);
+        if (busy) { again = true; return Promise.resolve(last); }
         var p = place();
         var url = "https://api.open-meteo.com/v1/forecast?latitude=" + p.lat.toFixed(4) +
                   "&longitude=" + p.lon.toFixed(4) +
@@ -6048,18 +6052,21 @@ window.APL_CATALOG = [
                 textAr: d.ar, textEn: d.en, icon: d.icon,
                 isDay: cur.is_day === 1,
                 placeKey: p.key,
+                unit: unitF() ? "F" : "C",
                 days: daysForecast,
                 hours: hoursForecast,
                 at: Date.now()
             };
             saveSaved(last);
             render();
+            if (again) { again = false; global.setTimeout(fetchNow, 0); }
             return last;
         }).catch(function (e) {
             busy = false;
             failed = true;
-            last = readSaved() || last;
+            last = readSaved() || (last && last.placeKey === place().key ? last : null);
             render(true);
+            if (again) { again = false; global.setTimeout(fetchNow, 0); }
             return last;
         });
     }
@@ -7733,6 +7740,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     /* v7.0.8: Eid Takbeer plays again as soon as it ends, until the person stops it. If two endings come less than
        4 s apart three times (a broken or empty file) it stops instead of looping forever. */
     var loopAt = 0, loopFast = 0;
+    var playedOnline = {};
     function loopAgain(id) {
         var now = Date.now();
         loopFast = (loopAt && now - loopAt < 4000) ? loopFast + 1 : 0;
@@ -7740,7 +7748,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         if (loopFast >= 3) { stop(true, "The recording finished.", true); return; }
         closeAv();
         playing = false; preparing = false; current = "";
-        play(id).then(null, function () {});
+        play(id, { online: !!playedOnline[id] }).then(null, function () {});
     }
     function openOne(path, id, token) {
         return new Promise(function (resolve, reject) {
@@ -7836,12 +7844,14 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
             changed();
             /* v8.7.23: the local APL-Audio file is tried FIRST; only if it is not found (or will not open) the recording
                is streamed from the online source (ONLINE below). */
-            return tryChain(blind ? blindPaths(id) : paths, id, token).then(null, function (e) {
+            /* v8.7.25: a repeat (Eid takbeer loop) of a recording that was already playing online goes straight to the online source, so there is no wait on the local paths between repeats. */
+            var skipLocal = !!(opts && opts.online);
+            return (skipLocal ? Promise.reject(new Error("online repeat")) : tryChain(blind ? blindPaths(id) : paths, id, token)).then(function (r) { playedOnline[id] = false; return r; }, function (e) {
                 if (token !== session) throw e;
                 var localErr = e;
                 why = "Not found on the TV, trying online…";
                 changed();
-                return tryChain(ONLINE[id], id, token).then(null, function (e2) {
+                return tryChain(ONLINE[id], id, token).then(function (r2) { playedOnline[id] = true; return r2; }, function (e2) {
                     if (token !== session) throw e2;
                     if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; nf.triedOnline = true; throw nf; }
                     throw localErr;
@@ -8040,7 +8050,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     function cityKey() { return sys.pref("prayerCity") || CFG.city || "cairo"; }
     function city() { return global.APL_CITY ? global.APL_CITY(cityKey()) : { key: "cairo", lat: 30.0444, lon: 31.2357, ar: "القاهرة", en: "Cairo" }; }
     function cityName() { var c = city(); return APL.lang === "ar" ? c.ar : c.en; }
-    /* v8.8.1: world support. The time zone, the calculation method, the Asr rule and the high-latitude rule follow the chosen city. */
+    /* v8.7.21: world support. The time zone, the calculation method, the Asr rule and the high-latitude rule follow the chosen city. */
     function tz() { var c = city(); return (c && c.tz) || CFG.timezone || "Africa/Cairo"; }
     function methodId() {
         var v = sys.pref("prayerMethod"), n = parseInt(v, 10);
@@ -8108,7 +8118,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         return o;
     }
 
-    /* v8.8.1: one formatter per time zone (the zone of the chosen city), made when first needed. */
+    /* v8.7.21: one formatter per time zone (the zone of the chosen city), made when first needed. */
     var fmtCache = {};
     function fmtFor(zone) {
         if (fmtCache[zone] !== undefined) return fmtCache[zone];
@@ -8274,7 +8284,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var pauseRad = sys.pref("radioDuringAlert") !== false;
         var vol = parseFloat(sys.pref("prayerAlertVolume"));
         if (!(vol >= 0.1 && vol <= 1.5)) vol = 0.92;
-        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0].join("|");
+        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0, methodId(), schoolId(), hlNum()].join("|");
         if (!force && sig === syncedSig && entries.length > 0) return;
 
         if (!force && Date.now() < retryAt) return;          // Vetro was not ready: wait before asking again
@@ -8315,13 +8325,13 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var ra = fix(Math.atan2(cos(e) * sin(L), cos(L)) / R, 360) / 15;
         var eqt = qq / 15 - ra, decl = Math.asin(sin(e) * sin(L)) / R;
         eqt = eqt - 24 * Math.round(eqt / 24);
-        var noon = 12 - eqt - lon / 15 + tzHours(isoDay);   // local solar noon in the city's own time zone (v8.8.1)
+        var noon = 12 - eqt - lon / 15 + tzHours(isoDay);   // local solar noon in the city's own time zone (v8.7.21)
         function span(angle) {                                                          // hours from noon to the sun at -angle (angle > 0 = below the horizon)
             var c = (-sin(angle) - sin(decl) * sin(lat)) / (cos(decl) * cos(lat));
             if (c < -1 || c > 1) return null;
             return Math.acos(c) / R / 15;
         }
-        var P = methodInfo();                                                           // v8.8.1: the method, the Asr rule and far-north cities
+        var P = methodInfo();                                                           // v8.7.21: the method, the Asr rule and far-north cities
         var asrAngle = -Math.atan(1 / ((schoolId() === 1 ? 2 : 1) + Math.tan(Math.abs(lat - decl) * R))) / R;
         var sr = span(0.833);                                                           // sunrise and sunset are symmetrical around noon
         var t = { fajr: span(P.fajr), sunrise: sr, asr: span(asrAngle), maghrib: P.mag ? span(P.mag) : sr, isha: P.ishaMin ? 0 : span(P.isha) };
@@ -15696,7 +15706,7 @@ window.APL_KEYS = {
         });
         return list;
     }
-    /* v8.8.1: world support for the prayer times and the weather. */
+    /* v8.7.21: world support for the prayer times and the weather. */
     function weatherOptions() { return [["same", APL.t("Same as prayer city")]].concat(cityOptions()); }
     function methodOptions() {
         var list = [["auto", APL.t("Automatic (by country)")]];
@@ -23432,7 +23442,18 @@ window.APL_DEVICES = [
     if (!APL || !sys) return;
 
     var OK = "\u2714", WARN = "\u26A0", BAD = "\u2716";
-    function line(mark, name, why) { return mark + " " + name + (why ? " \u2014 " + why : ""); }
+    /* v8.7.25: English for the diagnostics lines (exact texts first, then phrases, longest first) */
+    var TE_D = {"الإصدار": "Version", "مواقيت الصلاة": "Prayer times", "متحمّلة": "Loaded", "مفيش بيانات": "No data", "خطأ": "Error", "معايرة المواقيت": "Prayer time calibration", "مش محسوبة لسه": "Not calculated yet", "تحديث الويدجت": "Widget refresh", "موجود": "Present", "مش متسجل": "Not registered", "قفل الطفل": "Child lock", "جاهز": "Ready", "مش متحمّل": "Not loaded", "المحراب الحي": "Live mihrab", "المصحف والختمة": "Mushaf and khatma", "مصحف حفص أوفلاين": "Hafs Mushaf offline", "قارئ وفهارس وبحث؛ تجربة الشاشة لسه مطلوبة": "Reader, indexes and search; a test on the screen is still needed", "مصحف حفص": "Hafs Mushaf", "وضع رمضان": "Ramadan mode", "شغّال": "On", "مش في رمضان": "Not in Ramadan", "الراديو": "Radio", "الصوت (AVPlay)": "Audio (AVPlay)", "مش جاهز": "Not ready", "الذاكرة": "Memory", "مش متاحة": "Not available", "سجل الأخطاء": "Error log", "الجسر": "Bridge", "شغال": "Running", "مش بيرد": "Not answering", "حارس التنبيهات": "Alert guard", "مفيش فحص ناجح": "No successful check", "فشل متكرر": "Repeated failure", "ماردّش لسه": "No answer yet", "مفيش رد": "No answer", "مش متاح هنا": "Not available here", "مفيش فلاشة": "No USB stick", "USB مش متاح": "USB not available", "مفيش فلاشة USB": "No USB stick", "مقدرتش أكتب على USB": "Could not write to USB"};
+    var TE_F = {" MB عالية": " MB (high)", "المرحلة: ": "Phase: ", "صفحة ": "Page ", "آخر فحص من ": "Last check ", "آخر رد من ": "Last reply ", " · من ": " · ", "من ": "", " د": " min", " يوم": " days", " خطأ": " errors", " مش شغال": " not running", " محتاج انتباه": " needs attention", " كله تمام": " all good", "اتحفظ:\n": "Saved:\n"};
+    var TE_K = Object.keys(TE_F).sort(function (a, b) { return b.length - a.length; });
+    function TE(s) {
+        if (APL.lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
+        if (Object.prototype.hasOwnProperty.call(TE_D, s)) return TE_D[s];
+        var out = s;
+        for (var i = 0; i < TE_K.length; i++) if (out.indexOf(TE_K[i]) >= 0) out = out.split(TE_K[i]).join(TE_F[TE_K[i]]);
+        return out;
+    }
+    function line(mark, name, why) { return mark + " " + TE(name) + (why ? " \u2014 " + TE(why) : ""); }
 
     function syncChecks() {
         var L = [], v = (global.APL_BUILD && global.APL_BUILD.version) || "?";
@@ -23576,6 +23597,9 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "\u2714 8.7.25: \u0642\u0627\u0631\u0626 \u0627\u0644\u0645\u0635\u062d\u0641 \u0648\u0645\u0634\u063a\u0651\u0644 \u0627\u0644\u0642\u0631\u0622\u0646 \u0648\u0627\u0644\u0641\u062d\u0635 \u0648\u0643\u0644 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0628\u0642\u062a \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a \u0643\u0627\u0645\u0644 \u0644\u0645\u0627 \u0627\u0644\u0644\u063a\u0629 English",
+        "\u2714 \u0632\u0631 \u062d\u0648\u0627\u0641 \u0627\u0644\u0634\u0627\u0634\u0629 \u0641\u064a \u0627\u0644\u0645\u0635\u062d\u0641 \u0628\u0642\u0649 \u064a\u0646\u0641\u0639 \u062a\u0648\u0635\u0644\u0647 \u0628\u0627\u0644\u0631\u064a\u0645\u0648\u062a",
+        "\u2714 \u0627\u0644\u0637\u0642\u0633 \u0645\u0628\u0642\u0627\u0634 \u064a\u0639\u0631\u0636 \u0642\u0631\u0627\u0621\u0629 \u0645\u062f\u064a\u0646\u0629 \u062a\u0627\u0646\u064a\u0629 \u0628\u0639\u062f \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0623\u0648 \u0627\u0644\u0648\u062d\u062f\u0629",
         "\u2714 \u0623\u0648\u0642\u0627\u062a \u0627\u0644\u0635\u0644\u0627\u0629 \u0648\u0627\u0644\u0637\u0642\u0633 \u0644\u0644\u0639\u0627\u0644\u0645 \u0643\u0644\u0647 (\u0645\u062f\u0646 \u0648\u062f\u0648\u0644 \u0628\u0637\u0631\u064a\u0642\u0629 \u062d\u0633\u0627\u0628 \u0643\u0644 \u0628\u0644\u062f)",
         "\u2714 \u0645\u062f\u0641\u0639 \u0631\u0645\u0636\u0627\u0646 \u0627\u062a\u0635\u0644\u062d \u0641\u064a \u062c\u062f\u0648\u0644 \u0627\u0644\u062e\u062f\u0645\u0629 \u0627\u0644\u062e\u0644\u0641\u064a\u0629\u060c \u0648\u0632\u0631\u0651 \u0645\u0633\u062a\u0642\u0644 \u0644\u062a\u062c\u0631\u0628\u0629 \u0627\u0644\u0645\u062f\u0641\u0639 \u0644\u0648\u062d\u062f\u0647",
         "\u2714 \u0633\u0648\u0631\u0629 \u0627\u0644\u0643\u0647\u0641 \u0648\u062a\u0643\u0628\u064a\u0631\u0627\u062a \u0627\u0644\u0639\u064a\u062f: \u0645\u0646 \u0645\u0644\u0641 APL-Audio \u0623\u0648\u0644\u0627\u064b\u060c \u0648\u0644\u0648 \u0645\u0634 \u0645\u0648\u062c\u0648\u062f \u062a\u0634\u063a\u0644 \u0623\u0648\u0646\u0644\u0627\u064a\u0646",
@@ -23584,6 +23608,9 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "\u2714 8.7.25: the Quran reader, the Quran player, the diagnostics and every setting are now fully in English when the language is English",
+        "\u2714 The Screen margins button in the Quran reader can now be reached with the remote",
+        "\u2714 Weather no longer shows another city's reading after you change the city or the unit",
         "\u2714 8.7.24: every setting and page now has full English text when the language is English",
         "\u2714 Prayer times and weather for the whole world (cities and countries, each with its usual calculation method)",
         "\u2714 Ramadan cannon fixed in the background schedule; the cannon switch decides cannon + adhan or adhan only; separate button to test the cannon alone",
@@ -24845,6 +24872,14 @@ window.APL_DEVICES = [
         "تفسير هذه الآية غير متوفر": "No tafsir available for this verse"
     };
     function T(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(QEN, s)) ? QEN[s] : s; }
+    /* v8.7.25: Q(arabic, english) picks by language; SN(name) gives the English surah name in English mode */
+    function Q(a, b) { return APL.lang === "ar" ? a : b; }
+    var SN_EN = ["Al-Fatihah", "Al-Baqarah", "Aal-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat", "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
+    function SN(name) {
+        if (APL.lang === "ar" || !data || !data.surahs) return name;
+        for (var i = 0; i < data.surahs.length; i++) if (data.surahs[i][0] === name) return SN_EN[i] || name;
+        return name;
+    }
 
     var COLORS_DARK = [["تلقائي", ""], ["أبيض", "#ffffff"], ["ذهبي", "#ffd36b"], ["أخضر فاتح", "#b9f27a"], ["سماوي", "#9fe3ff"], ["كريمي", "#f6e9c8"]];
     var COLORS_PAPER = [["تلقائي", ""], ["أسود", "#000000"], ["بني", "#4a2f0c"], ["أخضر غامق", "#14501f"], ["كحلي", "#14285a"], ["عنابي", "#6a1420"]];
@@ -25061,11 +25096,11 @@ window.APL_DEVICES = [
         previousQuery = needle; matches = out;
     }
     var TOOLBAR = [
-        "next", "prev", "font-smaller", "font-larger", "fit", "spacing", "paper", "color", "mark-read",
+        "next", "prev", "font-smaller", "font-larger", "fit", "spacing", "paper", "color", "safe", "mark-read", "tf-safe",
         "tf-next", "tf-prev", "tf-pick", "tf-search", "tf-mushaf", "tf-smaller", "tf-larger", "tf-spacing", "tf-paper", "tf-color"
     ];
-    var TOOL_ROWS = [["next", "prev"], ["font-smaller", "font-larger"], ["fit", "spacing"], ["paper", "color"], ["mark-read"]];
-    var TF_SAADI_ROWS = [["tf-next", "tf-prev"], ["tf-pick", "tf-search"], ["tf-mushaf"], ["tf-smaller", "tf-larger"], ["tf-spacing", "tf-paper"], ["tf-color"]];
+    var TOOL_ROWS = [["next", "prev"], ["font-smaller", "font-larger"], ["fit", "spacing"], ["paper", "color"], ["safe"], ["mark-read"]];
+    var TF_SAADI_ROWS = [["tf-next", "tf-prev"], ["tf-pick", "tf-search"], ["tf-mushaf"], ["tf-smaller", "tf-larger"], ["tf-spacing", "tf-paper"], ["tf-color"], ["tf-safe"]];
 
     function buildSideTools(mode) {
         if (!toolsEl) return;
@@ -25095,7 +25130,7 @@ window.APL_DEVICES = [
             }));
             toolsEl.appendChild(button(T("◐ ورقي"), "tf-paper", function () {
                 prefs.paper = !prefs.paper; savePrefs(); tfLook();
-                if (APL.toast) APL.toast(prefs.paper ? "الوضع الورقي مفعّل" : "الوضع الليلي مفعّل", true);
+                if (APL.toast) APL.toast(prefs.paper ? Q("الوضع الورقي مفعّل", "Paper mode on") : Q("الوضع الليلي مفعّل", "Night mode on"), true);
             }));
             toolsEl.appendChild(button(T("◉ لون"), "tf-color", function () {
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
@@ -25236,7 +25271,7 @@ window.APL_DEVICES = [
     }
     function toggleFit() {
         prefs.fit = prefs.fit === false; savePrefs(); applyLook();
-        if (APL.toast) APL.toast(prefs.fit ? "الصفحة كاملة على الشاشة" : "حجم الخط يدوي، والصفحة بتتمرّر", true);
+        if (APL.toast) APL.toast(prefs.fit ? Q("الصفحة كاملة على الشاشة", "The whole page fits the screen") : Q("حجم الخط يدوي، والصفحة بتتمرّر", "Manual font size, the page scrolls"), true);
     }
     /* v7.2.0: the largest font size at which the WHOLE page (headings included) fits the reading area without scrolling. */
     function fit() {
@@ -25249,7 +25284,7 @@ window.APL_DEVICES = [
         }
         readBody.style.fontSize = best + "px"; fitSize = best; readBody.scrollTop = 0;
     }
-    /* v8.8.1: a margin from the screen's edges (TVs hide a few pixels at the sides), shared by the Mushaf and the tafsir. */
+    /* v8.7.21: a margin from the screen's edges (TVs hide a few pixels at the sides), shared by the Mushaf and the tafsir. */
     var SAFE = [0, 24, 44, 64, 88];
     function safeIdx() { var v = prefs.safe; return (typeof v === "number" && v >= 0 && v < SAFE.length) ? v : 1; }
     function applySafe() {
@@ -25283,7 +25318,7 @@ window.APL_DEVICES = [
     }
     function togglePaper() {
         prefs.paper = !prefs.paper; savePrefs(); applyLook();
-        if (APL.toast) APL.toast(prefs.paper ? "ثيم ورقي هادي" : "ثيم داكن", true);
+        if (APL.toast) APL.toast(prefs.paper ? Q("ثيم ورقي هادي", "Calm paper theme") : Q("ثيم داكن", "Dark theme"), true);
     }
     /* "Continue from the last verse": open the page of the saved verse and mark it. */
     function resumeNow() {
@@ -25318,11 +25353,11 @@ window.APL_DEVICES = [
     function renderReader() {
         buildSideTools("read");
         var page = APL.khatma.state().page, from = data.pages[page - 1], end = data.pages[page], m = meta(from);
-        header("سورة " + m.name, "صفحة " + dg(page) + " من " + dg(604) + " · الجزء " + dg(m.juz) + " · حفص عن عاصم", "");
+        header(Q("سورة ", "Surah ") + SN(m.name), Q("صفحة ", "Page ") + dg(page) + Q(" من ", " of ") + dg(604) + Q(" · الجزء ", " · Juz ") + dg(m.juz) + Q(" · حفص عن عاصم", " · Hafs"), "");
         if (brandTitle) {
-            brandTitle.textContent = "سورة " + m.name;
-            brandSub.textContent = "صفحة " + dg(page) + " من " + dg(604) + " · الجزء " + dg(m.juz);
-            brandWird.textContent = "ورد النهارده: " + dg(APL.khatma.today()) + " / " + dg(APL.khatma.state().plan) + " صفحة";
+            brandTitle.textContent = Q("سورة ", "Surah ") + SN(m.name);
+            brandSub.textContent = Q("صفحة ", "Page ") + dg(page) + Q(" من ", " of ") + dg(604) + Q(" · الجزء ", " · Juz ") + dg(m.juz);
+            brandWird.textContent = Q("ورد النهارده: ", "Today's portion: ") + dg(APL.khatma.today()) + " / " + dg(APL.khatma.state().plan) + Q(" صفحة", " pages");
         }
 
         if (target >= from && target < end) {
@@ -25338,13 +25373,13 @@ window.APL_DEVICES = [
             var txt = elAyah ? elAyah.textContent : "";
             openAyahTafsir(v.surah, v.ayah, v.name, txt);
         };
-        readBody.setAttribute("aria-label", "نص الصفحة؛ أعلى وأسفل للتنقل بين الآيات، OK لتفسير السعدي، ويسار للصفحة التالية، ويمين للقائمة");
+        readBody.setAttribute("aria-label", Q("نص الصفحة؛ أعلى وأسفل للتنقل بين الآيات، OK لتفسير السعدي، ويسار للصفحة التالية، ويمين للقائمة", "Page text; up and down to move between verses, OK for the tafsir, left for the next page, right for the menu"));
         var flow = null, last = -1, i;
         for (i = from; i < end; i++) {
             var info = meta(i), split = splitOpening(i, info);
             if (info.surah !== last) {
-                var heading = el("div", "mq__surah-title", "سورة " + info.name);
-                heading.appendChild(el("span", "mq__surah-note", "الجزء " + dg(info.juz) + " · " + dg(data.surahs[info.surah - 1][2]) + " آية"));
+                var heading = el("div", "mq__surah-title", Q("سورة ", "Surah ") + SN(info.name));
+                heading.appendChild(el("span", "mq__surah-note", Q("الجزء ", "Juz ") + dg(info.juz) + " · " + dg(data.surahs[info.surah - 1][2]) + Q(" آية", " verses")));
                 readBody.appendChild(heading);
                 if (split.opening) readBody.appendChild(el("div", "mq__basmala", split.opening));
                 flow = el("div", "mq__flow"); readBody.appendChild(flow); last = info.surah;
@@ -25368,8 +25403,8 @@ window.APL_DEVICES = [
         main.appendChild(readBody);
         var progress = el("div", "mq__progress"), fill = el("i", ""); fill.style.width = (page/604*100).toFixed(2) + "%"; progress.appendChild(fill); main.appendChild(progress);
         var stat = el("div", "mq__reading-stat");
-        stat.appendChild(el("span", "mq__stat-main", "سورة " + m.name + " · صفحة " + dg(page) + " من " + dg(604) + " · الجزء " + dg(m.juz)));
-        stat.appendChild(el("span", "mq__stat-hint", "▲▼ تنقّل بين الآيات · OK تفسير السعدي · ◄ التالية · ► القائمة"));
+        stat.appendChild(el("span", "mq__stat-main", Q("سورة ", "Surah ") + SN(m.name) + Q(" · صفحة ", " · Page ") + dg(page) + Q(" من ", " of ") + dg(604) + Q(" · الجزء ", " · Juz ") + dg(m.juz)));
+        stat.appendChild(el("span", "mq__stat-hint", Q("▲▼ تنقّل بين الآيات · OK تفسير السعدي · ◄ التالية · ► القائمة", "▲▼ move between verses · OK tafsir · ◄ Next · ► Menu")));
         main.appendChild(stat);
         applyLook();      /* needs the text and the final size of the area: auto-fit happens here */
         var token = generation, currentBody = readBody;
@@ -25401,8 +25436,8 @@ window.APL_DEVICES = [
             var card = button("", "entry-" + n, function () { if (tfPick && surahs) { tfPick = false; tfSurah = n + 1; show("tafsir"); return; } jump(start, kind, "entry-" + n); }, "mq__index-card");
             card.appendChild(el("span", "mq__index-num", dg(n + 1)));
             var content = el("div", "mq__index-copy");
-            content.appendChild(el("div", "mq__index-name", surahs ? "سورة " + m.name : "الجزء " + dg(n + 1)));
-            content.appendChild(el("div", "mq__index-meta", surahs ? dg(data.surahs[n][2]) + " آية · صفحة " + dg(m.page) : "سورة " + m.name + " · آية " + dg(m.ayah) + " · ص " + dg(m.page)));
+            content.appendChild(el("div", "mq__index-name", surahs ? Q("سورة ", "Surah ") + SN(m.name) : Q("الجزء ", "Juz ") + dg(n + 1)));
+            content.appendChild(el("div", "mq__index-meta", surahs ? dg(data.surahs[n][2]) + Q(" آية · صفحة ", " verses · page ") + dg(m.page) : Q("سورة ", "Surah ") + SN(m.name) + Q(" · آية ", " · verse ") + dg(m.ayah) + Q(" · ص ", " · p. ") + dg(m.page)));
             card.appendChild(content); card.appendChild(el("span", "mq__index-arrow", "‹")); grid.appendChild(card);
         })(i);
         main.appendChild(grid);
@@ -25412,8 +25447,8 @@ window.APL_DEVICES = [
             T("لوحة الحروف بالريموت أو كيبورد · النتيجة بـ OK تفتح الصفحة وتعلّم على الآية · البحث بيتجاهل التشكيل واختلاف الألف"));
         var searchbar = el("div", "mq__searchbar");
         field = el("input", "mq__input mq__focus"); field.type = "text"; field.dir = "rtl"; field.maxLength = 180;
-        field.placeholder = "ابحث في آيات القرآن…"; field.value = query; field.autocomplete = "off";
-        field.setAttribute("aria-label", "البحث الفوري في آيات القرآن"); field._qid = "query"; field._run = function () { field.focus(); };
+        field.placeholder = Q("ابحث في آيات القرآن…", "Search the verses of the Quran…"); field.value = query; field.autocomplete = "off";
+        field.setAttribute("aria-label", Q("البحث الفوري في آيات القرآن", "Instant search in the verses of the Quran")); field._qid = "query"; field._run = function () { field.focus(); };
         field.addEventListener("input", function () { setQuery(field.value, true); });
         field.addEventListener("keydown", function (e) {
             if (e.keyCode === K.ENTER || e.keyCode === K.RETURN || e.keyCode === K.ESC || e.keyCode === K.DOWN) {
@@ -25444,18 +25479,18 @@ window.APL_DEVICES = [
         resultList.textContent = ""; pager.textContent = "";
         var total = matches.length, first = resultPage * LIMIT, end = Math.min(total, first + LIMIT), q = norm(query);
         if (q && !index) {
-            resultCount.textContent = "بنجهّز البحث من الملفات المحلية…";
-            resultList.appendChild(el("div", "mq__empty", "أول حرف بيقرا ملفات البحث مرة واحدة.\nالنتايج هتظهر لوحدها."));
+            resultCount.textContent = Q("بنجهّز البحث من الملفات المحلية…", "Preparing the search from the local files…");
+            resultList.appendChild(el("div", "mq__empty", Q("أول حرف بيقرا ملفات البحث مرة واحدة.\nالنتايج هتظهر لوحدها.", "The first letter reads the search files once.\nThe results will appear by themselves.")));
             return;
         }
-        resultCount.textContent = !q ? T("اكتب أول حرف عشان تظهر الآيات") : dg(total) + " آية" + (total ? " · عرض " + dg(first + 1) + "–" + dg(end) + " · بترتيب المصحف" : "");
+        resultCount.textContent = !q ? T("اكتب أول حرف عشان تظهر الآيات") : dg(total) + Q(" آية", " verses") + (total ? Q(" · عرض ", " · showing ") + dg(first + 1) + "–" + dg(end) + Q(" · بترتيب المصحف", " · in Mushaf order") : "");
         if (!q || !total) {
             var empty = el("div", "mq__empty", !q ? T("كل حرف بتكتبه بيحدّث النتايج فورًا.\nتقدر تكتب من لوحة الحروف اللي جنبك.") : T("مفيش آيات مطابقة.\nجرّب كلمة أقصر أو راجع الكتابة."));
             resultList.appendChild(empty);
         }
         for (var i = first; i < end; i++) (function (n) {
             var m = meta(n), row = button("", "result-" + n, function () { jump(n, "search", "result-" + n); }, "mq__result");
-            row.appendChild(el("div", "mq__result-ref", "سورة " + m.name + " · آية " + dg(m.ayah) + " · الجزء " + dg(m.juz) + " · ص " + dg(m.page)));
+            row.appendChild(el("div", "mq__result-ref", Q("سورة ", "Surah ") + SN(m.name) + Q(" · آية ", " · verse ") + dg(m.ayah) + Q(" · الجزء ", " · Juz ") + dg(m.juz) + Q(" · ص ", " · p. ") + dg(m.page)));
             row.appendChild(el("div", "mq__result-text", resultText(n))); resultList.appendChild(row);
         })(matches[i]);
         if (total > LIMIT) {
@@ -25469,11 +25504,11 @@ window.APL_DEVICES = [
         header(T("المصدر والرواية"), T("نص محلي موثّق · مش صور · مش نص مولّد"), T("رجوع: خروج  ·  تقدر تراجع بيانات المصدر والترخيص جوّه الحزمة"));
         var box = button("", "source-text", function () {}, "mq__source");
         box.appendChild(el("h2", "", T("رواية حفص عن عاصم")));
-        box.appendChild(el("p", "", "القرآن كامل: ١١٤ سورة، ٦٢٣٦ آية، ٣٠ جزءًا، بترقيم مصحف المدينة ٦٠٤ صفحات. النص العثماني المُشكّل من مشروع تنزيل، الإصدار 1.1، من غير إعادة صياغة أو تعديل الآيات."));
-        box.appendChild(el("p", "", "المصدر: Tanzil Project · https://tanzil.net/\nتوثيق حفص: https://tanzil.net/docs/Medina_Mushaf\nالترخيص: Creative Commons Attribution 3.0 · النص يُوزّع كما هو."));
-        box.appendChild(el("p", "", "البحث يستخدم نسخة إملائية موازية من نفس المصدر، وبيتجاهل التشكيل واختلاف الألف في فهرس بحث مؤقت بس. عرض الآيات دايمًا بالتشكيل الأصلي. البسملة الافتتاحية منفصلة عن ترقيم الآيات إلا الفاتحة."));
-        box.appendChild(el("p", "", "الخط: Amiri Quran · SIL Open Font License. كل النص والخط داخل الحزمة؛ مفيش تنزيل أو اتصال بالإنترنت أثناء القراءة أو البحث. الصفحات النصية قابلة للتمرير وليست صورة مطابقة لتخطيط الصفحة المطبوعة."));
-        box.appendChild(el("p", "mq__source-note", "الملف المرفوع باسم warshData رواية ورش، عشان كده ما اتستخدمش.\nUntested on the TV — اختبارات المتصفح مش بديل تجربة الشاشة."));
+        box.appendChild(el("p", "", Q("القرآن كامل: ١١٤ سورة، ٦٢٣٦ آية، ٣٠ جزءًا، بترقيم مصحف المدينة ٦٠٤ صفحات. النص العثماني المُشكّل من مشروع تنزيل، الإصدار 1.1، من غير إعادة صياغة أو تعديل الآيات.", "The complete Quran: 114 surahs, 6236 verses, 30 juz, in the Madinah Mushaf numbering of 604 pages. The vocalized Uthmani text is from the Tanzil Project, version 1.1, with no rewording or change to the verses.")));
+        box.appendChild(el("p", "", Q("المصدر: Tanzil Project · https://tanzil.net/\nتوثيق حفص: https://tanzil.net/docs/Medina_Mushaf\nالترخيص: Creative Commons Attribution 3.0 · النص يُوزّع كما هو.", "Source: Tanzil Project · https://tanzil.net/\nHafs documentation: https://tanzil.net/docs/Medina_Mushaf\nLicense: Creative Commons Attribution 3.0 · the text is distributed as it is.")));
+        box.appendChild(el("p", "", Q("البحث يستخدم نسخة إملائية موازية من نفس المصدر، وبيتجاهل التشكيل واختلاف الألف في فهرس بحث مؤقت بس. عرض الآيات دايمًا بالتشكيل الأصلي. البسملة الافتتاحية منفصلة عن ترقيم الآيات إلا الفاتحة.", "Search uses a parallel plain-spelling copy of the same source and ignores vocalization and alef variants, in a temporary search index only. Verses are always shown with the original vocalization. The opening basmala is separate from the verse numbering, except in Al-Fatihah.")));
+        box.appendChild(el("p", "", Q("الخط: Amiri Quran · SIL Open Font License. كل النص والخط داخل الحزمة؛ مفيش تنزيل أو اتصال بالإنترنت أثناء القراءة أو البحث. الصفحات النصية قابلة للتمرير وليست صورة مطابقة لتخطيط الصفحة المطبوعة.", "Font: Amiri Quran · SIL Open Font License. All the text and the font are inside the package; nothing is downloaded and no internet is used while reading or searching. The text pages scroll and are not an image of the printed page layout.")));
+        box.appendChild(el("p", "mq__source-note", Q("الملف المرفوع باسم warshData رواية ورش، عشان كده ما اتستخدمش.\nUntested on the TV — اختبارات المتصفح مش بديل تجربة الشاشة.", "The uploaded file named warshData is the Warsh riwaya, so it was not used.\nUntested on the TV. Browser tests are not a substitute for trying the screen.")));
         main.appendChild(box);
     }
 
@@ -25565,7 +25600,7 @@ window.APL_DEVICES = [
 
         sbField = el("input", "mq__input mq__focus");
         sbField.type = "text"; sbField.dir = "rtl"; sbField.maxLength = 180;
-        sbField.placeholder = "ابحث في تفسير السعدي…";
+        sbField.placeholder = Q("ابحث في تفسير السعدي…", "Search Tafsir al-Saadi…");
         sbField.value = sbQuery; sbField.autocomplete = "off";
         sbField._qid = "sb-query";
         sbField._run = function () { sbField.focus(); };
@@ -25603,14 +25638,14 @@ window.APL_DEVICES = [
 
         if (!sbIndexTafsir) {
             sbResultCount.textContent = T("جارٍ تجهيز فهرس تفسير السعدي…");
-            sbResultList.appendChild(el("div", "mq__empty", "جارٍ قراءة التفسير وبناء الفهرس…"));
+            sbResultList.appendChild(el("div", "mq__empty", Q("جارٍ قراءة التفسير وبناء الفهرس…", "Reading the tafsir and building the index…")));
             sbBuildIndex(function () {
                 if (view !== "search-book") return;
                 sbFind(sbQuery);
                 sbPaintResults();
             }, function (pct) {
                 if (view !== "search-book") return;
-                if (sbResultCount) sbResultCount.textContent = "جارٍ تجهيز فهرس تفسير السعدي… " + dg(pct) + "٪";
+                if (sbResultCount) sbResultCount.textContent = Q("جارٍ تجهيز فهرس تفسير السعدي… ", "Preparing the Tafsir al-Saadi index… ") + dg(pct) + (APL.lang === "ar" ? "٪" : "%");
             });
         } else {
             sbFind(sbQuery);
@@ -25636,11 +25671,11 @@ window.APL_DEVICES = [
         var q = norm(sbQuery);
 
         if (!sbIndexTafsir && sbLoading) {
-            if (sbResultCount) sbResultCount.textContent = "جارٍ تجهيز فهرس البحث…";
+            if (sbResultCount) sbResultCount.textContent = Q("جارٍ تجهيز فهرس البحث…", "Preparing the search index…");
             return;
         }
         if (sbResultCount) {
-            sbResultCount.textContent = !q ? T("اكتب أول حرف عشان تبدأ البحث في تفسير السعدي") : dg(total) + " نتيجة" + (total ? " · عرض " + dg(first + 1) + "–" + dg(end) : "");
+            sbResultCount.textContent = !q ? T("اكتب أول حرف عشان تبدأ البحث في تفسير السعدي") : dg(total) + Q(" نتيجة", " results") + (total ? Q(" · عرض ", " · showing ") + dg(first + 1) + "–" + dg(end) : "");
         }
         if (!q || !total) {
             var empty = el("div", "mq__empty", !q ? T("كل حرف بتكتبه بيحدّث النتايج فورًا في تفسير السعدي.\nتقدر تكتب من لوحة الحروف بالريموت.") : T("مفيش نتائج مطابقة.\nجرّب كلمة تانية أو راجع الحروف."));
@@ -25653,7 +25688,7 @@ window.APL_DEVICES = [
                     returnTo = { view: "search-book", focus: "sb-result-" + idxInPage };
                     openAyahTafsir(rec.surah, rec.ayah, rec.title, "");
                 }, "mq__result");
-                var refText = "تفسير السعدي · سورة " + rec.title + " · الآية " + dg(rec.ayah);
+                var refText = Q("تفسير السعدي · سورة ", "Tafsir al-Saadi · Surah ") + SN(rec.title) + Q(" · الآية ", " · verse ") + dg(rec.ayah);
                 row.appendChild(el("div", "mq__result-ref", refText));
                 row.appendChild(el("div", "mq__result-text mq__result-text--book", sbSnippet(rec.raw, rec.norm, q)));
                 sbResultList.appendChild(row);
@@ -25706,16 +25741,16 @@ window.APL_DEVICES = [
     function renderTafsir() {
         buildSideTools("tafsir");
         if (!tfSurah) tfSurah = tfSurahOfPage();
-        var name = (data && data.surahs && data.surahs[tfSurah - 1]) ? data.surahs[tfSurah - 1][0] : ("سورة " + dg(tfSurah));
-        header("تفسير السعدي · سورة " + name, T("تيسير الكريم الرحمن في تفسير كلام المنان · نص مدقّق وموثّق"),
+        var name = (data && data.surahs && data.surahs[tfSurah - 1]) ? data.surahs[tfSurah - 1][0] : (Q("سورة ", "Surah ") + dg(tfSurah));
+        header(Q("تفسير السعدي · سورة ", "Tafsir al-Saadi · Surah ") + SN(name), T("تيسير الكريم الرحمن في تفسير كلام المنان · نص مدقّق وموثّق"),
             T("▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات والقائمة · رجوع للخروج"));
         if (brandTitle) {
-            brandTitle.textContent = "سورة " + name;
-            brandSub.textContent = "تفسير السعدي · سورة " + dg(tfSurah);
-            brandWird.textContent = "تيسير الكريم الرحمن";
+            brandTitle.textContent = Q("سورة ", "Surah ") + SN(name);
+            brandSub.textContent = Q("تفسير السعدي · سورة ", "Tafsir al-Saadi · Surah ") + dg(tfSurah);
+            brandWird.textContent = Q("تيسير الكريم الرحمن", "Taysir al-Karim al-Rahman");
         }
         tfBody = el("article", "mq__paper mq__focus"); tfBody._qid = "tafsir-body"; tfBody._run = function () { setSide(true); };
-        tfBody.setAttribute("aria-label", "تفسير السعدي لسورة " + name + "؛ أعلى وأسفل للتمرير، ويمين للأدوات والقائمة");
+        tfBody.setAttribute("aria-label", Q("تفسير السعدي لسورة ", "Tafsir al-Saadi of Surah ") + SN(name) + Q("؛ أعلى وأسفل للتمرير، ويمين للأدوات والقائمة", "; up and down to scroll, right for the tools and menu"));
         tfBody.appendChild(el("div", "mq__empty", T("جارٍ تحميل تفسير السعدي…")));
         main.appendChild(tfBody);
         var progress = el("div", "mq__progress"), fill = el("i", "");
@@ -25723,7 +25758,7 @@ window.APL_DEVICES = [
         progress.appendChild(fill);
         main.appendChild(progress);
         var stat = el("div", "mq__reading-stat");
-        var statMain = el("span", "mq__stat-main", "تفسير السعدي · سورة " + name + " (" + dg(tfSurah) + " من ١١٤)");
+        var statMain = el("span", "mq__stat-main", Q("تفسير السعدي · سورة ", "Tafsir al-Saadi · Surah ") + SN(name) + " (" + dg(tfSurah) + Q(" من ١١٤", " of 114") + ")");
         stat.appendChild(statMain);
         stat.appendChild(el("span", "mq__stat-hint", T("▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات")));
         main.appendChild(stat);
@@ -25732,10 +25767,10 @@ window.APL_DEVICES = [
         loadSurahTafsir(n, function (d) {
             if (!opened || generation !== token || tfBody !== mine || view !== "tafsir") return;
             mine.textContent = "";
-            var heading = el("div", "mq__surah-title", "تفسير سورة " + name);
+            var heading = el("div", "mq__surah-title", Q("تفسير سورة ", "Tafsir of Surah ") + SN(name));
             mine.appendChild(heading);
             if (!d || !d.ayahs) {
-                mine.appendChild(el("div", "mq__empty", "تفسير سورة " + name + " غير متوفر حالياً"));
+                mine.appendChild(el("div", "mq__empty", Q("تفسير سورة ", "Tafsir of Surah ") + SN(name) + Q(" غير متوفر حالياً", " is not available right now")));
                 return;
             }
             var vCount = d.verses || (data && data.surahs && data.surahs[n - 1] ? data.surahs[n - 1][2] : 0) || Object.keys(d.ayahs).length;
@@ -26640,6 +26675,58 @@ window.APL_DEVICES = [
     /* v8.7.24: English surah names and display helper (Arabic stays when the language is Arabic) */
     var S_NAMES_EN = ["Al-Fatihah", "Al-Baqarah", "Aal-Imran", "An-Nisa", "Al-Ma'idah", "Al-An'am", "Al-A'raf", "Al-Anfal", "At-Tawbah", "Yunus", "Hud", "Yusuf", "Ar-Ra'd", "Ibrahim", "Al-Hijr", "An-Nahl", "Al-Isra", "Al-Kahf", "Maryam", "Ta-Ha", "Al-Anbiya", "Al-Hajj", "Al-Mu'minun", "An-Nur", "Al-Furqan", "Ash-Shu'ara", "An-Naml", "Al-Qasas", "Al-Ankabut", "Ar-Rum", "Luqman", "As-Sajdah", "Al-Ahzab", "Saba", "Fatir", "Ya-Sin", "As-Saffat", "Sad", "Az-Zumar", "Ghafir", "Fussilat", "Ash-Shura", "Az-Zukhruf", "Ad-Dukhan", "Al-Jathiyah", "Al-Ahqaf", "Muhammad", "Al-Fath", "Al-Hujurat", "Qaf", "Adh-Dhariyat", "At-Tur", "An-Najm", "Al-Qamar", "Ar-Rahman", "Al-Waqi'ah", "Al-Hadid", "Al-Mujadilah", "Al-Hashr", "Al-Mumtahanah", "As-Saff", "Al-Jumu'ah", "Al-Munafiqun", "At-Taghabun", "At-Talaq", "At-Tahrim", "Al-Mulk", "Al-Qalam", "Al-Haqqah", "Al-Ma'arij", "Nuh", "Al-Jinn", "Al-Muzzammil", "Al-Muddaththir", "Al-Qiyamah", "Al-Insan", "Al-Mursalat", "An-Naba", "An-Nazi'at", "Abasa", "At-Takwir", "Al-Infitar", "Al-Mutaffifin", "Al-Inshiqaq", "Al-Buruj", "At-Tariq", "Al-A'la", "Al-Ghashiyah", "Al-Fajr", "Al-Balad", "Ash-Shams", "Al-Layl", "Ad-Duha", "Ash-Sharh", "At-Tin", "Al-Alaq", "Al-Qadr", "Al-Bayyinah", "Az-Zalzalah", "Al-Adiyat", "Al-Qari'ah", "At-Takathur", "Al-Asr", "Al-Humazah", "Al-Fil", "Quraysh", "Al-Ma'un", "Al-Kawthar", "Al-Kafirun", "An-Nasr", "Al-Masad", "Al-Ikhlas", "Al-Falaq", "An-Nas"];
     function NM(o) { return (APL.lang === "ar" || !o) ? (o && o.name_ar) : (o.name_en || o.name_ar); }
+    /* v8.7.25: English for the Quran player. In English mode every label, tooltip and placeholder inside the player is translated
+       (exact texts, surah and reciter names, a few phrases); verse and tafsir text is never touched. */
+    var QA_D = {"تشغيل متواصل": "Continuous play", "تكرار الآية الحالية": "Repeat the current verse", "تكرار السورة كاملة": "Repeat the whole surah", "إيقاف التكرار": "Repeat off", "البحث في الآيات": "Search verses", "إذاعة القرآن الكريم من القاهرة": "Holy Quran Radio from Cairo", "إذاعة القرآن": "Quran Radio", "إذاعة القرآن · مباشر": "Quran Radio · Live", "وضع التكرار": "Repeat mode", "الآية السابقة": "Previous verse", "تشغيل / إيقاف مؤقت": "Play / Pause", "الآية التالية": "Next verse", "سرعة التلاوة": "Recitation speed", "خيارات إضافية": "More options", "جاري تحميل نص الآية الكريمة…": "Loading the verse…", "جاري تحميل التفسير…": "Loading the tafsir…", "جاري الاتصال…": "Connecting…", "اختر سورة من المصحف الشريف": "Choose a surah", "تنقل بالأسهم واضغط OK للاختيار والاستماع": "Move with the arrows and press OK to choose and listen", "السورة المحددة بالريموت:": "Surah selected with the remote:", "اضغط زر [ OK ] لتشغيل السورة والاستماع فوراً ◀": "Press [ OK ] to play the surah now ◀", "اختر القارئ (٤٢ قارئ معتمد)": "Choose a reciter (42 approved reciters)", "القارئ المحدد بالريموت:": "Reciter selected with the remote:", "اضغط زر [ OK ] لتشغيل القارئ والاستماع فوراً ◀": "Press [ OK ] to play with this reciter now ◀", "البحث الفوري في نصوص الآيات": "Instant search in the verses", "اكتب كلمة أو جزءاً من الآية للبحث...": "Type a word or part of a verse to search...", "أدخل كلمتين على الأقل لبدء البحث الفوري": "Enter at least two letters to start the instant search", "جاري تحميل فهرس وبيانات البحث…": "Loading the search index and data…", "تعذر تحميل بيانات البحث": "Could not load the search data", "لم يتم العثور على نتائج مطابقة": "No matching results", "خيارات مشغل القرآن الكريم": "Quran player options", "سرعة التلاوة:": "Recitation speed:", "1.0× (عادي)": "1.0× (normal)", "مفعّل": "On", "معطّل": "Off", "إظهار التفسير أسفل الآية:": "Show the tafsir under the verse:", "حفظ وإغلاق": "Save and close"};
+    var QA_FR = {"سورة ": "Surah ", "الآية ": "Verse ", " آية": " verses", "مكية": "Meccan", "مدنية": "Medinan", "القارئ رقم ": "Reciter no. ", "رقم ": "No. ", " من ١١٤ · ": " of 114 · ", " من ٤٢ قارئاً معتمداً": " of 42 approved reciters"};
+    function qaMaps() {
+        if (QA_D._ready) return;
+        QA_D._ready = true;
+        for (var i = 0; i < SURAHS.length; i++) QA_D[SURAHS[i].name_ar] = SURAHS[i].name_en;
+        for (var j = 0; j < RECITERS.length; j++) if (RECITERS[j].name_en) QA_D[RECITERS[j].name_ar] = RECITERS[j].name_en;
+    }
+    function qaText(s) {
+        var t = s.replace(/^\s+|\s+$/g, "");
+        if (!t || !/[\u0600-\u06FF\u0660-\u0669]/.test(t) || t.length > 90) return s;
+        qaMaps();
+        if (Object.prototype.hasOwnProperty.call(QA_D, t)) return s.replace(t, QA_D[t]);
+        var out = s, k;
+        for (k in QA_FR) if (out.indexOf(k) >= 0) out = out.split(k).join(QA_FR[k]);
+        for (var i = 0; i < SURAHS.length; i++) if (out.indexOf("Surah " + SURAHS[i].name_ar) >= 0) out = out.split("Surah " + SURAHS[i].name_ar).join("Surah " + SURAHS[i].name_en);
+        return out.replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 1632); });
+    }
+    function qaSkip(n) {
+        var e = n.nodeType === 1 ? n : n.parentNode;
+        if (!e) return true;
+        if ((verseTextEl && verseTextEl.contains(e)) || (tafsirTextEl && tafsirTextEl.contains(e))) return true;
+        return !!(e.closest && e.closest(".qa-sr-body, .qa-verse-main, .qa-tafsir-main"));
+    }
+    function qaWalk(n) {
+        if (n.nodeType === 3) { if (!qaSkip(n)) { var v = qaText(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; } return; }
+        if (n.nodeType !== 1 || qaSkip(n)) return;
+        var at = ["title", "placeholder", "aria-label"];
+        for (var a = 0; a < at.length; a++) { var av = n.getAttribute(at[a]); if (av) { var nv = qaText(av); if (nv !== av) n.setAttribute(at[a], nv); } }
+        for (var c = n.firstChild; c; c = c.nextSibling) qaWalk(c);
+    }
+    function qaWatch(el) {
+        if (APL.lang === "ar" || !global.MutationObserver) return;
+        var busy = false;
+        var mo = new global.MutationObserver(function (recs) {
+            if (busy) return;
+            busy = true;
+            try {
+                for (var i = 0; i < recs.length; i++) {
+                    var r = recs[i];
+                    if (r.type === "childList") { for (var j = 0; j < r.addedNodes.length; j++) qaWalk(r.addedNodes[j]); }
+                    else if (r.type === "characterData") qaWalk(r.target);
+                    else qaWalk(r.target);
+                }
+            } catch (e) {}
+            busy = false;
+        });
+        mo.observe(el, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["title", "placeholder", "aria-label"] });
+        qaWalk(el);
+    }
     for (var sIdx = 0; sIdx < 114; sIdx++) {
         SURAHS.push({
             id: sIdx + 1,
@@ -27292,6 +27379,7 @@ window.APL_DEVICES = [
         rootEl.appendChild(modalOverlay);
 
         document.body.appendChild(rootEl);
+        qaWatch(rootEl);
         return rootEl;
     }
 

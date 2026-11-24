@@ -3682,7 +3682,7 @@ body.quran-audio-active .qa-widget-slot .statusx--qa {
     display: flex !important;
 }
 
-/* v8.8.1: the Mushaf and the tafsir page were cut at the sides: the general ".is-focused" rule above scales every focused
+/* v8.7.21: the Mushaf and the tafsir page were cut at the sides: the general ".is-focused" rule above scales every focused
    element by 5.5 %, and the page (always focused) grew wider than its pane, which clips the overflow, so a word or two
    disappeared at each side. The reading page is never scaled now. */
 .mq__paper.is-focused,

@@ -1,3 +1,11 @@
+## 8.7.25 (Quran reader and player in English; remote reach for Screen margins; Untested on physical TV)
+- **Fix:** the Screen margins button in the Mushaf and tafsir tool panel was not in the remote navigation rows, so the remote could not reach it. It is now (Mushaf and tafsir).
+- **English:** the Quran reader (page and surah headers, index cards, search and tafsir search texts, source page, toasts) and the Quran listening player (buttons, tooltips, surah and reciter pickers, search and options, surah and reciter names, digits) now show English when the language is English. The diagnostics screen (Settings > Performance) is in English too.
+- **Weather:** a saved reading is used only for the same city and unit; a city change during a refresh is no longer dropped.
+- **Prayer sync:** the background schedule signature also covers the method, Asr rule and high-latitude rule.
+- **Eid takbeer:** repeats of a recording that was playing online go straight to the online source (no wait on the local paths).
+- Left as is: verse and tafsir text (Arabic), Hikma section names (data), the language and digits options.
+
 ## 8.7.24 (English everywhere in the settings; What's New message updated; Untested on physical TV)
 - **English:** every settings page and option now has English text when the language is English (about 55 new entries in the settings tree). Toasts, alerts, the prayer flow, khatma, personal pages, the Ramadan chip, the home ayah and occasion labels and the Quran reader messages now go through a shared translator (`APL.enx`). Surah and reciter names show in English in English mode.
 - **Audio:** a clear message when both the local APL-Audio file and the online fallback fail.

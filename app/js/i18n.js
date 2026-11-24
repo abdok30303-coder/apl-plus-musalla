@@ -271,7 +271,7 @@
 "التاريخ (▲ ▼ تغيّر القيمة)": "Date (▲ ▼ change the value)",
 "✓ حفظ": "✓ Save",
 "🗑 حذف": "🗑 Delete",
-"اختار اسم من المقترحات أو اكتب اسم": "Pick a name from the suggestions or type one",
+"اختار اسم من المقترحات أو اكتب اسم": "Choose a name from the suggestions or type one",
 "عيد ميلاد": "Birthday",
 "ذكرى زواج": "Anniversary",
 "ميلاد مولود": "New baby",
