@@ -24,6 +24,47 @@
 
     var APL = global.APL, sys = APL.sys;
 
+    /* v8.7.22: English text for strings that were written in Arabic only */
+    var HT_D = {
+        "ويدجت حكم ومواعظ بالرئيسية": "Wisdom & Sermons Home Widget",
+        "ويدجت حكم ومواعظ (٥ دقائق)": "Wisdom & Sermons Widget (5 min)",
+        "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).": "Shows a separate wisdom or sermon card on the Home Screen, changing every 5 minutes (offline).",
+        "موضع ويدجت الحكمة": "Wisdom Widget Position",
+        "فوق التطبيقات بالمنتصف": "Above the apps, centered",
+        "أعلى المنتصف": "Top center",
+        "أعلى اليمين": "Top right",
+        "أعلى اليسار": "Top left",
+        "أسفل المنتصف": "Bottom center",
+        "أسفل اليمين": "Bottom right",
+        "أسفل اليسار": "Bottom left",
+        "متصل بشريط الصلاة": "Attached to the prayer strip",
+        "اختر موضع كارت الحكمة منفصلاً في أي زاوية من الشاشة أو متصلاً بشريط الصلاة.": "Choose where the wisdom card sits: any corner of the screen, or attached to the prayer strip.",
+        "موضع كارت الحكمة على الشاشة.": "Where the wisdom card sits on the screen.",
+        "حجم ويدجت الحكمة": "Wisdom Widget Size",
+        "عادي (100%)": "Normal (100%)",
+        "كبير (125%)": "Large (125%)",
+        "كبير جداً (150%)": "Very large (150%)",
+        "ضخم (175%)": "Huge (175%)",
+        "أقصى حجم (200%)": "Maximum (200%)",
+        "100% عادي": "100% Normal",
+        "125% كبير": "125% Large",
+        "150% كبير جداً": "150% Very large",
+        "175% ضخم": "175% Huge",
+        "200% أقصى حجم": "200% Maximum",
+        "تحكم في حجم كارت الحكمة والخط ليكون بارزاً ومقروءاً بامتياز على شاشة التلفزيون.": "Sets the size of the wisdom card and its text so it is easy to read on the TV.",
+        "حجم كارت الحكمة على الشاشة.": "Size of the wisdom card on the screen.",
+        "لون خط ويدجت الحكمة": "Wisdom Widget Text Color",
+        "ذهبي ملكي براق": "Royal gold",
+        "أبيض ناصع كريستالي": "Crystal white",
+        "أزرق سماوي نيون": "Neon sky blue",
+        "موف المجرة متوهج": "Glowing galaxy purple",
+        "أخضر فسفوري إسلامي": "Islamic neon green",
+        "اختر لون خط وتوهج نصوص ويدجت الحكمة.": "Choose the text color and glow of the wisdom widget.",
+        "عرض الويدجت بالشاشة كاملة": "Full-Screen-Width Widget",
+        "الويدجت بياخد عرض الشاشة الرئيسية فوق صف التطبيقات، ومعاه أقرب ٤ مناسبات والمهام والطقس.": "The widget takes the full width of the Home Screen above the app row, with the next 4 occasions, tasks and weather."
+    };
+    function HT(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(HT_D, s)) ? HT_D[s] : s; }
+
     function menu(label, icon, children, desc) { return { type: "menu", label: label, icon: icon, children: children, desc: desc }; }
     function info(label, get, desc) { return { type: "info", label: label, get: get, desc: desc }; }
     function toggle(label, key, desc) { return { type: "toggle", label: label, key: key, desc: desc }; }
@@ -395,34 +436,34 @@
                 choice(APL.t("Prayer Widget Size"), "prayerWidgetScale",
                     [[0, APL.t("Current size") + " 100%"], [25, "125%"], [50, "150%"], [75, "175%"], [100, "200%"], [150, "250%"], [200, "300%"]],
                     APL.t("Makes the prayer widget on the Home Screen bigger than its current size.")),
-                toggle("\u0639\u0631\u0636 \u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u0627\u0644\u0634\u0627\u0634\u0629 \u0643\u0627\u0645\u0644\u0629", "prayerWidgetFull",
-                    "\u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u064a\u0627\u062e\u062f \u0639\u0631\u0636 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0641\u0648\u0642 \u0635\u0641 \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a\u060c \u0648\u0645\u0639\u0627\u0647 \u0623\u0642\u0631\u0628 \u0664 \u0645\u0646\u0627\u0633\u0628\u0627\u062a \u0648\u0627\u0644\u0645\u0647\u0627\u0645 \u0648\u0627\u0644\u0637\u0642\u0633."),
-                toggle("ويدجت حكم ومواعظ بالرئيسية", "hekamWidget",
-                    "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين)."),
-                choice("موضع ويدجت الحكمة", "hekamPos", [
-                    ["above-dock", "فوق التطبيقات بالمنتصف"],
-                    ["top-center", "أعلى المنتصف"],
-                    ["top-right", "أعلى اليمين"],
-                    ["top-left", "أعلى اليسار"],
-                    ["bottom-center", "أسفل المنتصف"],
-                    ["bottom-right", "أسفل اليمين"],
-                    ["bottom-left", "أسفل اليسار"],
-                    ["inline", "متصل بشريط الصلاة"]
-                ], "اختر موضع كارت الحكمة منفصلاً في أي زاوية من الشاشة أو متصلاً بشريط الصلاة."),
-                choice("حجم ويدجت الحكمة", "hekamScale", [
-                    [100, "عادي (100%)"],
-                    [125, "كبير (125%)"],
-                    [150, "كبير جداً (150%)"],
-                    [175, "ضخم (175%)"],
-                    [200, "أقصى حجم (200%)"]
-                ], "تحكم في حجم كارت الحكمة والخط ليكون بارزاً ومقروءاً بامتياز على شاشة التلفزيون."),
-                choice("لون خط ويدجت الحكمة", "hekamColor", [
-                    ["gold", "ذهبي ملكي براق"],
-                    ["white", "أبيض ناصع كريستالي"],
-                    ["sky", "أزرق سماوي نيون"],
-                    ["galaxy", "موف المجرة متوهج"],
-                    ["green", "أخضر فسفوري إسلامي"]
-                ], "اختر لون خط وتوهج نصوص ويدجت الحكمة."),
+                toggle(HT("\u0639\u0631\u0636 \u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u0627\u0644\u0634\u0627\u0634\u0629 \u0643\u0627\u0645\u0644\u0629"), "prayerWidgetFull",
+                    HT("\u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u064a\u0627\u062e\u062f \u0639\u0631\u0636 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0641\u0648\u0642 \u0635\u0641 \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a\u060c \u0648\u0645\u0639\u0627\u0647 \u0623\u0642\u0631\u0628 \u0664 \u0645\u0646\u0627\u0633\u0628\u0627\u062a \u0648\u0627\u0644\u0645\u0647\u0627\u0645 \u0648\u0627\u0644\u0637\u0642\u0633.")),
+                toggle(HT("ويدجت حكم ومواعظ بالرئيسية"), "hekamWidget",
+                    HT("يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).")),
+                choice(HT("موضع ويدجت الحكمة"), "hekamPos", [
+                    ["above-dock", HT("فوق التطبيقات بالمنتصف")],
+                    ["top-center", HT("أعلى المنتصف")],
+                    ["top-right", HT("أعلى اليمين")],
+                    ["top-left", HT("أعلى اليسار")],
+                    ["bottom-center", HT("أسفل المنتصف")],
+                    ["bottom-right", HT("أسفل اليمين")],
+                    ["bottom-left", HT("أسفل اليسار")],
+                    ["inline", HT("متصل بشريط الصلاة")]
+                ], HT("اختر موضع كارت الحكمة منفصلاً في أي زاوية من الشاشة أو متصلاً بشريط الصلاة.")),
+                choice(HT("حجم ويدجت الحكمة"), "hekamScale", [
+                    [100, HT("عادي (100%)")],
+                    [125, HT("كبير (125%)")],
+                    [150, HT("كبير جداً (150%)")],
+                    [175, HT("ضخم (175%)")],
+                    [200, HT("أقصى حجم (200%)")]
+                ], HT("تحكم في حجم كارت الحكمة والخط ليكون بارزاً ومقروءاً بامتياز على شاشة التلفزيون.")),
+                choice(HT("لون خط ويدجت الحكمة"), "hekamColor", [
+                    ["gold", HT("ذهبي ملكي براق")],
+                    ["white", HT("أبيض ناصع كريستالي")],
+                    ["sky", HT("أزرق سماوي نيون")],
+                    ["galaxy", HT("موف المجرة متوهج")],
+                    ["green", HT("أخضر فسفوري إسلامي")]
+                ], HT("اختر لون خط وتوهج نصوص ويدجت الحكمة.")),
                 toggle(APL.t("Prayer Alerts"), "prayerAlerts",
                     APL.t("A short spoken alert at each prayer time. Not the full call to prayer.")),
                 action(APL.t("Test the Isha Alert"), function () {
@@ -1005,31 +1046,31 @@
                         toggle("\u0623\u064a\u0642\u0648\u0646\u0627\u062a \u0623\u0648\u0646\u0644\u0627\u064a\u0646", "onlineIcons", "\u0623\u064a\u0642\u0648\u0646\u0627\u062a \u062d\u0642\u064a\u0642\u064a\u0629 \u0645\u0646 \u0643\u062a\u0627\u0644\u0648\u062c \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a. \u0645\u062d\u062a\u0627\u062c \u0646\u062a."),
                         toggle("\u0644\u0648\u0646 \u0645\u0646 \u0627\u0644\u062e\u0644\u0641\u064a\u0629", "wallTint", "\u0644\u0645\u0633\u0629 \u0644\u0648\u0646 \u062e\u0641\u064a\u0641\u0629 \u0645\u0646 \u0635\u0648\u0631\u0629 \u0627\u0644\u062e\u0644\u0641\u064a\u0629 \u0627\u0644\u0645\u062d\u0644\u064a\u0629."),
                         toggle("\u062d\u0631\u0643\u0629 \u0627\u0644\u0645\u062d\u0631\u0627\u0628 \u0627\u0644\u062d\u064a", "ambientFx", "\u062a\u062f\u0631\u0651\u062c \u0627\u0644\u0633\u0645\u0627 \u0648\u0644\u0645\u0639\u0629 \u0627\u0644\u0623\u0630\u0627\u0646 \u0627\u0644\u0645\u062a\u062d\u0631\u0643\u0629."),
-                        toggle("ويدجت حكم ومواعظ (٥ دقائق)", "hekamWidget", "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين)."),
-                        choice("موضع ويدجت الحكمة", "hekamPos", [
-                            ["above-dock", "فوق التطبيقات بالمنتصف"],
-                            ["top-center", "أعلى المنتصف"],
-                            ["top-right", "أعلى اليمين"],
-                            ["top-left", "أعلى اليسار"],
-                            ["bottom-center", "أسفل المنتصف"],
-                            ["bottom-right", "أسفل اليمين"],
-                            ["bottom-left", "أسفل اليسار"],
-                            ["inline", "متصل بشريط الصلاة"]
-                        ], "موضع كارت الحكمة على الشاشة."),
-                        choice("حجم ويدجت الحكمة", "hekamScale", [
-                            [100, "100% عادي"],
-                            [125, "125% كبير"],
-                            [150, "150% كبير جداً"],
-                            [175, "175% ضخم"],
-                            [200, "200% أقصى حجم"]
-                        ], "حجم كارت الحكمة على الشاشة."),
-                        choice("لون خط ويدجت الحكمة", "hekamColor", [
-                            ["gold", "ذهبي ملكي براق"],
-                            ["white", "أبيض ناصع كريستالي"],
-                            ["sky", "أزرق سماوي نيون"],
-                            ["galaxy", "موف المجرة متوهج"],
-                            ["green", "أخضر فسفوري إسلامي"]
-                        ], "اختر لون خط وتوهج نصوص ويدجت الحكمة."),
+                        toggle(HT("ويدجت حكم ومواعظ (٥ دقائق)"), "hekamWidget", HT("يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).")),
+                        choice(HT("موضع ويدجت الحكمة"), "hekamPos", [
+                            ["above-dock", HT("فوق التطبيقات بالمنتصف")],
+                            ["top-center", HT("أعلى المنتصف")],
+                            ["top-right", HT("أعلى اليمين")],
+                            ["top-left", HT("أعلى اليسار")],
+                            ["bottom-center", HT("أسفل المنتصف")],
+                            ["bottom-right", HT("أسفل اليمين")],
+                            ["bottom-left", HT("أسفل اليسار")],
+                            ["inline", HT("متصل بشريط الصلاة")]
+                        ], HT("موضع كارت الحكمة على الشاشة.")),
+                        choice(HT("حجم ويدجت الحكمة"), "hekamScale", [
+                            [100, HT("100% عادي")],
+                            [125, HT("125% كبير")],
+                            [150, HT("150% كبير جداً")],
+                            [175, HT("175% ضخم")],
+                            [200, HT("200% أقصى حجم")]
+                        ], HT("حجم كارت الحكمة على الشاشة.")),
+                        choice(HT("لون خط ويدجت الحكمة"), "hekamColor", [
+                            ["gold", HT("ذهبي ملكي براق")],
+                            ["white", HT("أبيض ناصع كريستالي")],
+                            ["sky", HT("أزرق سماوي نيون")],
+                            ["galaxy", HT("موف المجرة متوهج")],
+                            ["green", HT("أخضر فسفوري إسلامي")]
+                        ], HT("اختر لون خط وتوهج نصوص ويدجت الحكمة.")),
                         action("\u0627\u0642\u0641\u0644 \u0643\u0644 \u0627\u0644\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u062b\u0642\u064a\u0644\u0629", function () { ["visualEffects","richFx","cleanFrameBackdrops","bgMotion","focusFx","liveShelf","onlineIcons","wallTint","ambientFx","hekamWidget"].forEach(function (k) { APL.sys.setPref(k, false); }); APL.toast("\u0627\u062a\u0642\u0641\u0644\u062a \u0643\u0644 \u0627\u0644\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u062b\u0642\u064a\u0644\u0629", true); },
                             "\u0628\u062a\u0642\u0641\u0644 \u0643\u0644 \u0627\u0644\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u0644\u064a \u0641\u0648\u0642 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629.", "shield")
                     ], "\u0643\u0644 \u0645\u064a\u0632\u0629 \u0644\u0648\u062d\u062f\u0647\u0627\u060c \u0648\u0643\u0644\u0647\u0627 \u0645\u0642\u0641\u0648\u0644\u0629 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u064b\u0627."),

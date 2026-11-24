@@ -7965,6 +7965,8 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         });
     }
 
+    /* v8.7.22: the Ramadan cannon switch (Ramadan mode panel) now also decides the Maghrib alert key */
+    function cannonOn() { try { return !(APL.ramadan && APL.ramadan.cannonOn && !APL.ramadan.cannonOn()); } catch (e) { return true; } }
     /* Push rolling 30-day prayer timestamps + alert config to Vetro persistent daemon */
     var retryAt = 0, retryStep = 0;
     function backOff() { retryStep = Math.min(retryStep + 1, 5); retryAt = Date.now() + Math.min(15000 * Math.pow(2, retryStep - 1), 300000); }
@@ -7993,7 +7995,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                             if (h && h.m === 9) isRam = true;
                         }
                     } catch (e) {}
-                    var alertKey = (k === "maghrib" && isRam) ? "maghrib_ramadan" : k;
+                    var alertKey = (k === "maghrib" && isRam && cannonOn()) ? "maghrib_ramadan" : k;
                     entries.push({
                         epoch: sec,
                         id: k + "@" + dIso + "_" + dMap[k],
@@ -8006,7 +8008,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var pauseRad = sys.pref("radioDuringAlert") !== false;
         var vol = parseFloat(sys.pref("prayerAlertVolume"));
         if (!(vol >= 0.1 && vol <= 1.5)) vol = 0.92;
-        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol].join("|");
+        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0].join("|");
         if (!force && sig === syncedSig && entries.length > 0) return;
 
         if (!force && Date.now() < retryAt) return;          // Vetro was not ready: wait before asking again
@@ -8392,7 +8394,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                     if (h && h.m === 9) isRam = true;
                 }
             } catch (e) {}
-            var alertKey = (key === "maghrib" && isRam) ? "maghrib_ramadan" : key;
+            var alertKey = (key === "maghrib" && isRam && cannonOn()) ? "maghrib_ramadan" : key;
             if (APL.prayerAlert && APL.prayerAlert.play) APL.prayerAlert.play(alertKey);
             if (APL.toast) APL.toast(APL.t("It is time for {prayer}", { prayer: nameOf(key) }) + " — " + hhmmText(t[key]));
         };
@@ -9108,6 +9110,12 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     APL.islamic = {
         jdn: jdn, ymd: ymd, isoOf: isoOf, weekday: weekday, today: todayJdn,
         hijriToday: hijriToday, hijriText: hijriText, gregorian: gregorian,
+        /* v8.7.22: Hijri date of any Gregorian day (y, m, d), same offset and rules as hijriToday. prayer.js needs it to mark Ramadan Maghrib in the background schedule. */
+        toHijri: function (y, m, d) {
+            var off = 0;
+            try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
+            return hijriFor(jdn(y, m, d) + off);
+        },
         occasions: occasions,
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
         /* for the tests: the pieces that can be checked on their own */
@@ -12603,11 +12611,11 @@ window.APL_KEYS = {
     function buildHekamSections() {
         bodyEl.innerHTML = "";
         tiles = [];
-        titleEl.textContent = "حكم ومواعظ الكلم الطيب";
-        subEl.textContent = "موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)";
+        titleEl.textContent = HK("حكم ومواعظ الكلم الطيب");
+        subEl.textContent = HK("موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)");
 
         var topBar = el("div", "pw-btns");
-        var rndBtn = pwBtn("🎲 حكمة اليوم العشوائية", "sparkle", false, false, function () {
+        var rndBtn = pwBtn(HK("🎲 حكمة اليوم العشوائية"), "sparkle", false, false, function () {
             mode = "hekam-random";
             focusIndex = 0;
             render();
@@ -12616,7 +12624,7 @@ window.APL_KEYS = {
         bodyEl.appendChild(topBar);
 
         if (!hekamSectionsData) {
-            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">جارٍ قراءة قائمة الأقسام من الحزمة…</span></div>');
+            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">' + L("جارٍ قراءة قائمة الأقسام من الحزمة…", "Reading the section list from the package…") + '</span></div>');
             bodyEl.appendChild(loadingEl);
             loadHekamJSON("data/hekam/sections.json", function (e, d) {
                 if (!e && d && d.length) {
@@ -12664,7 +12672,7 @@ window.APL_KEYS = {
         titleEl.textContent = hekamCurSec.name;
 
         var navRow = el("div", "pw-btns");
-        var backBtn = pwBtn("◄ رجوع للأقسام", "back", false, false, function () {
+        var backBtn = pwBtn(HK("◄ رجوع للأقسام"), "back", false, false, function () {
             mode = "hekam";
             focusIndex = hekamReturn;
             render();
@@ -12672,9 +12680,9 @@ window.APL_KEYS = {
         navRow.appendChild(backBtn);
 
         if (!cached) {
-            subEl.textContent = "جارٍ تحميل المواد والفوائد أوفلاين…";
+            subEl.textContent = HK("جارٍ تحميل المواد والفوائد أوفلاين…");
             bodyEl.appendChild(navRow);
-            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">جارٍ قراءة الملف data/hekam/' + hekamCurSec.file + '…</span></div>');
+            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">' + L("جارٍ قراءة الملف ", "Reading the file ") + 'data/hekam/' + hekamCurSec.file + '…</span></div>');
             bodyEl.appendChild(loadingEl);
             loadHekamJSON("data/hekam/" + hekamCurSec.file, function (e, d) {
                 if (!e && d && d.items) {
@@ -12682,7 +12690,7 @@ window.APL_KEYS = {
                     if (mode === "hekam-items") render();
                 }
             });
-            hintEl.textContent = "رجوع لقائمة الأقسام";
+            hintEl.textContent = HK("رجوع لقائمة الأقسام");
             return;
         }
 
@@ -12693,10 +12701,10 @@ window.APL_KEYS = {
         var start = hekamPage * pageSize;
         var pageItems = items.slice(start, start + pageSize);
 
-        subEl.textContent = hekamCurSec.name + " · " + dg(total) + " مادة · صفحة " + dg(hekamPage + 1) + " من " + dg(totalPages);
+        subEl.textContent = hekamCurSec.name + " · " + dg(total) + " " + (APL.lang === "ar" ? "مادة · صفحة" : "items · page") + " " + dg(hekamPage + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(totalPages);
 
         if (hekamPage > 0) {
-            var prevBtn = pwBtn("السابقة ►", "prev", false, false, function () {
+            var prevBtn = pwBtn(HK("السابقة ►"), "prev", false, false, function () {
                 hekamPage--;
                 focusIndex = 1;
                 render();
@@ -12704,7 +12712,7 @@ window.APL_KEYS = {
             navRow.appendChild(prevBtn);
         }
         if (start + pageSize < total) {
-            var nextBtn = pwBtn("◄ المزيد (" + dg(total - start - pageSize) + ")", "next", false, false, function () {
+            var nextBtn = pwBtn((APL.lang === "ar" ? "◄ المزيد (" : "◄ More (") + dg(total - start - pageSize) + ")", "next", false, false, function () {
                 hekamPage++;
                 focusIndex = 1;
                 render();
@@ -12730,17 +12738,17 @@ window.APL_KEYS = {
         });
 
         bodyEl.appendChild(list);
-        hintEl.textContent = "▲▼ للتمرير · ◄ المزيد للصفحة التالية · رجوع للأقسام";
+        hintEl.textContent = HK("▲▼ للتمرير · ◄ المزيد للصفحة التالية · رجوع للأقسام");
     }
 
     function buildHekamRandom() {
         bodyEl.innerHTML = "";
         tiles = [];
-        titleEl.textContent = "حكمة اليوم · الكلم الطيب";
-        subEl.textContent = "مقتطفات مختارة من أقوال أئمة السلف وحكم العلماء والمواعظ";
+        titleEl.textContent = HK("حكمة اليوم · الكلم الطيب");
+        subEl.textContent = HK("مقتطفات مختارة من أقوال أئمة السلف وحكم العلماء والمواعظ");
 
         var navRow = el("div", "pw-btns");
-        var rndBtn = pwBtn("🔄 حكمة أخرى", "refresh", false, false, function () {
+        var rndBtn = pwBtn(HK("🔄 حكمة أخرى"), "refresh", false, false, function () {
             if (hekamRandomList && hekamRandomList.length) {
                 var rIdx = Math.floor(Math.random() * hekamRandomList.length);
                 hekamRandomCur = hekamRandomList[rIdx];
@@ -12750,7 +12758,7 @@ window.APL_KEYS = {
             }
         });
         navRow.appendChild(rndBtn);
-        var secBtn = pwBtn("📚 تصفح كل الأقسام", "book", false, false, function () {
+        var secBtn = pwBtn(HK("📚 تصفح كل الأقسام"), "book", false, false, function () {
             mode = "hekam";
             focusIndex = 0;
             render();
@@ -12759,7 +12767,7 @@ window.APL_KEYS = {
         bodyEl.appendChild(navRow);
 
         if (!hekamRandomList) {
-            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">جارٍ تحميل المقتطفات…</span></div>');
+            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">' + L("جارٍ تحميل المقتطفات…", "Loading the excerpts…") + '</span></div>');
             bodyEl.appendChild(loadingEl);
             loadHekamJSON("data/hekam/excerpts.json", function (e, d) {
                 if (!e && d && d.length) {
@@ -12769,7 +12777,7 @@ window.APL_KEYS = {
                     if (mode === "hekam-random") render();
                 }
             });
-            hintEl.textContent = "رجوع للصلاة والقرآن";
+            hintEl.textContent = HK("رجوع للصلاة والقرآن");
             return;
         }
 
@@ -12777,11 +12785,11 @@ window.APL_KEYS = {
         var card = el("div", "hekam-featured-card",
             '<div class="hekam-featured__text">' + it.text + '</div>' +
             '<div class="hekam-featured__ref">' +
-                '<span>' + (it.ref || "الكلم الطيب") + '</span>' +
+                '<span>' + (it.ref || HK("الكلم الطيب")) + '</span>' +
                 '<span style="opacity:0.75; font-size:16px;">' + (it.sec || "") + '</span>' +
             '</div>');
         bodyEl.appendChild(card);
-        hintEl.textContent = "OK لتغيير الحكمة · 📚 لتصفح الأقسام الـ ٥٣ · رجوع للخروج";
+        hintEl.textContent = HK("OK لتغيير الحكمة · 📚 لتصفح الأقسام الـ ٥٣ · رجوع للخروج");
     }
 
     /* what the big figure of a card says: the days left, or a word */
@@ -13064,17 +13072,17 @@ window.APL_KEYS = {
             nextScale();
             render();
         }));
-        row.appendChild(pwBtn("عرض كامل بالرئيسية", "size", !!sys.pref("prayerWidgetFull"), false, function () {
+        row.appendChild(pwBtn(HK("عرض كامل بالرئيسية"), "size", !!sys.pref("prayerWidgetFull"), false, function () {
             sys.setPref("prayerWidgetFull", !sys.pref("prayerWidgetFull"));
             render();
         }));
 
         var curShow = sys.pref("prayerWidgetShow");
-        var showLabel = curShow === "ayah" ? "آية اليوم" :
-            curShow === "tafsir" ? "آية وتفسير" :
-            curShow === "hekam" ? "حكمة اليوم" :
-            curShow === "pers" ? "مناسبتي القادمة" : "المناسبات";
-        row.appendChild(pwBtn("يعرض: " + showLabel, "sparkle", curShow !== "occ", false, function () {
+        var showLabel = curShow === "ayah" ? HK("آية اليوم") :
+            curShow === "tafsir" ? HK("آية وتفسير") :
+            curShow === "hekam" ? HK("حكمة اليوم") :
+            curShow === "pers" ? HK("مناسبتي القادمة") : HK("المناسبات");
+        row.appendChild(pwBtn(HK("يعرض: ") + showLabel, "sparkle", curShow !== "occ", false, function () {
             var cur = sys.pref("prayerWidgetShow");
             var nxt = cur === "ayah" ? "tafsir" :
                 cur === "tafsir" ? "hekam" :
@@ -13090,26 +13098,26 @@ window.APL_KEYS = {
     function hekamSettingsButtons() {
         var row = el("div", "pw-btns");
         var hekamOn = !!sys.pref("hekamWidget");
-        row.appendChild(pwBtn("ويدجت الحكمة: " + (hekamOn ? "شغال" : "مغلق"), "sparkle", hekamOn, false, function () {
+        row.appendChild(pwBtn(HK("ويدجت الحكمة: ") + (hekamOn ? HK("شغال") : HK("مغلق")), "sparkle", hekamOn, false, function () {
             var nxt = !hekamOn;
             sys.setPref("hekamWidget", nxt);
-            if (APL.toast) APL.toast(nxt ? "تم تفعيل ويدجت الحكمة على الرئيسية" : "تم إيقاف ويدجت الحكمة", true);
+            if (APL.toast) APL.toast(nxt ? HK("تم تفعيل ويدجت الحكمة على الرئيسية") : HK("تم إيقاف ويدجت الحكمة"), true);
             render();
         }));
 
         var curHekamPos = sys.pref("hekamPos") || "above-dock";
         var posMap = {
-            "above-dock": "فوق التطبيقات",
-            "top-center": "أعلى المنتصف",
-            "top-right": "أعلى اليمين",
-            "top-left": "أعلى اليسار",
-            "bottom-center": "أسفل المنتصف",
-            "bottom-right": "أسفل اليمين",
-            "bottom-left": "أسفل اليسار",
-            "inline": "بشريط الصلاة"
+            "above-dock": HK("فوق التطبيقات"),
+            "top-center": HK("أعلى المنتصف"),
+            "top-right": HK("أعلى اليمين"),
+            "top-left": HK("أعلى اليسار"),
+            "bottom-center": HK("أسفل المنتصف"),
+            "bottom-right": HK("أسفل اليمين"),
+            "bottom-left": HK("أسفل اليسار"),
+            "inline": HK("بشريط الصلاة")
         };
         var posKeys = ["above-dock", "top-center", "top-right", "top-left", "bottom-center", "bottom-right", "bottom-left", "inline"];
-        row.appendChild(pwBtn("الموضع: " + (posMap[curHekamPos] || "فوق التطبيقات"), "pin", hekamOn, false, function () {
+        row.appendChild(pwBtn(HK("الموضع: ") + (posMap[curHekamPos] || HK("فوق التطبيقات")), "pin", hekamOn, false, function () {
             var idx = posKeys.indexOf(sys.pref("hekamPos") || "above-dock");
             var nxtPos = posKeys[(idx + 1) % posKeys.length];
             sys.setPref("hekamPos", nxtPos);
@@ -13119,7 +13127,7 @@ window.APL_KEYS = {
 
         var HEKAM_SCALES = [100, 125, 150, 175, 200];
         var curHekamScale = Number(sys.pref("hekamScale")) || 100;
-        row.appendChild(pwBtn("الحجم: \u2066" + dg(curHekamScale) + "%\u2069", "size", curHekamScale > 100, false, function () {
+        row.appendChild(pwBtn(L("الحجم: ", "Size: ") + "\u2066" + dg(curHekamScale) + "%\u2069", "size", curHekamScale > 100, false, function () {
             var sidx = HEKAM_SCALES.indexOf(curHekamScale);
             var nxtScale = HEKAM_SCALES[(sidx + 1) % HEKAM_SCALES.length];
             sys.setPref("hekamScale", nxtScale);
@@ -13127,25 +13135,25 @@ window.APL_KEYS = {
         }));
 
         var HEKAM_COLORS = [
-            { key: "gold", label: "ذهبي ملكي" },
-            { key: "white", label: "أبيض كريستال" },
-            { key: "sky", label: "أزرق سماوي" },
-            { key: "galaxy", label: "موف المجرة" },
-            { key: "green", label: "أخضر فسفوري" }
+            { key: "gold", label: HK("ذهبي ملكي") },
+            { key: "white", label: HK("أبيض كريستال") },
+            { key: "sky", label: HK("أزرق سماوي") },
+            { key: "galaxy", label: HK("موف المجرة") },
+            { key: "green", label: HK("أخضر فسفوري") }
         ];
         var curColor = sys.pref("hekamColor") || "white";
         var curColorObj = HEKAM_COLORS[1];
         for (var c = 0; c < HEKAM_COLORS.length; c++) {
             if (HEKAM_COLORS[c].key === curColor) { curColorObj = HEKAM_COLORS[c]; break; }
         }
-        row.appendChild(pwBtn("اللون: " + curColorObj.label, "sparkle", false, false, function () {
+        row.appendChild(pwBtn(HK("اللون: ") + curColorObj.label, "sparkle", false, false, function () {
             var cidx = 0;
             for (var i = 0; i < HEKAM_COLORS.length; i++) {
                 if (HEKAM_COLORS[i].key === (sys.pref("hekamColor") || "white")) { cidx = i; break; }
             }
             var nxtColor = HEKAM_COLORS[(cidx + 1) % HEKAM_COLORS.length];
             sys.setPref("hekamColor", nxtColor.key);
-            if (APL.toast) APL.toast("لون خط الحكمة: " + nxtColor.label, true);
+            if (APL.toast) APL.toast(HK("لون خط الحكمة: ") + nxtColor.label, true);
             render();
         }));
 
@@ -13628,6 +13636,57 @@ window.APL_KEYS = {
         return actBtn(ico, label + mark, on, function () { toggleAudio(id); });
     }
     /* v7.2.0: two half-size buttons, one above the other, between the Al-Kahf and the Eid Takbeer tiles */
+    /* v8.7.22: English text for strings that were written in Arabic only */
+    var HK_D = {
+        "حكم ومواعظ الكلم الطيب": "Wisdom & Sermons (Kalem Tayeb)",
+        "موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)": "Encyclopedia of wisdom, sermons, benefits and sayings · fully offline (35 thousand items in 53 sections) · text in Arabic",
+        "🎲 حكمة اليوم العشوائية": "🎲 Random wisdom",
+        "جارٍ قراءة قائمة الأقسام من الحزمة…": "Reading the section list from the package…",
+        "◄ رجوع للأقسام": "◄ Back to sections",
+        "جارٍ تحميل المواد والفوائد أوفلاين…": "Loading the items offline…",
+        "رجوع لقائمة الأقسام": "Back to the section list",
+        "السابقة ►": "Previous ►",
+        "▲▼ للتمرير · ◄ المزيد للصفحة التالية · رجوع للأقسام": "▲▼ scroll · ◄ More for the next page · Back to sections",
+        "حكمة اليوم · الكلم الطيب": "Wisdom of the day · Kalem Tayeb",
+        "مقتطفات مختارة من أقوال أئمة السلف وحكم العلماء والمواعظ": "Selected sayings of the early imams, wisdom of scholars and sermons (text in Arabic)",
+        "🔄 حكمة أخرى": "🔄 Another one",
+        "📚 تصفح كل الأقسام": "📚 Browse all sections",
+        "جارٍ تحميل المقتطفات…": "Loading the excerpts…",
+        "رجوع للصلاة والقرآن": "Back to Prayer & Quran",
+        "الكلم الطيب": "Kalem Tayeb",
+        "OK لتغيير الحكمة · 📚 لتصفح الأقسام الـ ٥٣ · رجوع للخروج": "OK for another one · 📚 browse the 53 sections · Back to exit",
+        "عرض كامل بالرئيسية": "Full width on Home",
+        "آية اليوم": "Verse of the day",
+        "آية وتفسير": "Verse and tafsir",
+        "حكمة اليوم": "Wisdom of the day",
+        "مناسبتي القادمة": "My next occasion",
+        "المناسبات": "Occasions",
+        "يعرض: ": "Shows: ",
+        "ويدجت الحكمة: ": "Wisdom widget: ",
+        "شغال": "On",
+        "مغلق": "Off",
+        "تم تفعيل ويدجت الحكمة على الرئيسية": "Wisdom widget turned on for Home",
+        "تم إيقاف ويدجت الحكمة": "Wisdom widget turned off",
+        "فوق التطبيقات": "Above the apps",
+        "أعلى المنتصف": "Top center",
+        "أعلى اليمين": "Top right",
+        "أعلى اليسار": "Top left",
+        "أسفل المنتصف": "Bottom center",
+        "أسفل اليمين": "Bottom right",
+        "أسفل اليسار": "Bottom left",
+        "بشريط الصلاة": "On the prayer strip",
+        "الموضع: ": "Position: ",
+        "الحجم: ⁦": "Size: ⁦",
+        "ذهبي ملكي": "Royal gold",
+        "أبيض كريستال": "Crystal white",
+        "أزرق سماوي": "Sky blue",
+        "موف المجرة": "Galaxy purple",
+        "أخضر فسفوري": "Neon green",
+        "اللون: ": "Color: ",
+        "لون خط الحكمة: ": "Wisdom text color: "
+    };
+    function HK(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(HK_D, s)) ? HK_D[s] : s; }
+
     function L(ar, en) { return APL.lang === "ar" ? ar : en; }
     function miniBtn(ico, label, run) {
         var b = el("div", "pw-ic pw-ic--mini", (ACT_ICO[ico] || "") + "<span>" + label + "</span>");
@@ -15232,6 +15291,47 @@ window.APL_KEYS = {
 
     var APL = global.APL, sys = APL.sys;
 
+    /* v8.7.22: English text for strings that were written in Arabic only */
+    var HT_D = {
+        "ويدجت حكم ومواعظ بالرئيسية": "Wisdom & Sermons Home Widget",
+        "ويدجت حكم ومواعظ (٥ دقائق)": "Wisdom & Sermons Widget (5 min)",
+        "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).": "Shows a separate wisdom or sermon card on the Home Screen, changing every 5 minutes (offline).",
+        "موضع ويدجت الحكمة": "Wisdom Widget Position",
+        "فوق التطبيقات بالمنتصف": "Above the apps, centered",
+        "أعلى المنتصف": "Top center",
+        "أعلى اليمين": "Top right",
+        "أعلى اليسار": "Top left",
+        "أسفل المنتصف": "Bottom center",
+        "أسفل اليمين": "Bottom right",
+        "أسفل اليسار": "Bottom left",
+        "متصل بشريط الصلاة": "Attached to the prayer strip",
+        "اختر موضع كارت الحكمة منفصلاً في أي زاوية من الشاشة أو متصلاً بشريط الصلاة.": "Choose where the wisdom card sits: any corner of the screen, or attached to the prayer strip.",
+        "موضع كارت الحكمة على الشاشة.": "Where the wisdom card sits on the screen.",
+        "حجم ويدجت الحكمة": "Wisdom Widget Size",
+        "عادي (100%)": "Normal (100%)",
+        "كبير (125%)": "Large (125%)",
+        "كبير جداً (150%)": "Very large (150%)",
+        "ضخم (175%)": "Huge (175%)",
+        "أقصى حجم (200%)": "Maximum (200%)",
+        "100% عادي": "100% Normal",
+        "125% كبير": "125% Large",
+        "150% كبير جداً": "150% Very large",
+        "175% ضخم": "175% Huge",
+        "200% أقصى حجم": "200% Maximum",
+        "تحكم في حجم كارت الحكمة والخط ليكون بارزاً ومقروءاً بامتياز على شاشة التلفزيون.": "Sets the size of the wisdom card and its text so it is easy to read on the TV.",
+        "حجم كارت الحكمة على الشاشة.": "Size of the wisdom card on the screen.",
+        "لون خط ويدجت الحكمة": "Wisdom Widget Text Color",
+        "ذهبي ملكي براق": "Royal gold",
+        "أبيض ناصع كريستالي": "Crystal white",
+        "أزرق سماوي نيون": "Neon sky blue",
+        "موف المجرة متوهج": "Glowing galaxy purple",
+        "أخضر فسفوري إسلامي": "Islamic neon green",
+        "اختر لون خط وتوهج نصوص ويدجت الحكمة.": "Choose the text color and glow of the wisdom widget.",
+        "عرض الويدجت بالشاشة كاملة": "Full-Screen-Width Widget",
+        "الويدجت بياخد عرض الشاشة الرئيسية فوق صف التطبيقات، ومعاه أقرب ٤ مناسبات والمهام والطقس.": "The widget takes the full width of the Home Screen above the app row, with the next 4 occasions, tasks and weather."
+    };
+    function HT(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(HT_D, s)) ? HT_D[s] : s; }
+
     function menu(label, icon, children, desc) { return { type: "menu", label: label, icon: icon, children: children, desc: desc }; }
     function info(label, get, desc) { return { type: "info", label: label, get: get, desc: desc }; }
     function toggle(label, key, desc) { return { type: "toggle", label: label, key: key, desc: desc }; }
@@ -15603,34 +15703,34 @@ window.APL_KEYS = {
                 choice(APL.t("Prayer Widget Size"), "prayerWidgetScale",
                     [[0, APL.t("Current size") + " 100%"], [25, "125%"], [50, "150%"], [75, "175%"], [100, "200%"], [150, "250%"], [200, "300%"]],
                     APL.t("Makes the prayer widget on the Home Screen bigger than its current size.")),
-                toggle("\u0639\u0631\u0636 \u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u0627\u0644\u0634\u0627\u0634\u0629 \u0643\u0627\u0645\u0644\u0629", "prayerWidgetFull",
-                    "\u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u064a\u0627\u062e\u062f \u0639\u0631\u0636 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0641\u0648\u0642 \u0635\u0641 \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a\u060c \u0648\u0645\u0639\u0627\u0647 \u0623\u0642\u0631\u0628 \u0664 \u0645\u0646\u0627\u0633\u0628\u0627\u062a \u0648\u0627\u0644\u0645\u0647\u0627\u0645 \u0648\u0627\u0644\u0637\u0642\u0633."),
-                toggle("ويدجت حكم ومواعظ بالرئيسية", "hekamWidget",
-                    "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين)."),
-                choice("موضع ويدجت الحكمة", "hekamPos", [
-                    ["above-dock", "فوق التطبيقات بالمنتصف"],
-                    ["top-center", "أعلى المنتصف"],
-                    ["top-right", "أعلى اليمين"],
-                    ["top-left", "أعلى اليسار"],
-                    ["bottom-center", "أسفل المنتصف"],
-                    ["bottom-right", "أسفل اليمين"],
-                    ["bottom-left", "أسفل اليسار"],
-                    ["inline", "متصل بشريط الصلاة"]
-                ], "اختر موضع كارت الحكمة منفصلاً في أي زاوية من الشاشة أو متصلاً بشريط الصلاة."),
-                choice("حجم ويدجت الحكمة", "hekamScale", [
-                    [100, "عادي (100%)"],
-                    [125, "كبير (125%)"],
-                    [150, "كبير جداً (150%)"],
-                    [175, "ضخم (175%)"],
-                    [200, "أقصى حجم (200%)"]
-                ], "تحكم في حجم كارت الحكمة والخط ليكون بارزاً ومقروءاً بامتياز على شاشة التلفزيون."),
-                choice("لون خط ويدجت الحكمة", "hekamColor", [
-                    ["gold", "ذهبي ملكي براق"],
-                    ["white", "أبيض ناصع كريستالي"],
-                    ["sky", "أزرق سماوي نيون"],
-                    ["galaxy", "موف المجرة متوهج"],
-                    ["green", "أخضر فسفوري إسلامي"]
-                ], "اختر لون خط وتوهج نصوص ويدجت الحكمة."),
+                toggle(HT("\u0639\u0631\u0636 \u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u0627\u0644\u0634\u0627\u0634\u0629 \u0643\u0627\u0645\u0644\u0629"), "prayerWidgetFull",
+                    HT("\u0627\u0644\u0648\u064a\u062f\u062c\u062a \u0628\u064a\u0627\u062e\u062f \u0639\u0631\u0636 \u0627\u0644\u0634\u0627\u0634\u0629 \u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629 \u0641\u0648\u0642 \u0635\u0641 \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a\u060c \u0648\u0645\u0639\u0627\u0647 \u0623\u0642\u0631\u0628 \u0664 \u0645\u0646\u0627\u0633\u0628\u0627\u062a \u0648\u0627\u0644\u0645\u0647\u0627\u0645 \u0648\u0627\u0644\u0637\u0642\u0633.")),
+                toggle(HT("ويدجت حكم ومواعظ بالرئيسية"), "hekamWidget",
+                    HT("يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).")),
+                choice(HT("موضع ويدجت الحكمة"), "hekamPos", [
+                    ["above-dock", HT("فوق التطبيقات بالمنتصف")],
+                    ["top-center", HT("أعلى المنتصف")],
+                    ["top-right", HT("أعلى اليمين")],
+                    ["top-left", HT("أعلى اليسار")],
+                    ["bottom-center", HT("أسفل المنتصف")],
+                    ["bottom-right", HT("أسفل اليمين")],
+                    ["bottom-left", HT("أسفل اليسار")],
+                    ["inline", HT("متصل بشريط الصلاة")]
+                ], HT("اختر موضع كارت الحكمة منفصلاً في أي زاوية من الشاشة أو متصلاً بشريط الصلاة.")),
+                choice(HT("حجم ويدجت الحكمة"), "hekamScale", [
+                    [100, HT("عادي (100%)")],
+                    [125, HT("كبير (125%)")],
+                    [150, HT("كبير جداً (150%)")],
+                    [175, HT("ضخم (175%)")],
+                    [200, HT("أقصى حجم (200%)")]
+                ], HT("تحكم في حجم كارت الحكمة والخط ليكون بارزاً ومقروءاً بامتياز على شاشة التلفزيون.")),
+                choice(HT("لون خط ويدجت الحكمة"), "hekamColor", [
+                    ["gold", HT("ذهبي ملكي براق")],
+                    ["white", HT("أبيض ناصع كريستالي")],
+                    ["sky", HT("أزرق سماوي نيون")],
+                    ["galaxy", HT("موف المجرة متوهج")],
+                    ["green", HT("أخضر فسفوري إسلامي")]
+                ], HT("اختر لون خط وتوهج نصوص ويدجت الحكمة.")),
                 toggle(APL.t("Prayer Alerts"), "prayerAlerts",
                     APL.t("A short spoken alert at each prayer time. Not the full call to prayer.")),
                 action(APL.t("Test the Isha Alert"), function () {
@@ -16213,31 +16313,31 @@ window.APL_KEYS = {
                         toggle("\u0623\u064a\u0642\u0648\u0646\u0627\u062a \u0623\u0648\u0646\u0644\u0627\u064a\u0646", "onlineIcons", "\u0623\u064a\u0642\u0648\u0646\u0627\u062a \u062d\u0642\u064a\u0642\u064a\u0629 \u0645\u0646 \u0643\u062a\u0627\u0644\u0648\u062c \u0627\u0644\u062a\u0637\u0628\u064a\u0642\u0627\u062a. \u0645\u062d\u062a\u0627\u062c \u0646\u062a."),
                         toggle("\u0644\u0648\u0646 \u0645\u0646 \u0627\u0644\u062e\u0644\u0641\u064a\u0629", "wallTint", "\u0644\u0645\u0633\u0629 \u0644\u0648\u0646 \u062e\u0641\u064a\u0641\u0629 \u0645\u0646 \u0635\u0648\u0631\u0629 \u0627\u0644\u062e\u0644\u0641\u064a\u0629 \u0627\u0644\u0645\u062d\u0644\u064a\u0629."),
                         toggle("\u062d\u0631\u0643\u0629 \u0627\u0644\u0645\u062d\u0631\u0627\u0628 \u0627\u0644\u062d\u064a", "ambientFx", "\u062a\u062f\u0631\u0651\u062c \u0627\u0644\u0633\u0645\u0627 \u0648\u0644\u0645\u0639\u0629 \u0627\u0644\u0623\u0630\u0627\u0646 \u0627\u0644\u0645\u062a\u062d\u0631\u0643\u0629."),
-                        toggle("ويدجت حكم ومواعظ (٥ دقائق)", "hekamWidget", "يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين)."),
-                        choice("موضع ويدجت الحكمة", "hekamPos", [
-                            ["above-dock", "فوق التطبيقات بالمنتصف"],
-                            ["top-center", "أعلى المنتصف"],
-                            ["top-right", "أعلى اليمين"],
-                            ["top-left", "أعلى اليسار"],
-                            ["bottom-center", "أسفل المنتصف"],
-                            ["bottom-right", "أسفل اليمين"],
-                            ["bottom-left", "أسفل اليسار"],
-                            ["inline", "متصل بشريط الصلاة"]
-                        ], "موضع كارت الحكمة على الشاشة."),
-                        choice("حجم ويدجت الحكمة", "hekamScale", [
-                            [100, "100% عادي"],
-                            [125, "125% كبير"],
-                            [150, "150% كبير جداً"],
-                            [175, "175% ضخم"],
-                            [200, "200% أقصى حجم"]
-                        ], "حجم كارت الحكمة على الشاشة."),
-                        choice("لون خط ويدجت الحكمة", "hekamColor", [
-                            ["gold", "ذهبي ملكي براق"],
-                            ["white", "أبيض ناصع كريستالي"],
-                            ["sky", "أزرق سماوي نيون"],
-                            ["galaxy", "موف المجرة متوهج"],
-                            ["green", "أخضر فسفوري إسلامي"]
-                        ], "اختر لون خط وتوهج نصوص ويدجت الحكمة."),
+                        toggle(HT("ويدجت حكم ومواعظ (٥ دقائق)"), "hekamWidget", HT("يعرض كارت حكمة أو موعظة منفصل على الشاشة الرئيسية ويتغير تلقائياً كل ٥ دقائق (أوفلاين).")),
+                        choice(HT("موضع ويدجت الحكمة"), "hekamPos", [
+                            ["above-dock", HT("فوق التطبيقات بالمنتصف")],
+                            ["top-center", HT("أعلى المنتصف")],
+                            ["top-right", HT("أعلى اليمين")],
+                            ["top-left", HT("أعلى اليسار")],
+                            ["bottom-center", HT("أسفل المنتصف")],
+                            ["bottom-right", HT("أسفل اليمين")],
+                            ["bottom-left", HT("أسفل اليسار")],
+                            ["inline", HT("متصل بشريط الصلاة")]
+                        ], HT("موضع كارت الحكمة على الشاشة.")),
+                        choice(HT("حجم ويدجت الحكمة"), "hekamScale", [
+                            [100, HT("100% عادي")],
+                            [125, HT("125% كبير")],
+                            [150, HT("150% كبير جداً")],
+                            [175, HT("175% ضخم")],
+                            [200, HT("200% أقصى حجم")]
+                        ], HT("حجم كارت الحكمة على الشاشة.")),
+                        choice(HT("لون خط ويدجت الحكمة"), "hekamColor", [
+                            ["gold", HT("ذهبي ملكي براق")],
+                            ["white", HT("أبيض ناصع كريستالي")],
+                            ["sky", HT("أزرق سماوي نيون")],
+                            ["galaxy", HT("موف المجرة متوهج")],
+                            ["green", HT("أخضر فسفوري إسلامي")]
+                        ], HT("اختر لون خط وتوهج نصوص ويدجت الحكمة.")),
                         action("\u0627\u0642\u0641\u0644 \u0643\u0644 \u0627\u0644\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u062b\u0642\u064a\u0644\u0629", function () { ["visualEffects","richFx","cleanFrameBackdrops","bgMotion","focusFx","liveShelf","onlineIcons","wallTint","ambientFx","hekamWidget"].forEach(function (k) { APL.sys.setPref(k, false); }); APL.toast("\u0627\u062a\u0642\u0641\u0644\u062a \u0643\u0644 \u0627\u0644\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u062b\u0642\u064a\u0644\u0629", true); },
                             "\u0628\u062a\u0642\u0641\u0644 \u0643\u0644 \u0627\u0644\u0645\u064a\u0632\u0627\u062a \u0627\u0644\u0644\u064a \u0641\u0648\u0642 \u0645\u0631\u0629 \u0648\u0627\u062d\u062f\u0629.", "shield")
                     ], "\u0643\u0644 \u0645\u064a\u0632\u0629 \u0644\u0648\u062d\u062f\u0647\u0627\u060c \u0648\u0643\u0644\u0647\u0627 \u0645\u0642\u0641\u0648\u0644\u0629 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u064b\u0627."),
@@ -24073,7 +24173,11 @@ window.APL_DEVICES = [
                     }
                     panel(5);
                 } },
-                { label: "حالة تشغيل المدفع", run: function () { cannonStatus().then(function (s) { APL.alert({ title: "حالة المدفع", message: s + "\nطلب تشغيل ناجح مش ضمان إن الصوت مسموع؛ جرّبه على الشاشة.\nCANNON_FINISHED = مسار Pulse خلّص الطلب.\nNO_PACTL / NO_PULSE = المسار مش متاح.\nSKIPPED_ALERT_BUSY = الأذان ليه الأولوية.", buttons: [{ label: "رجوع", run: function () { panel(6); } }] }); }); } },
+                { label: "جرّبه دلوقتي (المدفع بس)", run: function () {
+                    if (APL.prayerAlert && APL.prayerAlert.play) APL.prayerAlert.play("cannon"); else cannon(true);
+                    panel(6);
+                } },
+                { label: "حالة تشغيل المدفع", run: function () { cannonStatus().then(function (s) { APL.alert({ title: "حالة المدفع", message: s + "\nطلب تشغيل ناجح مش ضمان إن الصوت مسموع؛ جرّبه على الشاشة.\nCANNON_FINISHED = مسار Pulse خلّص الطلب.\nNO_PACTL / NO_PULSE = المسار مش متاح.\nSKIPPED_ALERT_BUSY = الأذان ليه الأولوية.", buttons: [{ label: "رجوع", run: function () { panel(7); } }] }); }); } },
                 { label: "افتح المصحف", run: function () { if (kh) kh.open(); } },
                 { label: "خلاص" }
             ]
@@ -24082,7 +24186,7 @@ window.APL_DEVICES = [
 
     global.document.addEventListener("visibilitychange", function () { if (!global.document.hidden) tick(); });
     global.setTimeout(tick, 4000);
-    APL.ramadan = { panel: panel, active: active, day: dayNo, state: function () { return S; }, cannon: cannon, cannonStatus: cannonStatus };
+    APL.ramadan = { panel: panel, active: active, day: dayNo, state: function () { return S; }, cannon: cannon, cannonStatus: cannonStatus, cannonOn: function () { return S.cannon !== false; } };
 })(window);
 /* === js/safe-restore.js === */
 /* ============================================================
@@ -24332,6 +24436,77 @@ window.APL_DEVICES = [
     var field = null, resultList = null, resultCount = null, pager = null, readBody = null;
     var SIZES = [26, 30, 34, 38, 42, 48, 54, 60, 66, 72], LH = [2.0, 2.2, 2.5, 2.8], lastFlip = 0, lastContent = "";   /* v7.0.3: sizes up to 72, 4 line spacings, paper theme */
     /* v7.1.0: text colour of the page (dark theme / paper theme palettes, same order, 6 each) */
+    /* v8.7.22: English text for strings that were written in Arabic only */
+    var QEN = {
+        "قراءة المصحف": "Read the Mushaf",
+        "كمّل من آخر آية": "Continue from last verse",
+        "فهرس السور": "Surah index",
+        "تفسير السعدي": "Tafsir al-Saadi",
+        "بحث تفسير السعدي": "Search Tafsir al-Saadi",
+        "إذاعة القرآن الكريم": "Holy Quran Radio",
+        "حكم ومواعظ الكلم الطيب": "Wisdom & Sermons (Kalem Tayeb)",
+        "فهرس الأجزاء": "Juz index",
+        "بحث في الآيات": "Search verses",
+        "الختمة والورد": "Khatma & daily portion",
+        "المصدر والرواية": "Source & riwaya",
+        "رجوع للّانشر": "Back to launcher",
+        "المصحف الشريف": "The Noble Mushaf",
+        "رواية حفص عن عاصم": "Riwayat Hafs 'an 'Asim",
+        "● أوفلاين بالكامل": "● Fully offline",
+        "حفص": "Hafs",
+        "١١٤ سورة · ٣٠ جزءًا\nنص مُشكّل من مشروع تنزيل": "114 surahs · 30 juz\nVocalized text from the Tanzil Project",
+        "◄ التالية": "◄ Next",
+        "السابقة ►": "Previous ►",
+        "− أ": "− A",
+        "+ أ": "+ A",
+        "⤢ ملء الشاشة": "⤢ Fit screen",
+        "↕ تباعد": "↕ Spacing",
+        "◐ ورقي": "◐ Paper",
+        "◉ لون": "◉ Color",
+        "⇔ حواف الشاشة": "⇔ Screen margins",
+        "✓ قرأت الصفحة": "✓ Mark page read",
+        "بحث التفسير": "Search tafsir",
+        "فتح في المصحف": "Open in Mushaf",
+        "إذاعة القرآن الكريم تعمل في الخلفية بدون انقطاع": "Quran Radio is playing in the background",
+        "تم إيقاف إذاعة القرآن الكريم": "Quran Radio stopped",
+        "السور الـ ١١٤ بالترتيب · افتح السورة من أول آية": "The 114 surahs in order · open a surah from its first verse",
+        "٣٠ جزءًا بالترتيب · انتقال لأول آية في الجزء بدقة": "The 30 juz in order · jumps to the first verse of the juz",
+        "الأسهم للتنقّل  ·  OK لفتح الاختيار  ·  رجوع من القراءة يرجّعك لنفس مكانك في الفهرس": "Arrows to move · OK to open · Back from reading returns you to the same place in the index",
+        "بحث في المصحف": "Search the Mushaf",
+        "اكتب حرف أو كلمة أو جملة · النتايج فورًا وبترتيب المصحف، مش بترتيب التشابه": "Type a letter, word or phrase · results appear at once, in Mushaf order",
+        "لوحة الحروف بالريموت أو كيبورد · النتيجة بـ OK تفتح الصفحة وتعلّم على الآية · البحث بيتجاهل التشكيل واختلاف الألف": "Use the letter pad with the remote or a keyboard · OK on a result opens the page and marks the verse · search ignores diacritics and alef forms (Arabic letters only)",
+        "مسح الكل": "Clear all",
+        "مسافة": "Space",
+        "⌫ حذف": "⌫ Delete",
+        "النتايج ◄": "Results ◄",
+        "◄ المزيد": "◄ More",
+        "✕ إغلاق": "✕ Close",
+        "إعادة المحاولة": "Retry",
+        "نص محلي موثّق · مش صور · مش نص مولّد": "Verified local text · not images · not generated text",
+        "رجوع: خروج  ·  تقدر تراجع بيانات المصدر والترخيص جوّه الحزمة": "Back: exit · source and license details are inside the package",
+        "بحث في تفسير السعدي": "Search Tafsir al-Saadi",
+        "بحث فوري من أول حرف في تفسير السعدي كاملاً لجميع السور الـ ١١٤": "Instant search from the first letter across the whole Tafsir al-Saadi, all 114 surahs",
+        "لوحة الحروف بالريموت أو كيبورد · OK على النتيجة تفتح الآية وتفسيرها مباشرة · رجوع للقائمة": "Letter pad with the remote or a keyboard · OK on a result opens the verse and its tafsir · Back for the menu",
+        "تيسير الكريم الرحمن في تفسير كلام المنان · نص مدقّق وموثّق": "Taysir al-Karim al-Rahman fi Tafsir Kalam al-Mannan · verified text",
+        "▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات والقائمة · رجوع للخروج": "▲▼ scroll · ◄ Next · Previous ► · ► tools and menu · Back to exit",
+        "▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات": "▲▼ scroll · ◄ Next · Previous ► · ► tools",
+        "بنفتح النص المحلي…": "Opening the local text…",
+        "النص موجود جوّه الحزمة؛ مش محتاج إنترنت": "The text is inside the package; no internet needed",
+        "جارٍ فتح مصحف حفص…": "Opening the Hafs Mushaf…",
+        "جارٍ تحميل تفسير السعدي…": "Loading Tafsir al-Saadi…",
+        "جارٍ تجهيز فهرس تفسير السعدي…": "Preparing the Tafsir al-Saadi index…",
+        "مفيش آيات مطابقة.\nجرّب كلمة أقصر أو راجع الكتابة.": "No matching verses.\nTry a shorter word or check the spelling.",
+        "مفيش نتائج مطابقة.\nجرّب كلمة تانية أو راجع الحروف.": "No matching results.\nTry another word or check the letters.",
+        "اكتب أول حرف عشان تظهر الآيات": "Type the first letter to see verses",
+        "اكتب أول حرف عشان تبدأ البحث في تفسير السعدي": "Type the first letter to start searching Tafsir al-Saadi",
+        "كل حرف بتكتبه بيحدّث النتايج فورًا.\nتقدر تكتب من لوحة الحروف اللي جنبك.": "Every letter you type updates the results.\nUse the letter pad next to you.",
+        "كل حرف بتكتبه بيحدّث النتايج فورًا في تفسير السعدي.\nتقدر تكتب من لوحة الحروف بالريموت.": "Every letter you type updates the results.\nUse the letter pad with the remote.",
+        "▲▼ للتمرير · ◄ التالية · السابقة ► · OK أو رجوع للإغلاق": "▲▼ scroll · ◄ Next · Previous ► · OK or Back to close",
+        "تفسير السعدي (تيسير الكريم الرحمن)": "Tafsir al-Saadi (Taysir al-Karim al-Rahman)",
+        "تفسير هذه الآية غير متوفر": "No tafsir available for this verse"
+    };
+    function T(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(QEN, s)) ? QEN[s] : s; }
+
     var COLORS_DARK = [["تلقائي", ""], ["أبيض", "#ffffff"], ["ذهبي", "#ffd36b"], ["أخضر فاتح", "#b9f27a"], ["سماوي", "#9fe3ff"], ["كريمي", "#f6e9c8"]];
     var COLORS_PAPER = [["تلقائي", ""], ["أسود", "#000000"], ["بني", "#4a2f0c"], ["أخضر غامق", "#14501f"], ["كحلي", "#14285a"], ["عنابي", "#6a1420"]];
     var prefs = readPrefs(), savedScroll = 0;
@@ -24340,18 +24515,18 @@ window.APL_DEVICES = [
     var sbQuery = "", sbMatches = [], sbPage = 0, sbIndexTafsir = null, sbLoading = false;
     var sbField = null, sbResultList = null, sbResultCount = null, sbPager = null;
     var MENU = [
-        ["read", "قراءة المصحف", "book"],
-        ["resume", "كمّل من آخر آية", "back"],
-        ["surahs", "فهرس السور", "list"],
-        ["tafsir", "تفسير السعدي", "book"],
-        ["search-book", "بحث تفسير السعدي", "search"],
-        ["radio", "إذاعة القرآن الكريم", "radio"],
-        ["hekam", "حكم ومواعظ الكلم الطيب", "book"],
-        ["juz", "فهرس الأجزاء", "parts"],
-        ["search", "بحث في الآيات", "search"],
-        ["tracker", "الختمة والورد", "check"],
-        ["source", "المصدر والرواية", "info"],
-        ["close", "رجوع للّانشر", "back"]
+        ["read", T("قراءة المصحف"), "book"],
+        ["resume", T("كمّل من آخر آية"), "back"],
+        ["surahs", T("فهرس السور"), "list"],
+        ["tafsir", T("تفسير السعدي"), "book"],
+        ["search-book", T("بحث تفسير السعدي"), "search"],
+        ["radio", T("إذاعة القرآن الكريم"), "radio"],
+        ["hekam", T("حكم ومواعظ الكلم الطيب"), "book"],
+        ["juz", T("فهرس الأجزاء"), "parts"],
+        ["search", T("بحث في الآيات"), "search"],
+        ["tracker", T("الختمة والورد"), "check"],
+        ["source", T("المصدر والرواية"), "info"],
+        ["close", T("رجوع للّانشر"), "back"]
     ];
     var ICON = {
         book: '<path d="M12 5v15M3 4c4-1 6 0 9 2 3-2 5-3 9-2v14c-4-1-6 0-9 2-3-2-5-3-9-2z"/>',
@@ -24366,7 +24541,7 @@ window.APL_DEVICES = [
     function el(tag, cls, text) {
         var n = document.createElement(tag);
         if (cls) n.className = cls;
-        if (text !== undefined) n.textContent = text;
+        if (text !== undefined) n.textContent = T(text);
         return n;
     }
     function svg(name) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON[name] || ICON.book) + '</svg>'; }
@@ -24557,37 +24732,37 @@ window.APL_DEVICES = [
         if (!toolsEl) return;
         toolsEl.textContent = "";
         if (mode === "read") {
-            toolsEl.appendChild(button("◄ التالية", "next", function () { changePage(1); }));
-            toolsEl.appendChild(button("السابقة ►", "prev", function () { changePage(-1); }));
-            toolsEl.appendChild(button("− أ", "font-smaller", function () { setSize(-1); }));
-            toolsEl.appendChild(button("+ أ", "font-larger", function () { setSize(1); }));
-            toolsEl.appendChild(button("⤢ ملء الشاشة", "fit", toggleFit));
-            toolsEl.appendChild(button("↕ تباعد", "spacing", cycleSpacing));
-            toolsEl.appendChild(button("◐ ورقي", "paper", togglePaper));
-            toolsEl.appendChild(button("◉ لون", "color", cycleColor));
-            toolsEl.appendChild(button("⇔ حواف الشاشة", "safe", cycleSafe));
-            toolsEl.appendChild(button("✓ قرأت الصفحة", "mark-read", markRead, "mq__button--green mq__tool--wide"));
+            toolsEl.appendChild(button(T("◄ التالية"), "next", function () { changePage(1); }));
+            toolsEl.appendChild(button(T("السابقة ►"), "prev", function () { changePage(-1); }));
+            toolsEl.appendChild(button(T("− أ"), "font-smaller", function () { setSize(-1); }));
+            toolsEl.appendChild(button(T("+ أ"), "font-larger", function () { setSize(1); }));
+            toolsEl.appendChild(button(T("⤢ ملء الشاشة"), "fit", toggleFit));
+            toolsEl.appendChild(button(T("↕ تباعد"), "spacing", cycleSpacing));
+            toolsEl.appendChild(button(T("◐ ورقي"), "paper", togglePaper));
+            toolsEl.appendChild(button(T("◉ لون"), "color", cycleColor));
+            toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "safe", cycleSafe));
+            toolsEl.appendChild(button(T("✓ قرأت الصفحة"), "mark-read", markRead, "mq__button--green mq__tool--wide"));
         } else if (mode === "tafsir") {
-            toolsEl.appendChild(button("◄ التالية", "tf-next", function () { tfGo(1); }));
-            toolsEl.appendChild(button("السابقة ►", "tf-prev", function () { tfGo(-1); }));
-            toolsEl.appendChild(button("فهرس السور", "tf-pick", function () { setSide(false); tfPick = true; returnTo = null; show("surahs"); }));
-            toolsEl.appendChild(button("بحث التفسير", "tf-search", function () { setSide(false); show("search-book"); }));
-            toolsEl.appendChild(button("فتح في المصحف", "tf-mushaf", function () { setSide(false); var s = data.surahs[tfSurah - 1][1]; jump(s, "tafsir", "tf-mushaf"); }, "mq__tool--wide"));
-            toolsEl.appendChild(button("− أ", "tf-smaller", function () { tfSize(-1); }));
-            toolsEl.appendChild(button("+ أ", "tf-larger", function () { tfSize(1); }));
-            toolsEl.appendChild(button("↕ تباعد", "tf-spacing", function () {
+            toolsEl.appendChild(button(T("◄ التالية"), "tf-next", function () { tfGo(1); }));
+            toolsEl.appendChild(button(T("السابقة ►"), "tf-prev", function () { tfGo(-1); }));
+            toolsEl.appendChild(button(T("فهرس السور"), "tf-pick", function () { setSide(false); tfPick = true; returnTo = null; show("surahs"); }));
+            toolsEl.appendChild(button(T("بحث التفسير"), "tf-search", function () { setSide(false); show("search-book"); }));
+            toolsEl.appendChild(button(T("فتح في المصحف"), "tf-mushaf", function () { setSide(false); var s = data.surahs[tfSurah - 1][1]; jump(s, "tafsir", "tf-mushaf"); }, "mq__tool--wide"));
+            toolsEl.appendChild(button(T("− أ"), "tf-smaller", function () { tfSize(-1); }));
+            toolsEl.appendChild(button(T("+ أ"), "tf-larger", function () { tfSize(1); }));
+            toolsEl.appendChild(button(T("↕ تباعد"), "tf-spacing", function () {
                 prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); tfLook();
                 if (APL.toast) APL.toast("تباعد السطور " + dg(prefs.lh + 1) + " من " + dg(LH.length), true);
             }));
-            toolsEl.appendChild(button("◐ ورقي", "tf-paper", function () {
+            toolsEl.appendChild(button(T("◐ ورقي"), "tf-paper", function () {
                 prefs.paper = !prefs.paper; savePrefs(); tfLook();
                 if (APL.toast) APL.toast(prefs.paper ? "الوضع الورقي مفعّل" : "الوضع الليلي مفعّل", true);
             }));
-            toolsEl.appendChild(button("◉ لون", "tf-color", function () {
+            toolsEl.appendChild(button(T("◉ لون"), "tf-color", function () {
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
                 if (APL.toast) APL.toast("لون الخط: " + (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0], true);
             }, "mq__tool--wide"));
-            toolsEl.appendChild(button("⇔ حواف الشاشة", "tf-safe", cycleSafe, "mq__tool--wide"));
+            toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "tf-safe", cycleSafe, "mq__tool--wide"));
         }
     }
     function step(id) { if (focusID(id) && APL.sound && APL.sound.tick) APL.sound.tick(); }
@@ -24606,10 +24781,10 @@ window.APL_DEVICES = [
         root = el("section", "mq"); root.setAttribute("dir", "rtl"); root.setAttribute("aria-label", "المصحف الشريف برواية حفص");
         var aside = el("aside", "mq__side"), brand = el("div", "mq__brand");
         brand.innerHTML = '<div class="mq__emblem">' + svg("book") + '</div>';
-        brandTitle = el("div", "mq__brand-title", "المصحف الشريف"); brand.appendChild(brandTitle);
-        brandSub = el("div", "mq__brand-sub", "رواية حفص عن عاصم"); brand.appendChild(brandSub);
+        brandTitle = el("div", "mq__brand-title", T("المصحف الشريف")); brand.appendChild(brandTitle);
+        brandSub = el("div", "mq__brand-sub", T("رواية حفص عن عاصم")); brand.appendChild(brandSub);
         brandWird = el("div", "mq__brand-wird", ""); brand.appendChild(brandWird);
-        brand.appendChild(el("span", "mq__offline", "● أوفلاين بالكامل")); aside.appendChild(brand);
+        brand.appendChild(el("span", "mq__offline", T("● أوفلاين بالكامل"))); aside.appendChild(brand);
         var menus = el("div", "mq__menus");
         MENU.forEach(function (m) {
             var b = button("", "menu-" + m[0], function () {
@@ -24618,7 +24793,7 @@ window.APL_DEVICES = [
                     if (APL.radio) {
                         APL.radio.toggle().then(function () {
                             var isLive = APL.radio.isPlaying();
-                            if (APL.toast) APL.toast(isLive ? "إذاعة القرآن الكريم تعمل في الخلفية بدون انقطاع" : "تم إيقاف إذاعة القرآن الكريم", true);
+                            if (APL.toast) APL.toast(isLive ? T("إذاعة القرآن الكريم تعمل في الخلفية بدون انقطاع") : T("تم إيقاف إذاعة القرآن الكريم"), true);
                         });
                     }
                     return;
@@ -24633,13 +24808,14 @@ window.APL_DEVICES = [
             b.innerHTML = svg(m[2]); b.appendChild(el("span", "", m[1])); b._view = m[0]; menus.appendChild(b);
         });
         aside.appendChild(menus);
+        if (APL.lang !== "ar") aside.setAttribute("dir", "ltr");   /* v8.7.22: English labels read left to right; the Quran text itself stays right to left */
         /* v7.2.0/v8.4.1: reading controls live here; shown in read and book views */
         toolsEl = el("div", "mq__tools");
         aside.appendChild(toolsEl);
-        aside.appendChild(el("div", "mq__side-foot", "١١٤ سورة · ٣٠ جزءًا\nنص مُشكّل من مشروع تنزيل"));
+        aside.appendChild(el("div", "mq__side-foot", T("١١٤ سورة · ٣٠ جزءًا\nنص مُشكّل من مشروع تنزيل")));
         var pane = el("div", "mq__pane"), head = el("header", "mq__head"), h = el("div", "");
         title = el("h1", "mq__title"); sub = el("div", "mq__subtitle"); h.appendChild(title); h.appendChild(sub); head.appendChild(h);
-        var badge = el("div", "mq__edition", "حفص"); head.appendChild(badge); pane.appendChild(head);
+        var badge = el("div", "mq__edition", T("حفص")); head.appendChild(badge); pane.appendChild(head);
         main = el("div", "mq__main"); pane.appendChild(main);
         footer = el("footer", "mq__footer"); pane.appendChild(footer);
         var handle = el("div", "mq__handle"); handle.innerHTML = svg("menu"); handle.setAttribute("aria-hidden", "true");
@@ -24657,7 +24833,7 @@ window.APL_DEVICES = [
             onKey: onKey
         });
     }
-    function header(a, b, hint) { title.textContent = a; sub.textContent = b; footer.textContent = hint; }
+    function header(a, b, hint) { title.textContent = T(a); sub.textContent = T(b); footer.textContent = T(hint); if (APL.lang !== "ar") { title.setAttribute("dir", "auto"); sub.setAttribute("dir", "auto"); footer.setAttribute("dir", "auto"); } }
     function clearMain() { main.textContent = ""; field = resultList = resultCount = pager = readBody = null; }
     function activeMenu() {
         var list = root.querySelectorAll(".mq__menu");
@@ -24690,7 +24866,7 @@ window.APL_DEVICES = [
         rememberScroll(); view = name; clearMain(); activeMenu(); lastContent = "";
         side = false; root.classList.remove("mq--side"); if (name === "read" || name === "tafsir") lastSide = "";
         root.classList.toggle("mq--read", name === "read" || name === "tafsir");   /* v7.1.0/v8.4.1: full screen reader for Mushaf and books */
-        if (name !== "read" && name !== "tafsir" && brandTitle) { brandTitle.textContent = "المصحف الشريف"; brandSub.textContent = "رواية حفص عن عاصم"; brandWird.textContent = ""; }
+        if (name !== "read" && name !== "tafsir" && brandTitle) { brandTitle.textContent = T("المصحف الشريف"); brandSub.textContent = T("رواية حفص عن عاصم"); brandWird.textContent = ""; }
         if (name === "read") renderReader();
         else if (name === "surahs" || name === "juz") renderIndex(name);
         else if (name === "search") renderSearch();
@@ -24878,8 +25054,8 @@ window.APL_DEVICES = [
     }
     function renderIndex(kind) {
         var surahs = kind === "surahs", count = surahs ? 114 : 30;
-        header(surahs ? "فهرس السور" : "فهرس الأجزاء", surahs ? "السور الـ ١١٤ بالترتيب · افتح السورة من أول آية" : "٣٠ جزءًا بالترتيب · انتقال لأول آية في الجزء بدقة",
-            "الأسهم للتنقّل  ·  OK لفتح الاختيار  ·  رجوع من القراءة يرجّعك لنفس مكانك في الفهرس");
+        header(surahs ? T("فهرس السور") : T("فهرس الأجزاء"), surahs ? T("السور الـ ١١٤ بالترتيب · افتح السورة من أول آية") : T("٣٠ جزءًا بالترتيب · انتقال لأول آية في الجزء بدقة"),
+            T("الأسهم للتنقّل  ·  OK لفتح الاختيار  ·  رجوع من القراءة يرجّعك لنفس مكانك في الفهرس"));
         var grid = el("div", "mq__index");
         for (var i = 0; i < count; i++) (function (n) {
             var start = surahs ? data.surahs[n][1] : data.juz[n], m = meta(start);
@@ -24893,8 +25069,8 @@ window.APL_DEVICES = [
         main.appendChild(grid);
     }
     function renderSearch() {
-        header("بحث في المصحف", "اكتب حرف أو كلمة أو جملة · النتايج فورًا وبترتيب المصحف، مش بترتيب التشابه",
-            "لوحة الحروف بالريموت أو كيبورد · النتيجة بـ OK تفتح الصفحة وتعلّم على الآية · البحث بيتجاهل التشكيل واختلاف الألف");
+        header(T("بحث في المصحف"), T("اكتب حرف أو كلمة أو جملة · النتايج فورًا وبترتيب المصحف، مش بترتيب التشابه"),
+            T("لوحة الحروف بالريموت أو كيبورد · النتيجة بـ OK تفتح الصفحة وتعلّم على الآية · البحث بيتجاهل التشكيل واختلاف الألف"));
         var searchbar = el("div", "mq__searchbar");
         field = el("input", "mq__input mq__focus"); field.type = "text"; field.dir = "rtl"; field.maxLength = 180;
         field.placeholder = "ابحث في آيات القرآن…"; field.value = query; field.autocomplete = "off";
@@ -24906,12 +25082,12 @@ window.APL_DEVICES = [
             }
         });
         searchbar.appendChild(field);
-        searchbar.appendChild(button("مسح الكل", "clear-query", function () { setQuery(""); })); main.appendChild(searchbar);
+        searchbar.appendChild(button(T("مسح الكل"), "clear-query", function () { setQuery(""); })); main.appendChild(searchbar);
         var split = el("div", "mq__search-layout"), keys = el("div", "mq__keyboard"), chars = "ابتثجحخدذرزسشصضطظعغفقكلمنهويءأإآؤئةى".split("");
         chars.forEach(function (c, i) { keys.appendChild(button(c, "letter-" + i, function () { setQuery(query + c); }, "mq__key")); });
-        keys.appendChild(button("مسافة", "space", function () { setQuery(query + " "); }, "mq__key mq__key--wide"));
-        keys.appendChild(button("⌫ حذف", "erase", function () { setQuery(query.slice(0, -1)); }, "mq__key mq__key--wide"));
-        keys.appendChild(button("النتايج ◄", "go-results", function () { focusID(matches.length ? "result-" + matches[resultPage * LIMIT] : "clear-query"); }, "mq__key mq__key--wide"));
+        keys.appendChild(button(T("مسافة"), "space", function () { setQuery(query + " "); }, "mq__key mq__key--wide"));
+        keys.appendChild(button(T("⌫ حذف"), "erase", function () { setQuery(query.slice(0, -1)); }, "mq__key mq__key--wide"));
+        keys.appendChild(button(T("النتايج ◄"), "go-results", function () { focusID(matches.length ? "result-" + matches[resultPage * LIMIT] : "clear-query"); }, "mq__key mq__key--wide"));
         split.appendChild(keys);
         var results = el("div", "mq__results-wrap"); resultCount = el("div", "mq__result-count");
         resultList = el("div", "mq__results"); pager = el("div", "mq__pager"); results.appendChild(resultCount); results.appendChild(resultList); results.appendChild(pager);
@@ -24933,9 +25109,9 @@ window.APL_DEVICES = [
             resultList.appendChild(el("div", "mq__empty", "أول حرف بيقرا ملفات البحث مرة واحدة.\nالنتايج هتظهر لوحدها."));
             return;
         }
-        resultCount.textContent = !q ? "اكتب أول حرف عشان تظهر الآيات" : dg(total) + " آية" + (total ? " · عرض " + dg(first + 1) + "–" + dg(end) + " · بترتيب المصحف" : "");
+        resultCount.textContent = !q ? T("اكتب أول حرف عشان تظهر الآيات") : dg(total) + " آية" + (total ? " · عرض " + dg(first + 1) + "–" + dg(end) + " · بترتيب المصحف" : "");
         if (!q || !total) {
-            var empty = el("div", "mq__empty", !q ? "كل حرف بتكتبه بيحدّث النتايج فورًا.\nتقدر تكتب من لوحة الحروف اللي جنبك." : "مفيش آيات مطابقة.\nجرّب كلمة أقصر أو راجع الكتابة.");
+            var empty = el("div", "mq__empty", !q ? T("كل حرف بتكتبه بيحدّث النتايج فورًا.\nتقدر تكتب من لوحة الحروف اللي جنبك.") : T("مفيش آيات مطابقة.\nجرّب كلمة أقصر أو راجع الكتابة."));
             resultList.appendChild(empty);
         }
         for (var i = first; i < end; i++) (function (n) {
@@ -24944,16 +25120,16 @@ window.APL_DEVICES = [
             row.appendChild(el("div", "mq__result-text", resultText(n))); resultList.appendChild(row);
         })(matches[i]);
         if (total > LIMIT) {
-            if (resultPage > 0) pager.appendChild(button("السابقة ►", "results-prev", function () { resultPage--; paintResults(); refreshNav("result-" + matches[resultPage * LIMIT]); }));
+            if (resultPage > 0) pager.appendChild(button(T("السابقة ►"), "results-prev", function () { resultPage--; paintResults(); refreshNav("result-" + matches[resultPage * LIMIT]); }));
             pager.appendChild(el("span", "mq__pager-count", dg(resultPage + 1) + " / " + dg(Math.ceil(total / LIMIT))));
-            if (end < total) pager.appendChild(button("◄ المزيد", "results-next", function () { resultPage++; paintResults(); refreshNav("result-" + matches[resultPage * LIMIT]); }));
+            if (end < total) pager.appendChild(button(T("◄ المزيد"), "results-next", function () { resultPage++; paintResults(); refreshNav("result-" + matches[resultPage * LIMIT]); }));
         }
         resultList.scrollTop = 0;
     }
     function renderSource() {
-        header("المصدر والرواية", "نص محلي موثّق · مش صور · مش نص مولّد", "رجوع: خروج  ·  تقدر تراجع بيانات المصدر والترخيص جوّه الحزمة");
+        header(T("المصدر والرواية"), T("نص محلي موثّق · مش صور · مش نص مولّد"), T("رجوع: خروج  ·  تقدر تراجع بيانات المصدر والترخيص جوّه الحزمة"));
         var box = button("", "source-text", function () {}, "mq__source");
-        box.appendChild(el("h2", "", "رواية حفص عن عاصم"));
+        box.appendChild(el("h2", "", T("رواية حفص عن عاصم")));
         box.appendChild(el("p", "", "القرآن كامل: ١١٤ سورة، ٦٢٣٦ آية، ٣٠ جزءًا، بترقيم مصحف المدينة ٦٠٤ صفحات. النص العثماني المُشكّل من مشروع تنزيل، الإصدار 1.1، من غير إعادة صياغة أو تعديل الآيات."));
         box.appendChild(el("p", "", "المصدر: Tanzil Project · https://tanzil.net/\nتوثيق حفص: https://tanzil.net/docs/Medina_Mushaf\nالترخيص: Creative Commons Attribution 3.0 · النص يُوزّع كما هو."));
         box.appendChild(el("p", "", "البحث يستخدم نسخة إملائية موازية من نفس المصدر، وبيتجاهل التشكيل واختلاف الألف في فهرس بحث مؤقت بس. عرض الآيات دايمًا بالتشكيل الأصلي. البسملة الافتتاحية منفصلة عن ترقيم الآيات إلا الفاتحة."));
@@ -25041,9 +25217,9 @@ window.APL_DEVICES = [
     }
 
     function renderSearchBook() {
-        header("بحث في تفسير السعدي",
-            "بحث فوري من أول حرف في تفسير السعدي كاملاً لجميع السور الـ ١١٤",
-            "لوحة الحروف بالريموت أو كيبورد · OK على النتيجة تفتح الآية وتفسيرها مباشرة · رجوع للقائمة");
+        header(T("بحث في تفسير السعدي"),
+            T("بحث فوري من أول حرف في تفسير السعدي كاملاً لجميع السور الـ ١١٤"),
+            T("لوحة الحروف بالريموت أو كيبورد · OK على النتيجة تفتح الآية وتفسيرها مباشرة · رجوع للقائمة"));
 
         var bar = el("div", "mq__searchbar");
         bar.style.gridTemplateColumns = "1fr auto";
@@ -25062,7 +25238,7 @@ window.APL_DEVICES = [
             }
         });
         bar.appendChild(sbField);
-        bar.appendChild(button("مسح الكل", "sb-clear-query", function () { sbSetQuery(""); }));
+        bar.appendChild(button(T("مسح الكل"), "sb-clear-query", function () { sbSetQuery(""); }));
         main.appendChild(bar);
 
         var split = el("div", "mq__search-layout");
@@ -25071,9 +25247,9 @@ window.APL_DEVICES = [
         chars.forEach(function (c, i) {
             keys.appendChild(button(c, "sb-letter-" + i, function () { sbSetQuery(sbQuery + c); }, "mq__key"));
         });
-        keys.appendChild(button("مسافة", "sb-space", function () { sbSetQuery(sbQuery + " "); }, "mq__key mq__key--wide"));
-        keys.appendChild(button("⌫ حذف", "sb-erase", function () { sbSetQuery(sbQuery.slice(0, -1)); }, "mq__key mq__key--wide"));
-        keys.appendChild(button("النتايج ◄", "sb-go-results", function () { focusID(sbMatches.length ? "sb-result-0" : "sb-clear-query"); }, "mq__key mq__key--wide"));
+        keys.appendChild(button(T("مسافة"), "sb-space", function () { sbSetQuery(sbQuery + " "); }, "mq__key mq__key--wide"));
+        keys.appendChild(button(T("⌫ حذف"), "sb-erase", function () { sbSetQuery(sbQuery.slice(0, -1)); }, "mq__key mq__key--wide"));
+        keys.appendChild(button(T("النتايج ◄"), "sb-go-results", function () { focusID(sbMatches.length ? "sb-result-0" : "sb-clear-query"); }, "mq__key mq__key--wide"));
         split.appendChild(keys);
 
         var results = el("div", "mq__results-wrap");
@@ -25087,7 +25263,7 @@ window.APL_DEVICES = [
         main.appendChild(split);
 
         if (!sbIndexTafsir) {
-            sbResultCount.textContent = "جارٍ تجهيز فهرس تفسير السعدي…";
+            sbResultCount.textContent = T("جارٍ تجهيز فهرس تفسير السعدي…");
             sbResultList.appendChild(el("div", "mq__empty", "جارٍ قراءة التفسير وبناء الفهرس…"));
             sbBuildIndex(function () {
                 if (view !== "search-book") return;
@@ -25125,10 +25301,10 @@ window.APL_DEVICES = [
             return;
         }
         if (sbResultCount) {
-            sbResultCount.textContent = !q ? "اكتب أول حرف عشان تبدأ البحث في تفسير السعدي" : dg(total) + " نتيجة" + (total ? " · عرض " + dg(first + 1) + "–" + dg(end) : "");
+            sbResultCount.textContent = !q ? T("اكتب أول حرف عشان تبدأ البحث في تفسير السعدي") : dg(total) + " نتيجة" + (total ? " · عرض " + dg(first + 1) + "–" + dg(end) : "");
         }
         if (!q || !total) {
-            var empty = el("div", "mq__empty", !q ? "كل حرف بتكتبه بيحدّث النتايج فورًا في تفسير السعدي.\nتقدر تكتب من لوحة الحروف بالريموت." : "مفيش نتائج مطابقة.\nجرّب كلمة تانية أو راجع الحروف.");
+            var empty = el("div", "mq__empty", !q ? T("كل حرف بتكتبه بيحدّث النتايج فورًا في تفسير السعدي.\nتقدر تكتب من لوحة الحروف بالريموت.") : T("مفيش نتائج مطابقة.\nجرّب كلمة تانية أو راجع الحروف."));
             sbResultList.appendChild(empty);
             return;
         }
@@ -25145,9 +25321,9 @@ window.APL_DEVICES = [
             })(sbMatches[i], i - first);
         }
         if (total > LIMIT && sbPager) {
-            if (sbPage > 0) sbPager.appendChild(button("السابقة ►", "sb-prev", function () { sbPage--; sbPaintResults(); refreshNav("sb-result-0"); }));
+            if (sbPage > 0) sbPager.appendChild(button(T("السابقة ►"), "sb-prev", function () { sbPage--; sbPaintResults(); refreshNav("sb-result-0"); }));
             sbPager.appendChild(el("span", "mq__pager-count", dg(sbPage + 1) + " / " + dg(Math.ceil(total / LIMIT))));
-            if (end < total) sbPager.appendChild(button("◄ المزيد", "sb-next", function () { sbPage++; sbPaintResults(); refreshNav("sb-result-0"); }));
+            if (end < total) sbPager.appendChild(button(T("◄ المزيد"), "sb-next", function () { sbPage++; sbPaintResults(); refreshNav("sb-result-0"); }));
         }
         sbResultList.scrollTop = 0;
     }
@@ -25192,8 +25368,8 @@ window.APL_DEVICES = [
         buildSideTools("tafsir");
         if (!tfSurah) tfSurah = tfSurahOfPage();
         var name = (data && data.surahs && data.surahs[tfSurah - 1]) ? data.surahs[tfSurah - 1][0] : ("سورة " + dg(tfSurah));
-        header("تفسير السعدي · سورة " + name, "تيسير الكريم الرحمن في تفسير كلام المنان · نص مدقّق وموثّق",
-            "▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات والقائمة · رجوع للخروج");
+        header("تفسير السعدي · سورة " + name, T("تيسير الكريم الرحمن في تفسير كلام المنان · نص مدقّق وموثّق"),
+            T("▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات والقائمة · رجوع للخروج"));
         if (brandTitle) {
             brandTitle.textContent = "سورة " + name;
             brandSub.textContent = "تفسير السعدي · سورة " + dg(tfSurah);
@@ -25201,7 +25377,7 @@ window.APL_DEVICES = [
         }
         tfBody = el("article", "mq__paper mq__focus"); tfBody._qid = "tafsir-body"; tfBody._run = function () { setSide(true); };
         tfBody.setAttribute("aria-label", "تفسير السعدي لسورة " + name + "؛ أعلى وأسفل للتمرير، ويمين للأدوات والقائمة");
-        tfBody.appendChild(el("div", "mq__empty", "جارٍ تحميل تفسير السعدي…"));
+        tfBody.appendChild(el("div", "mq__empty", T("جارٍ تحميل تفسير السعدي…")));
         main.appendChild(tfBody);
         var progress = el("div", "mq__progress"), fill = el("i", "");
         fill.style.width = ((tfSurah / 114) * 100).toFixed(2) + "%";
@@ -25210,7 +25386,7 @@ window.APL_DEVICES = [
         var stat = el("div", "mq__reading-stat");
         var statMain = el("span", "mq__stat-main", "تفسير السعدي · سورة " + name + " (" + dg(tfSurah) + " من ١١٤)");
         stat.appendChild(statMain);
-        stat.appendChild(el("span", "mq__stat-hint", "▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات"));
+        stat.appendChild(el("span", "mq__stat-hint", T("▲▼ للتمرير · ◄ التالية · السابقة ► · ► الأدوات")));
         main.appendChild(stat);
         tfLook();
         var token = generation, mine = tfBody, n = tfSurah;
@@ -25268,14 +25444,14 @@ window.APL_DEVICES = [
 
         var head = el("div", "mq__tf-head");
         var titleWrap = el("div");
-        titleWrap.appendChild(el("div", "mq__tf-title", "تفسير السعدي (تيسير الكريم الرحمن)"));
+        titleWrap.appendChild(el("div", "mq__tf-title", T("تفسير السعدي (تيسير الكريم الرحمن)")));
         titleWrap.appendChild(el("div", "mq__tf-meta", "سورة " + sName + " · الآية " + dg(tfModalAyah)));
         head.appendChild(titleWrap);
 
         var actions = el("div", "mq__tf-btns");
-        var btnPrev = button("السابقة ►", "modal-prev", function () { stepAyahTafsir(-1); }, "mq__button mq__tafsir-btn");
-        var btnNext = button("◄ التالية", "modal-next", function () { stepAyahTafsir(1); }, "mq__button mq__tafsir-btn");
-        var btnClose = button("✕ إغلاق", "modal-close", closeAyahTafsir, "mq__button mq__button--red mq__tafsir-btn");
+        var btnPrev = button(T("السابقة ►"), "modal-prev", function () { stepAyahTafsir(-1); }, "mq__button mq__tafsir-btn");
+        var btnNext = button(T("◄ التالية"), "modal-next", function () { stepAyahTafsir(1); }, "mq__button mq__tafsir-btn");
+        var btnClose = button(T("✕ إغلاق"), "modal-close", closeAyahTafsir, "mq__button mq__button--red mq__tafsir-btn");
         actions.appendChild(btnPrev);
         actions.appendChild(btnNext);
         actions.appendChild(btnClose);
@@ -25301,12 +25477,12 @@ window.APL_DEVICES = [
 
         var contentBox = el("div", "mq__tf-content");
         contentBox.tabIndex = 0;
-        contentBox.appendChild(el("div", "mq__empty", "جارٍ تحميل تفسير السعدي…"));
+        contentBox.appendChild(el("div", "mq__empty", T("جارٍ تحميل تفسير السعدي…")));
         body.appendChild(contentBox);
         modal.appendChild(body);
 
         var foot = el("div", "mq__tf-foot");
-        foot.appendChild(el("div", "mq__stat-hint", "▲▼ للتمرير · ◄ التالية · السابقة ► · OK أو رجوع للإغلاق"));
+        foot.appendChild(el("div", "mq__stat-hint", T("▲▼ للتمرير · ◄ التالية · السابقة ► · OK أو رجوع للإغلاق")));
         modal.appendChild(foot);
 
         modal.onclick = function (e) {
@@ -25320,7 +25496,7 @@ window.APL_DEVICES = [
             contentBox.textContent = "";
             var text = (d && d.ayahs && d.ayahs[String(tfModalAyah)]) || "";
             if (!text) {
-                contentBox.appendChild(el("div", "mq__empty", "تفسير هذه الآية غير متوفر"));
+                contentBox.appendChild(el("div", "mq__empty", T("تفسير هذه الآية غير متوفر")));
                 return;
             }
             var paras = text.split("\n");
@@ -25567,8 +25743,8 @@ window.APL_DEVICES = [
         opened = true; generation++; var token = generation;
         savedScroll = !page && prefs.page === APL.khatma.state().page ? Number(prefs.scroll) || 0 : 0;
         build(); APL.pushNav(nav); root.classList.add("is-open");
-        header("المصحف الشريف", "بنفتح النص المحلي…", "النص موجود جوّه الحزمة؛ مش محتاج إنترنت");
-        main.appendChild(el("div", "mq__empty", "جارٍ فتح مصحف حفص…")); refreshNav("menu-read");
+        header(T("المصحف الشريف"), T("بنفتح النص المحلي…"), T("النص موجود جوّه الحزمة؛ مش محتاج إنترنت"));
+        main.appendChild(el("div", "mq__empty", T("جارٍ فتح مصحف حفص…"))); refreshNav("menu-read");
         load().then(function () {
             if (!opened || generation !== token) return;
             target = -1; returnTo = null;
@@ -25583,7 +25759,7 @@ window.APL_DEVICES = [
     function failScreen(mode) {
         if (!opened || !main) return;
         clearMain(); header("النص المحلي مش متاح", "ملفات data/quran ناقصة أو ما اتقرتش", "جرّب تفتح تاني؛ مفيش نص بديل أو قرآن من الإنترنت");
-        main.appendChild(button("إعادة المحاولة", "retry", function () { var p = APL.khatma.state().page; close(); open(p, mode); })); refreshNav("retry");
+        main.appendChild(button(T("إعادة المحاولة"), "retry", function () { var p = APL.khatma.state().page; close(); open(p, mode); })); refreshNav("retry");
     }
     function close() {
         if (!opened) return;

@@ -229,6 +229,8 @@
     }
 
     /* Push rolling 30-day prayer timestamps + alert config to Vetro persistent daemon */
+    /* v8.7.22: the Ramadan cannon switch (Ramadan mode panel) now also decides the Maghrib alert key */
+    function cannonOn() { try { return !(APL.ramadan && APL.ramadan.cannonOn && !APL.ramadan.cannonOn()); } catch (e) { return true; } }
     var retryAt = 0, retryStep = 0;
     function backOff() { retryStep = Math.min(retryStep + 1, 5); retryAt = Date.now() + Math.min(15000 * Math.pow(2, retryStep - 1), 300000); }
     document.addEventListener("visibilitychange", function () { if (!document.hidden) { retryAt = 0; } });
@@ -256,7 +258,7 @@
                             if (h && h.m === 9) isRam = true;
                         }
                     } catch (e) {}
-                    var alertKey = (k === "maghrib" && isRam) ? "maghrib_ramadan" : k;
+                    var alertKey = (k === "maghrib" && isRam && cannonOn()) ? "maghrib_ramadan" : k;
                     entries.push({
                         epoch: sec,
                         id: k + "@" + dIso + "_" + dMap[k],
@@ -269,7 +271,7 @@
         var pauseRad = sys.pref("radioDuringAlert") !== false;
         var vol = parseFloat(sys.pref("prayerAlertVolume"));
         if (!(vol >= 0.1 && vol <= 1.5)) vol = 0.92;
-        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol].join("|");
+        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0].join("|");
         if (!force && sig === syncedSig && entries.length > 0) return;
 
         if (!force && Date.now() < retryAt) return;          // Vetro was not ready: wait before asking again
@@ -655,7 +657,7 @@
                     if (h && h.m === 9) isRam = true;
                 }
             } catch (e) {}
-            var alertKey = (key === "maghrib" && isRam) ? "maghrib_ramadan" : key;
+            var alertKey = (key === "maghrib" && isRam && cannonOn()) ? "maghrib_ramadan" : key;
             if (APL.prayerAlert && APL.prayerAlert.play) APL.prayerAlert.play(alertKey);
             if (APL.toast) APL.toast(APL.t("It is time for {prayer}", { prayer: nameOf(key) }) + " — " + hhmmText(t[key]));
         };

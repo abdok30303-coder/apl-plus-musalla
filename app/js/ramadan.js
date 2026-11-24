@@ -185,7 +185,11 @@
                     }
                     panel(5);
                 } },
-                { label: "حالة تشغيل المدفع", run: function () { cannonStatus().then(function (s) { APL.alert({ title: "حالة المدفع", message: s + "\nطلب تشغيل ناجح مش ضمان إن الصوت مسموع؛ جرّبه على الشاشة.\nCANNON_FINISHED = مسار Pulse خلّص الطلب.\nNO_PACTL / NO_PULSE = المسار مش متاح.\nSKIPPED_ALERT_BUSY = الأذان ليه الأولوية.", buttons: [{ label: "رجوع", run: function () { panel(6); } }] }); }); } },
+                { label: "جرّبه دلوقتي (المدفع بس)", run: function () {
+                    if (APL.prayerAlert && APL.prayerAlert.play) APL.prayerAlert.play("cannon"); else cannon(true);
+                    panel(6);
+                } },
+                { label: "حالة تشغيل المدفع", run: function () { cannonStatus().then(function (s) { APL.alert({ title: "حالة المدفع", message: s + "\nطلب تشغيل ناجح مش ضمان إن الصوت مسموع؛ جرّبه على الشاشة.\nCANNON_FINISHED = مسار Pulse خلّص الطلب.\nNO_PACTL / NO_PULSE = المسار مش متاح.\nSKIPPED_ALERT_BUSY = الأذان ليه الأولوية.", buttons: [{ label: "رجوع", run: function () { panel(7); } }] }); }); } },
                 { label: "افتح المصحف", run: function () { if (kh) kh.open(); } },
                 { label: "خلاص" }
             ]
@@ -194,5 +198,5 @@
 
     global.document.addEventListener("visibilitychange", function () { if (!global.document.hidden) tick(); });
     global.setTimeout(tick, 4000);
-    APL.ramadan = { panel: panel, active: active, day: dayNo, state: function () { return S; }, cannon: cannon, cannonStatus: cannonStatus };
+    APL.ramadan = { panel: panel, active: active, day: dayNo, state: function () { return S; }, cannon: cannon, cannonStatus: cannonStatus, cannonOn: function () { return S.cannon !== false; } };
 })(window);

@@ -332,11 +332,11 @@
     function buildHekamSections() {
         bodyEl.innerHTML = "";
         tiles = [];
-        titleEl.textContent = "حكم ومواعظ الكلم الطيب";
-        subEl.textContent = "موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)";
+        titleEl.textContent = HK("حكم ومواعظ الكلم الطيب");
+        subEl.textContent = HK("موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)");
 
         var topBar = el("div", "pw-btns");
-        var rndBtn = pwBtn("🎲 حكمة اليوم العشوائية", "sparkle", false, false, function () {
+        var rndBtn = pwBtn(HK("🎲 حكمة اليوم العشوائية"), "sparkle", false, false, function () {
             mode = "hekam-random";
             focusIndex = 0;
             render();
@@ -345,7 +345,7 @@
         bodyEl.appendChild(topBar);
 
         if (!hekamSectionsData) {
-            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">جارٍ قراءة قائمة الأقسام من الحزمة…</span></div>');
+            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">' + L("جارٍ قراءة قائمة الأقسام من الحزمة…", "Reading the section list from the package…") + '</span></div>');
             bodyEl.appendChild(loadingEl);
             loadHekamJSON("data/hekam/sections.json", function (e, d) {
                 if (!e && d && d.length) {
@@ -393,7 +393,7 @@
         titleEl.textContent = hekamCurSec.name;
 
         var navRow = el("div", "pw-btns");
-        var backBtn = pwBtn("◄ رجوع للأقسام", "back", false, false, function () {
+        var backBtn = pwBtn(HK("◄ رجوع للأقسام"), "back", false, false, function () {
             mode = "hekam";
             focusIndex = hekamReturn;
             render();
@@ -401,9 +401,9 @@
         navRow.appendChild(backBtn);
 
         if (!cached) {
-            subEl.textContent = "جارٍ تحميل المواد والفوائد أوفلاين…";
+            subEl.textContent = HK("جارٍ تحميل المواد والفوائد أوفلاين…");
             bodyEl.appendChild(navRow);
-            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">جارٍ قراءة الملف data/hekam/' + hekamCurSec.file + '…</span></div>');
+            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">' + L("جارٍ قراءة الملف ", "Reading the file ") + 'data/hekam/' + hekamCurSec.file + '…</span></div>');
             bodyEl.appendChild(loadingEl);
             loadHekamJSON("data/hekam/" + hekamCurSec.file, function (e, d) {
                 if (!e && d && d.items) {
@@ -411,7 +411,7 @@
                     if (mode === "hekam-items") render();
                 }
             });
-            hintEl.textContent = "رجوع لقائمة الأقسام";
+            hintEl.textContent = HK("رجوع لقائمة الأقسام");
             return;
         }
 
@@ -422,10 +422,10 @@
         var start = hekamPage * pageSize;
         var pageItems = items.slice(start, start + pageSize);
 
-        subEl.textContent = hekamCurSec.name + " · " + dg(total) + " مادة · صفحة " + dg(hekamPage + 1) + " من " + dg(totalPages);
+        subEl.textContent = hekamCurSec.name + " · " + dg(total) + " " + (APL.lang === "ar" ? "مادة · صفحة" : "items · page") + " " + dg(hekamPage + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(totalPages);
 
         if (hekamPage > 0) {
-            var prevBtn = pwBtn("السابقة ►", "prev", false, false, function () {
+            var prevBtn = pwBtn(HK("السابقة ►"), "prev", false, false, function () {
                 hekamPage--;
                 focusIndex = 1;
                 render();
@@ -433,7 +433,7 @@
             navRow.appendChild(prevBtn);
         }
         if (start + pageSize < total) {
-            var nextBtn = pwBtn("◄ المزيد (" + dg(total - start - pageSize) + ")", "next", false, false, function () {
+            var nextBtn = pwBtn((APL.lang === "ar" ? "◄ المزيد (" : "◄ More (") + dg(total - start - pageSize) + ")", "next", false, false, function () {
                 hekamPage++;
                 focusIndex = 1;
                 render();
@@ -459,17 +459,17 @@
         });
 
         bodyEl.appendChild(list);
-        hintEl.textContent = "▲▼ للتمرير · ◄ المزيد للصفحة التالية · رجوع للأقسام";
+        hintEl.textContent = HK("▲▼ للتمرير · ◄ المزيد للصفحة التالية · رجوع للأقسام");
     }
 
     function buildHekamRandom() {
         bodyEl.innerHTML = "";
         tiles = [];
-        titleEl.textContent = "حكمة اليوم · الكلم الطيب";
-        subEl.textContent = "مقتطفات مختارة من أقوال أئمة السلف وحكم العلماء والمواعظ";
+        titleEl.textContent = HK("حكمة اليوم · الكلم الطيب");
+        subEl.textContent = HK("مقتطفات مختارة من أقوال أئمة السلف وحكم العلماء والمواعظ");
 
         var navRow = el("div", "pw-btns");
-        var rndBtn = pwBtn("🔄 حكمة أخرى", "refresh", false, false, function () {
+        var rndBtn = pwBtn(HK("🔄 حكمة أخرى"), "refresh", false, false, function () {
             if (hekamRandomList && hekamRandomList.length) {
                 var rIdx = Math.floor(Math.random() * hekamRandomList.length);
                 hekamRandomCur = hekamRandomList[rIdx];
@@ -479,7 +479,7 @@
             }
         });
         navRow.appendChild(rndBtn);
-        var secBtn = pwBtn("📚 تصفح كل الأقسام", "book", false, false, function () {
+        var secBtn = pwBtn(HK("📚 تصفح كل الأقسام"), "book", false, false, function () {
             mode = "hekam";
             focusIndex = 0;
             render();
@@ -488,7 +488,7 @@
         bodyEl.appendChild(navRow);
 
         if (!hekamRandomList) {
-            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">جارٍ تحميل المقتطفات…</span></div>');
+            var loadingEl = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label">' + L("جارٍ تحميل المقتطفات…", "Loading the excerpts…") + '</span></div>');
             bodyEl.appendChild(loadingEl);
             loadHekamJSON("data/hekam/excerpts.json", function (e, d) {
                 if (!e && d && d.length) {
@@ -498,7 +498,7 @@
                     if (mode === "hekam-random") render();
                 }
             });
-            hintEl.textContent = "رجوع للصلاة والقرآن";
+            hintEl.textContent = HK("رجوع للصلاة والقرآن");
             return;
         }
 
@@ -506,11 +506,11 @@
         var card = el("div", "hekam-featured-card",
             '<div class="hekam-featured__text">' + it.text + '</div>' +
             '<div class="hekam-featured__ref">' +
-                '<span>' + (it.ref || "الكلم الطيب") + '</span>' +
+                '<span>' + (it.ref || HK("الكلم الطيب")) + '</span>' +
                 '<span style="opacity:0.75; font-size:16px;">' + (it.sec || "") + '</span>' +
             '</div>');
         bodyEl.appendChild(card);
-        hintEl.textContent = "OK لتغيير الحكمة · 📚 لتصفح الأقسام الـ ٥٣ · رجوع للخروج";
+        hintEl.textContent = HK("OK لتغيير الحكمة · 📚 لتصفح الأقسام الـ ٥٣ · رجوع للخروج");
     }
 
     /* what the big figure of a card says: the days left, or a word */
@@ -793,17 +793,17 @@
             nextScale();
             render();
         }));
-        row.appendChild(pwBtn("عرض كامل بالرئيسية", "size", !!sys.pref("prayerWidgetFull"), false, function () {
+        row.appendChild(pwBtn(HK("عرض كامل بالرئيسية"), "size", !!sys.pref("prayerWidgetFull"), false, function () {
             sys.setPref("prayerWidgetFull", !sys.pref("prayerWidgetFull"));
             render();
         }));
 
         var curShow = sys.pref("prayerWidgetShow");
-        var showLabel = curShow === "ayah" ? "آية اليوم" :
-            curShow === "tafsir" ? "آية وتفسير" :
-            curShow === "hekam" ? "حكمة اليوم" :
-            curShow === "pers" ? "مناسبتي القادمة" : "المناسبات";
-        row.appendChild(pwBtn("يعرض: " + showLabel, "sparkle", curShow !== "occ", false, function () {
+        var showLabel = curShow === "ayah" ? HK("آية اليوم") :
+            curShow === "tafsir" ? HK("آية وتفسير") :
+            curShow === "hekam" ? HK("حكمة اليوم") :
+            curShow === "pers" ? HK("مناسبتي القادمة") : HK("المناسبات");
+        row.appendChild(pwBtn(HK("يعرض: ") + showLabel, "sparkle", curShow !== "occ", false, function () {
             var cur = sys.pref("prayerWidgetShow");
             var nxt = cur === "ayah" ? "tafsir" :
                 cur === "tafsir" ? "hekam" :
@@ -819,26 +819,26 @@
     function hekamSettingsButtons() {
         var row = el("div", "pw-btns");
         var hekamOn = !!sys.pref("hekamWidget");
-        row.appendChild(pwBtn("ويدجت الحكمة: " + (hekamOn ? "شغال" : "مغلق"), "sparkle", hekamOn, false, function () {
+        row.appendChild(pwBtn(HK("ويدجت الحكمة: ") + (hekamOn ? HK("شغال") : HK("مغلق")), "sparkle", hekamOn, false, function () {
             var nxt = !hekamOn;
             sys.setPref("hekamWidget", nxt);
-            if (APL.toast) APL.toast(nxt ? "تم تفعيل ويدجت الحكمة على الرئيسية" : "تم إيقاف ويدجت الحكمة", true);
+            if (APL.toast) APL.toast(nxt ? HK("تم تفعيل ويدجت الحكمة على الرئيسية") : HK("تم إيقاف ويدجت الحكمة"), true);
             render();
         }));
 
         var curHekamPos = sys.pref("hekamPos") || "above-dock";
         var posMap = {
-            "above-dock": "فوق التطبيقات",
-            "top-center": "أعلى المنتصف",
-            "top-right": "أعلى اليمين",
-            "top-left": "أعلى اليسار",
-            "bottom-center": "أسفل المنتصف",
-            "bottom-right": "أسفل اليمين",
-            "bottom-left": "أسفل اليسار",
-            "inline": "بشريط الصلاة"
+            "above-dock": HK("فوق التطبيقات"),
+            "top-center": HK("أعلى المنتصف"),
+            "top-right": HK("أعلى اليمين"),
+            "top-left": HK("أعلى اليسار"),
+            "bottom-center": HK("أسفل المنتصف"),
+            "bottom-right": HK("أسفل اليمين"),
+            "bottom-left": HK("أسفل اليسار"),
+            "inline": HK("بشريط الصلاة")
         };
         var posKeys = ["above-dock", "top-center", "top-right", "top-left", "bottom-center", "bottom-right", "bottom-left", "inline"];
-        row.appendChild(pwBtn("الموضع: " + (posMap[curHekamPos] || "فوق التطبيقات"), "pin", hekamOn, false, function () {
+        row.appendChild(pwBtn(HK("الموضع: ") + (posMap[curHekamPos] || HK("فوق التطبيقات")), "pin", hekamOn, false, function () {
             var idx = posKeys.indexOf(sys.pref("hekamPos") || "above-dock");
             var nxtPos = posKeys[(idx + 1) % posKeys.length];
             sys.setPref("hekamPos", nxtPos);
@@ -848,7 +848,7 @@
 
         var HEKAM_SCALES = [100, 125, 150, 175, 200];
         var curHekamScale = Number(sys.pref("hekamScale")) || 100;
-        row.appendChild(pwBtn("الحجم: \u2066" + dg(curHekamScale) + "%\u2069", "size", curHekamScale > 100, false, function () {
+        row.appendChild(pwBtn(L("الحجم: ", "Size: ") + "\u2066" + dg(curHekamScale) + "%\u2069", "size", curHekamScale > 100, false, function () {
             var sidx = HEKAM_SCALES.indexOf(curHekamScale);
             var nxtScale = HEKAM_SCALES[(sidx + 1) % HEKAM_SCALES.length];
             sys.setPref("hekamScale", nxtScale);
@@ -856,25 +856,25 @@
         }));
 
         var HEKAM_COLORS = [
-            { key: "gold", label: "ذهبي ملكي" },
-            { key: "white", label: "أبيض كريستال" },
-            { key: "sky", label: "أزرق سماوي" },
-            { key: "galaxy", label: "موف المجرة" },
-            { key: "green", label: "أخضر فسفوري" }
+            { key: "gold", label: HK("ذهبي ملكي") },
+            { key: "white", label: HK("أبيض كريستال") },
+            { key: "sky", label: HK("أزرق سماوي") },
+            { key: "galaxy", label: HK("موف المجرة") },
+            { key: "green", label: HK("أخضر فسفوري") }
         ];
         var curColor = sys.pref("hekamColor") || "white";
         var curColorObj = HEKAM_COLORS[1];
         for (var c = 0; c < HEKAM_COLORS.length; c++) {
             if (HEKAM_COLORS[c].key === curColor) { curColorObj = HEKAM_COLORS[c]; break; }
         }
-        row.appendChild(pwBtn("اللون: " + curColorObj.label, "sparkle", false, false, function () {
+        row.appendChild(pwBtn(HK("اللون: ") + curColorObj.label, "sparkle", false, false, function () {
             var cidx = 0;
             for (var i = 0; i < HEKAM_COLORS.length; i++) {
                 if (HEKAM_COLORS[i].key === (sys.pref("hekamColor") || "white")) { cidx = i; break; }
             }
             var nxtColor = HEKAM_COLORS[(cidx + 1) % HEKAM_COLORS.length];
             sys.setPref("hekamColor", nxtColor.key);
-            if (APL.toast) APL.toast("لون خط الحكمة: " + nxtColor.label, true);
+            if (APL.toast) APL.toast(HK("لون خط الحكمة: ") + nxtColor.label, true);
             render();
         }));
 
@@ -1357,6 +1357,57 @@
         return actBtn(ico, label + mark, on, function () { toggleAudio(id); });
     }
     /* v7.2.0: two half-size buttons, one above the other, between the Al-Kahf and the Eid Takbeer tiles */
+    /* v8.7.22: English text for strings that were written in Arabic only */
+    var HK_D = {
+        "حكم ومواعظ الكلم الطيب": "Wisdom & Sermons (Kalem Tayeb)",
+        "موسوعة الحكم والمواعظ والفوائد والأقوال المأثورة · أوفلاين بالكامل (٣٥ ألف مادة عبر ٥٣ قسماً)": "Encyclopedia of wisdom, sermons, benefits and sayings · fully offline (35 thousand items in 53 sections) · text in Arabic",
+        "🎲 حكمة اليوم العشوائية": "🎲 Random wisdom",
+        "جارٍ قراءة قائمة الأقسام من الحزمة…": "Reading the section list from the package…",
+        "◄ رجوع للأقسام": "◄ Back to sections",
+        "جارٍ تحميل المواد والفوائد أوفلاين…": "Loading the items offline…",
+        "رجوع لقائمة الأقسام": "Back to the section list",
+        "السابقة ►": "Previous ►",
+        "▲▼ للتمرير · ◄ المزيد للصفحة التالية · رجوع للأقسام": "▲▼ scroll · ◄ More for the next page · Back to sections",
+        "حكمة اليوم · الكلم الطيب": "Wisdom of the day · Kalem Tayeb",
+        "مقتطفات مختارة من أقوال أئمة السلف وحكم العلماء والمواعظ": "Selected sayings of the early imams, wisdom of scholars and sermons (text in Arabic)",
+        "🔄 حكمة أخرى": "🔄 Another one",
+        "📚 تصفح كل الأقسام": "📚 Browse all sections",
+        "جارٍ تحميل المقتطفات…": "Loading the excerpts…",
+        "رجوع للصلاة والقرآن": "Back to Prayer & Quran",
+        "الكلم الطيب": "Kalem Tayeb",
+        "OK لتغيير الحكمة · 📚 لتصفح الأقسام الـ ٥٣ · رجوع للخروج": "OK for another one · 📚 browse the 53 sections · Back to exit",
+        "عرض كامل بالرئيسية": "Full width on Home",
+        "آية اليوم": "Verse of the day",
+        "آية وتفسير": "Verse and tafsir",
+        "حكمة اليوم": "Wisdom of the day",
+        "مناسبتي القادمة": "My next occasion",
+        "المناسبات": "Occasions",
+        "يعرض: ": "Shows: ",
+        "ويدجت الحكمة: ": "Wisdom widget: ",
+        "شغال": "On",
+        "مغلق": "Off",
+        "تم تفعيل ويدجت الحكمة على الرئيسية": "Wisdom widget turned on for Home",
+        "تم إيقاف ويدجت الحكمة": "Wisdom widget turned off",
+        "فوق التطبيقات": "Above the apps",
+        "أعلى المنتصف": "Top center",
+        "أعلى اليمين": "Top right",
+        "أعلى اليسار": "Top left",
+        "أسفل المنتصف": "Bottom center",
+        "أسفل اليمين": "Bottom right",
+        "أسفل اليسار": "Bottom left",
+        "بشريط الصلاة": "On the prayer strip",
+        "الموضع: ": "Position: ",
+        "الحجم: ⁦": "Size: ⁦",
+        "ذهبي ملكي": "Royal gold",
+        "أبيض كريستال": "Crystal white",
+        "أزرق سماوي": "Sky blue",
+        "موف المجرة": "Galaxy purple",
+        "أخضر فسفوري": "Neon green",
+        "اللون: ": "Color: ",
+        "لون خط الحكمة: ": "Wisdom text color: "
+    };
+    function HK(s) { return (APL.lang !== "ar" && Object.prototype.hasOwnProperty.call(HK_D, s)) ? HK_D[s] : s; }
+
     function L(ar, en) { return APL.lang === "ar" ? ar : en; }
     function miniBtn(ico, label, run) {
         var b = el("div", "pw-ic pw-ic--mini", (ACT_ICO[ico] || "") + "<span>" + label + "</span>");

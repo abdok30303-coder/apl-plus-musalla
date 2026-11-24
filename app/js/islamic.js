@@ -357,6 +357,12 @@
     APL.islamic = {
         jdn: jdn, ymd: ymd, isoOf: isoOf, weekday: weekday, today: todayJdn,
         hijriToday: hijriToday, hijriText: hijriText, gregorian: gregorian,
+        /* v8.7.22: Hijri date of any Gregorian day (y, m, d), same offset and rules as hijriToday. prayer.js needs it to mark Ramadan Maghrib in the background schedule. */
+        toHijri: function (y, m, d) {
+            var off = 0;
+            try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
+            return hijriFor(jdn(y, m, d) + off);
+        },
         occasions: occasions,
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
         /* for the tests: the pieces that can be checked on their own */
