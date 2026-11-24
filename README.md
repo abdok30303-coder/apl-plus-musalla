@@ -61,9 +61,20 @@ A TV is the one screen the whole family gathers around, yet its home screen know
   <tr>
     <td colspan="2"><img src="docs/screenshots/08-settings.jpg" alt="Settings" width="50%"><br><b>Settings</b><br>Appearance, prayer and Quran, tasks, remote buttons, accounts, performance and more.</td>
   </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/09-home-verse-ticker.jpg" alt="Home screen with a Qur'an verse ticker"><br><b>A verse on your Home Screen</b><br>A rotating Qur'an verse or reflection sits beside the clock, Hijri date, weather, live prayer strip and your next task.</td>
+    <td width="50%"><img src="docs/screenshots/10-home-arabic.jpg" alt="Home screen in Arabic" ><br><b>Fully Arabic, not translated</b><br>Date, time, weather and prayer labels switch completely to Arabic with correct right-to-left layout.</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/11-prayer-hub-full.jpg" alt="Full Prayer and Quran hub with every control"><br><b>Every control, one page</b><br>Radio, Al-Kahf, Takbeer alerts, Adhkar, Hekam and widget position/size/color, plus live countdowns to Isra' and Mi'raj, Ramadan and the last ten nights.</td>
+    <td width="50%"><img src="docs/screenshots/12-mushaf-menu.jpg" alt="Mushaf side menu"><br><b>Mushaf side menu</b><br>Jump to tafsir, bookmark your place, search the whole Qur'an, or open Qur'an radio — without leaving the page.</td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/screenshots/13-native-settings.jpg" alt="Prayer and Quran entry inside the TV's own Settings app" width="50%"><br><b>Lives inside the TV's own Settings, too</b><br>"Prayer and Quran" appears as a native entry alongside Samsung's own Appearance, Home Screen and Picture settings.</td>
+  </tr>
 </table>
 
-<sub>Screenshots come from the launcher's built-in browser preview, so the app shelf shows demo apps and the Wi-Fi name is a placeholder. On a TV the shelf shows your own apps.</sub>
+<sub>Screenshots 01–08 come from the launcher's built-in browser preview, so the app shelf shows demo apps and the Wi-Fi name is a placeholder. Screenshots 09–13 are from a real Samsung TV running the app, with the owner's own apps, location and Wi-Fi.</sub>
 
 ## Features
 
