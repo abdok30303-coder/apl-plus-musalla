@@ -1,3 +1,8 @@
+## 8.7.23 (Al-Kahf and Eid takbeer: local file first, online fallback; Untested on physical TV)
+- **Order:** `audio-pack.js` still looks for `alkahf.mp3` and `takbeerat-eid.mp3` in the APL-Audio folder (TV storage or USB) first. Only if the file is not found, or will not open, it streams the recording online with Samsung AVPlay (status text: "Not found on the TV, trying online...").
+- **Online sources (archive.org, HTTPS, byte ranges so Al-Kahf can seek and resume):** Al-Kahf: Sheikh Mahmoud Khalil Al-Husary, Egyptian Radio recording, `https://archive.org/download/MahmoudKhalilAl-husary/018.mp3` (MP3 128 kbps, 36 min). Eid takbeer: Egyptian Radio takbeerat, `https://archive.org/download/f-2mp-download-sd/F2mp_download_sd.mp3` (10 min, AAC in an MP4 container; it repeats until stopped like the local file).
+- Not changed: volume (it follows the TV volume), the files are still not inside the package.
+
 ## 8.7.22 (Ramadan cannon fixes; English for the Quran sidebar and the wisdom pages; Untested on physical TV)
 - **Cannon in the background schedule:** `prayer.js` asked `APL.islamic.toHijri`, which did not exist, so the schedule sent to the daemon never marked Ramadan and the daemon played the plain Maghrib adhan without the cannon. `islamic.js` now has `toHijri(y, m, d)` (same offset and rules as `hijriToday`). The foreground path was already correct.
 - **Cannon switch:** "مدفع الإفطار" in the Ramadan mode panel now decides whether the Maghrib alert is the cannon plus adhan or the adhan alone, both in the foreground (`prayer.js`) and in the schedule sent to the daemon (the switch is part of the sync signature, so a change is pushed on the next sync). Before, nothing read it for the real Maghrib alert.

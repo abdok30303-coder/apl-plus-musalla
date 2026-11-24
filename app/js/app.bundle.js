@@ -7328,6 +7328,15 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         "/opt/usr/home/owner/content/Downloads", "/opt/usr/home/owner/media/Downloads"
     ];
     var BLIND_FILES = { kahf: "alkahf.mp3", takbeer: "takbeerat-eid.mp3" };
+    /* v8.7.23: online fallback (used only when the local file is missing). Both are plain HTTPS files on archive.org
+       (302 to a storage host, byte ranges supported, so AVPlay can seek and resume).
+       kahf: Surat Al-Kahf, Sheikh Mahmoud Khalil Al-Husary, the Egyptian Radio recording (Quran Radio, Egypt), MP3 128 kbps.
+       takbeer: Eid takbeerat from the Egyptian Radio (presented by Shehata El-Arabi, takbeer by Sheikh Nasr El-Din Tobar), about 10 min,
+       AAC in an MP4 container (it repeats until stopped, like the local file). */
+    var ONLINE = {
+        kahf:    ["https://archive.org/download/MahmoudKhalilAl-husary/018.mp3"],
+        takbeer: ["https://archive.org/download/f-2mp-download-sd/F2mp_download_sd.mp3"]
+    };
     function blindPaths(id) {
         var out = [];
         var fname = BLIND_FILES[id];
@@ -7577,9 +7586,18 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
             var blind = !paths || !paths.length;
             why = "Opening…";
             changed();
+            /* v8.7.23: the local APL-Audio file is tried FIRST; only if it is not found (or will not open) the recording
+               is streamed from the online source (ONLINE below). */
             return tryChain(blind ? blindPaths(id) : paths, id, token).then(null, function (e) {
-                if (blind && token === session) { var nf = new Error("NOFILE"); nf.noFile = true; throw nf; }
-                throw e;
+                if (token !== session) throw e;
+                var localErr = e;
+                why = "Not found on the TV, trying online…";
+                changed();
+                return tryChain(ONLINE[id], id, token).then(null, function (e2) {
+                    if (token !== session) throw e2;
+                    if (blind) { var nf = new Error("NOFILE"); nf.noFile = true; throw nf; }
+                    throw localErr;
+                });
             });
         }).then(function () {
             if (token !== session) return true;
