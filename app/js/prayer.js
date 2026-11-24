@@ -326,7 +326,11 @@
         var night = 24 - 2 * sr;                                                        // hours from sunset to the next sunrise
         if (t.fajr === null) t.fajr = sr + night / 7;                                   // the sun never goes deep enough: one-seventh of the night
         if (t.maghrib === null) t.maghrib = sr;
-        if (P.ishaMin) t.isha = t.maghrib + P.ishaMin / 60;
+        if (P.ishaMin) {
+            var ishaMin = P.ishaMin;                                                    // v8.7.26: Umm Al-Qura (4) is 120 min after Maghrib in Ramadan, like AlAdhan
+            if (P.id === 4) { try { var hq = APL.islamic && APL.islamic.toHijri ? APL.islamic.toHijri(+q[1], +q[2], +q[3]) : null; if (hq && hq.m === 9) ishaMin = 120; } catch (e) {} }
+            t.isha = t.maghrib + ishaMin / 60;
+        }
         else if (t.isha === null) t.isha = sr + night / 7;
         function hm(h) { var m = Math.round(fix(h, 24) * 60) % 1440; return pad2(Math.floor(m / 60)) + ":" + pad2(m % 60); }
         return { fajr: hm(noon - t.fajr), sunrise: hm(noon - t.sunrise), dhuhr: hm(noon), asr: hm(noon + t.asr),

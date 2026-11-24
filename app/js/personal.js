@@ -78,7 +78,7 @@
         items.slice().sort(function (a, b) { return nextDate(a, new Date()) - nextDate(b, new Date()); }).forEach(function (it) {
             var c = el("div", "pe__f pe__card"); c._id = "i-" + it.id; c._run = function () { draft = JSON.parse(JSON.stringify(it)); mode = "form"; paint("name-0"); };
             var ty = typeOf(it.type);
-            c.appendChild(el("div", "pe__cname", ty[2] + " " + APL.enx(it.name) + " · " + APL.enx(ty[1])));
+            var cn = el("div", "pe__cname"); cn.textContent = ty[2] + " " + APL.enxName(it.name) + " \u00b7 " + APL.enx(ty[1]); c.appendChild(cn);   /* v8.7.26: typed names are not run through the phrase translator */
             c.appendChild(el("div", "pe__cdate", dg(it.d) + " " + MONTHS[it.m] + " " + dg(it.y)));
             var a = el("div", "pe__age"), l = el("div", "pe__left"); c.appendChild(a); c.appendChild(l); ageEls.push({ it: it, a: a, l: l });
             grid.appendChild(c);
@@ -165,7 +165,7 @@
                 key = String(it.id || (it.type + it.m + "-" + it.d));
                 if (seen[key] === today) continue;
                 seen[key] = today;
-                name = typeOf(it.type)[2] + " " + APL.enx(it.name);
+                name = typeOf(it.type)[2] + " \uE000" + APL.enxName(it.name) + "\uE001";
                 msgs.push({ d: days, t: days === 0 ? "🎉 النهارده: " + name : days === 1 ? "⏰ بكرة: " + name : "⏰ بعد " + dg(days) + " أيام: " + name });
             }
             if (!msgs.length) return;
@@ -182,7 +182,7 @@
             if (!it || typeof it.m !== "number" || typeof it.d !== "number") continue;
             d = Math.round((nextDate(it, now).getTime() - mid) / 86400000);
             if (d < 0) continue;
-            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + APL.enx(it.name) };
+            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + APL.enxName(it.name) };
         }
         return best;
     }

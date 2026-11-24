@@ -201,8 +201,18 @@
             APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
         }).catch(function () { APL.toast(APL.t("No internet connection"), true); });
     }
+    /* v8.7.26: the geocoder sometimes sends no time zone. It is then asked of the weather service (timezone=auto) and the city is set only
+       once a real zone is known: no silent fallback to Cairo time. */
     function useCity(x) {
-        var c = { name: x.name, lat: +x.latitude, lon: +x.longitude, cc: String(x.country_code || "").toUpperCase(), tz: x.timezone || "" };
+        if (x.timezone) { applyCity(x, x.timezone); return; }
+        APL.toast(APL.t("Looking up the time zone\u2026"), true);
+        APL.fetchJSON("https://api.open-meteo.com/v1/forecast?latitude=" + encodeURIComponent(+x.latitude) + "&longitude=" + encodeURIComponent(+x.longitude) + "&current=temperature_2m&timezone=auto", 12000).then(function (j) {
+            if (j && typeof j.timezone === "string" && j.timezone.length > 2 && j.timezone !== "GMT") applyCity(x, j.timezone);
+            else APL.toast(APL.t("Could not find this city's time zone. Try another city."), true);
+        }).catch(function () { APL.toast(APL.t("Could not find this city's time zone. Try another city."), true); });
+    }
+    function applyCity(x, tzName) {
+        var c = { name: x.name, lat: +x.latitude, lon: +x.longitude, cc: String(x.country_code || "").toUpperCase(), tz: tzName };
         APL.sys.setPref("customPlace", c);
         APL.sys.setPref("weatherPlace", "same");
         APL.sys.setPref("prayerCity", "custom");

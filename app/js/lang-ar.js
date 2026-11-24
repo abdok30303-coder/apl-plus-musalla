@@ -165,6 +165,8 @@ window.APL_LANG_AR = {
     "Type the city name, then OK · Back to cancel": "اكتب اسم المدينة ثم OK · رجوع للإلغاء",
     "Searching…": "جارٍ البحث…",
     "No city found": "لم يتم العثور على مدينة",
+    "Looking up the time zone\u2026": "جارٍ البحث عن المنطقة الزمنية…",
+    "Could not find this city's time zone. Try another city.": "تعذّر تحديد المنطقة الزمنية لهذه المدينة. جرّب مدينة أخرى.",
     "No internet connection": "لا يوجد اتصال بالإنترنت",
     "City set: {name}": "تم ضبط المدينة: {name}",
     "Calculation Method": "طريقة الحساب",

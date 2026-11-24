@@ -720,6 +720,8 @@ window.APL_LANG_AR = {
     "Type the city name, then OK · Back to cancel": "اكتب اسم المدينة ثم OK · رجوع للإلغاء",
     "Searching…": "جارٍ البحث…",
     "No city found": "لم يتم العثور على مدينة",
+    "Looking up the time zone\u2026": "جارٍ البحث عن المنطقة الزمنية…",
+    "Could not find this city's time zone. Try another city.": "تعذّر تحديد المنطقة الزمنية لهذه المدينة. جرّب مدينة أخرى.",
     "No internet connection": "لا يوجد اتصال بالإنترنت",
     "City set: {name}": "تم ضبط المدينة: {name}",
     "Calculation Method": "طريقة الحساب",
@@ -2274,12 +2276,28 @@ window.APL_LANG_AR_EXTRA = {
 "تم إخفاء التفسير": "Tafsir hidden"
 };
     var ENX_KEYS = Object.keys(ENX_FRAG).sort(function (a, b) { return b.length - a.length; });
-    APL.enx = function (s) {
+    /* v8.7.26: text between \uE000 and \uE001 (a name the user typed) is kept exactly as written; the marks are removed. */
+    var enxRaw = function (s) {
         if (lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
         if (Object.prototype.hasOwnProperty.call(ENX_EXACT, s)) return ENX_EXACT[s];
         var out = s;
         for (var i = 0; i < ENX_KEYS.length; i++) { if (out.indexOf(ENX_KEYS[i]) >= 0) out = out.split(ENX_KEYS[i]).join(ENX_FRAG[ENX_KEYS[i]]); }
         return out;
+    };
+    APL.enx = function (s) {
+        if (typeof s !== "string" || s.indexOf("\uE000") < 0) return enxRaw(s);
+        return s.split("\uE000").map(function (seg, i) {
+            if (i === 0) return enxRaw(seg);
+            var k = seg.indexOf("\uE001");
+            return k < 0 ? seg : seg.slice(0, k) + enxRaw(seg.slice(k + 1));
+        }).join("");
+    };
+
+    /* v8.7.26: for names the user typed (occasions): only an exact match with a known suggested name is translated.
+       Words inside a typed name are never replaced, so text the user wrote stays exactly as written. */
+    APL.enxName = function (s) {
+        if (lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
+        return Object.prototype.hasOwnProperty.call(ENX_EXACT, s) ? ENX_EXACT[s] : s;
     };
 
     APL.t = t;
@@ -5980,10 +5998,17 @@ window.APL_CATALOG = [
                   "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure" +
                   "&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_probability_max,wind_speed_10m_max" +
                   "&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code" +
-                  "&timezone=" + encodeURIComponent(p.tz || (SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo") + unitParams();
+                  "&timezone=" + encodeURIComponent(p.tz || (p.key === "custom" ? "auto" : ((SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo"))) + unitParams();
         busy = true;
         return APL.fetchJSON(url, 12000).then(function (j) {   // v1.2.115: 12 s limit (a stalled request left busy = true for ever)
             busy = false;
+            /* v8.7.26: a searched city saved earlier without a time zone gets the one the weather service found (no silent Cairo time) */
+            try {
+                if (p.key === "custom" && !p.tz && j && typeof j.timezone === "string" && j.timezone.length > 2 && j.timezone !== "GMT") {
+                    var cp = sys.pref("customPlace");
+                    if (cp && typeof cp === "object" && !cp.tz) { cp.tz = j.timezone; sys.setPref("customPlace", cp); if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); }
+                }
+            } catch (eTz) {}
             var cur = (j && j.current) || {};
             var daily = (j && j.daily) || {};
             var hourly = (j && j.hourly) || {};
@@ -8339,7 +8364,11 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var night = 24 - 2 * sr;                                                        // hours from sunset to the next sunrise
         if (t.fajr === null) t.fajr = sr + night / 7;                                   // the sun never goes deep enough: one-seventh of the night
         if (t.maghrib === null) t.maghrib = sr;
-        if (P.ishaMin) t.isha = t.maghrib + P.ishaMin / 60;
+        if (P.ishaMin) {
+            var ishaMin = P.ishaMin;                                                    // v8.7.26: Umm Al-Qura (4) is 120 min after Maghrib in Ramadan, like AlAdhan
+            if (P.id === 4) { try { var hq = APL.islamic && APL.islamic.toHijri ? APL.islamic.toHijri(+q[1], +q[2], +q[3]) : null; if (hq && hq.m === 9) ishaMin = 120; } catch (e) {} }
+            t.isha = t.maghrib + ishaMin / 60;
+        }
         else if (t.isha === null) t.isha = sr + night / 7;
         function hm(h) { var m = Math.round(fix(h, 24) * 60) % 1440; return pad2(Math.floor(m / 60)) + ":" + pad2(m % 60); }
         return { fajr: hm(noon - t.fajr), sunrise: hm(noon - t.sunrise), dhuhr: hm(noon), asr: hm(noon + t.asr),
@@ -15748,8 +15777,18 @@ window.APL_KEYS = {
             APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
         }).catch(function () { APL.toast(APL.t("No internet connection"), true); });
     }
+    /* v8.7.26: the geocoder sometimes sends no time zone. It is then asked of the weather service (timezone=auto) and the city is set only
+       once a real zone is known: no silent fallback to Cairo time. */
     function useCity(x) {
-        var c = { name: x.name, lat: +x.latitude, lon: +x.longitude, cc: String(x.country_code || "").toUpperCase(), tz: x.timezone || "" };
+        if (x.timezone) { applyCity(x, x.timezone); return; }
+        APL.toast(APL.t("Looking up the time zone\u2026"), true);
+        APL.fetchJSON("https://api.open-meteo.com/v1/forecast?latitude=" + encodeURIComponent(+x.latitude) + "&longitude=" + encodeURIComponent(+x.longitude) + "&current=temperature_2m&timezone=auto", 12000).then(function (j) {
+            if (j && typeof j.timezone === "string" && j.timezone.length > 2 && j.timezone !== "GMT") applyCity(x, j.timezone);
+            else APL.toast(APL.t("Could not find this city's time zone. Try another city."), true);
+        }).catch(function () { APL.toast(APL.t("Could not find this city's time zone. Try another city."), true); });
+    }
+    function applyCity(x, tzName) {
+        var c = { name: x.name, lat: +x.latitude, lon: +x.longitude, cc: String(x.country_code || "").toUpperCase(), tz: tzName };
         APL.sys.setPref("customPlace", c);
         APL.sys.setPref("weatherPlace", "same");
         APL.sys.setPref("prayerCity", "custom");
@@ -23443,7 +23482,7 @@ window.APL_DEVICES = [
 
     var OK = "\u2714", WARN = "\u26A0", BAD = "\u2716";
     /* v8.7.25: English for the diagnostics lines (exact texts first, then phrases, longest first) */
-    var TE_D = {"الإصدار": "Version", "مواقيت الصلاة": "Prayer times", "متحمّلة": "Loaded", "مفيش بيانات": "No data", "خطأ": "Error", "معايرة المواقيت": "Prayer time calibration", "مش محسوبة لسه": "Not calculated yet", "تحديث الويدجت": "Widget refresh", "موجود": "Present", "مش متسجل": "Not registered", "قفل الطفل": "Child lock", "جاهز": "Ready", "مش متحمّل": "Not loaded", "المحراب الحي": "Live mihrab", "المصحف والختمة": "Mushaf and khatma", "مصحف حفص أوفلاين": "Hafs Mushaf offline", "قارئ وفهارس وبحث؛ تجربة الشاشة لسه مطلوبة": "Reader, indexes and search; a test on the screen is still needed", "مصحف حفص": "Hafs Mushaf", "وضع رمضان": "Ramadan mode", "شغّال": "On", "مش في رمضان": "Not in Ramadan", "الراديو": "Radio", "الصوت (AVPlay)": "Audio (AVPlay)", "مش جاهز": "Not ready", "الذاكرة": "Memory", "مش متاحة": "Not available", "سجل الأخطاء": "Error log", "الجسر": "Bridge", "شغال": "Running", "مش بيرد": "Not answering", "حارس التنبيهات": "Alert guard", "مفيش فحص ناجح": "No successful check", "فشل متكرر": "Repeated failure", "ماردّش لسه": "No answer yet", "مفيش رد": "No answer", "مش متاح هنا": "Not available here", "مفيش فلاشة": "No USB stick", "USB مش متاح": "USB not available", "مفيش فلاشة USB": "No USB stick", "مقدرتش أكتب على USB": "Could not write to USB"};
+    var TE_D = {"USB \u0645\u0634 \u0645\u062A\u0627\u062D": "USB not available", "\u0645\u0642\u062F\u0631\u062A\u0634 \u0623\u0643\u062A\u0628 \u0639\u0644\u0649 USB": "Could not write to the USB stick", "الإصدار": "Version", "مواقيت الصلاة": "Prayer times", "متحمّلة": "Loaded", "مفيش بيانات": "No data", "خطأ": "Error", "معايرة المواقيت": "Prayer time calibration", "مش محسوبة لسه": "Not calculated yet", "تحديث الويدجت": "Widget refresh", "موجود": "Present", "مش متسجل": "Not registered", "قفل الطفل": "Child lock", "جاهز": "Ready", "مش متحمّل": "Not loaded", "المحراب الحي": "Live mihrab", "المصحف والختمة": "Mushaf and khatma", "مصحف حفص أوفلاين": "Hafs Mushaf offline", "قارئ وفهارس وبحث؛ تجربة الشاشة لسه مطلوبة": "Reader, indexes and search; a test on the screen is still needed", "مصحف حفص": "Hafs Mushaf", "وضع رمضان": "Ramadan mode", "شغّال": "On", "مش في رمضان": "Not in Ramadan", "الراديو": "Radio", "الصوت (AVPlay)": "Audio (AVPlay)", "مش جاهز": "Not ready", "الذاكرة": "Memory", "مش متاحة": "Not available", "سجل الأخطاء": "Error log", "الجسر": "Bridge", "شغال": "Running", "مش بيرد": "Not answering", "حارس التنبيهات": "Alert guard", "مفيش فحص ناجح": "No successful check", "فشل متكرر": "Repeated failure", "ماردّش لسه": "No answer yet", "مفيش رد": "No answer", "مش متاح هنا": "Not available here", "مفيش فلاشة": "No USB stick", "USB مش متاح": "USB not available", "مفيش فلاشة USB": "No USB stick", "مقدرتش أكتب على USB": "Could not write to USB"};
     var TE_F = {" MB عالية": " MB (high)", "المرحلة: ": "Phase: ", "صفحة ": "Page ", "آخر فحص من ": "Last check ", "آخر رد من ": "Last reply ", " · من ": " · ", "من ": "", " د": " min", " يوم": " days", " خطأ": " errors", " مش شغال": " not running", " محتاج انتباه": " needs attention", " كله تمام": " all good", "اتحفظ:\n": "Saved:\n"};
     var TE_K = Object.keys(TE_F).sort(function (a, b) { return b.length - a.length; });
     function TE(s) {
@@ -23531,7 +23570,7 @@ window.APL_DEVICES = [
             var head = bad ? BAD + " " + bad + " \u0645\u0634 \u0634\u063A\u0627\u0644" : (warn ? WARN + " " + warn + " \u0645\u062D\u062A\u0627\u062C \u0627\u0646\u062A\u0628\u0627\u0647" : OK + " \u0643\u0644\u0647 \u062A\u0645\u0627\u0645");
             APL.alert({
                 title: APL.t("TV Check"),
-                message: head + "\n\n" + L.join("\n"),
+                message: TE(head) + "\n\n" + L.join("\n"),
                 buttons: [
                     { label: "USB", run: function () { exportUsb(L); } },
                     { label: APL.t("OK") }
@@ -23543,7 +23582,7 @@ window.APL_DEVICES = [
     function exportUsb(L) {
         var el = APL.errorLog, d = new Date();
         function p(n) { return (n < 10 ? "0" : "") + n; }
-        function say(m) { APL.alert({ title: APL.t("TV Check"), message: m, buttons: [{ label: APL.t("OK") }] }); }
+        function say(m) { APL.alert({ title: APL.t("TV Check"), message: TE(m), buttons: [{ label: APL.t("OK") }] }); }
         if (!el || !el.usbLabels || !el.writeText) { say("USB \u0645\u0634 \u0645\u062A\u0627\u062D"); return; }
         el.usbLabels().then(function (r) {
             if (!r || !r.usb || !r.usb.length) { say("\u0645\u0641\u064A\u0634 \u0641\u0644\u0627\u0634\u0629 USB"); return; }
@@ -23597,6 +23636,10 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "\u2714 8.7.26: \u0648\u0642\u062a \u0627\u0644\u0639\u0634\u0627\u0621 \u0641\u064a \u0631\u0645\u0636\u0627\u0646 \u0628\u0637\u0631\u064a\u0642\u0629 \u0623\u0645 \u0627\u0644\u0642\u0631\u0649 \u0628\u0642\u0649 120 \u062f\u0642\u064a\u0642\u0629 \u0628\u0639\u062f \u0627\u0644\u0645\u063a\u0631\u0628 \u062d\u062a\u0649 \u0644\u0645\u0627 \u0627\u0644\u0646\u062a \u064a\u0643\u0648\u0646 \u0642\u0627\u0637\u0639",
+        "\u2714 \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0627\u0644\u0644\u064a \u0628\u062a\u062f\u0648\u0631 \u0639\u0644\u064a\u0647\u0627 \u0628\u062a\u0627\u062e\u062f \u0645\u0646\u0637\u0642\u062a\u0647\u0627 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0627\u0644\u062d\u0642\u064a\u0642\u064a\u0629 \u0628\u062f\u0644 \u062a\u0648\u0642\u064a\u062a \u0627\u0644\u0642\u0627\u0647\u0631\u0629",
+        "\u2714 \u0623\u0633\u0645\u0627\u0621 \u0645\u0646\u0627\u0633\u0628\u0627\u062a\u0643 \u0627\u0644\u0644\u064a \u0643\u062a\u0628\u062a\u0647\u0627 \u0628\u0642\u062a \u0628\u062a\u0638\u0647\u0631 \u0632\u064a \u0645\u0627 \u0643\u062a\u0628\u062a\u0647\u0627 \u0641\u064a \u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a",
+        "\u2714 \u0631\u0633\u0627\u064a\u0644 \u0641\u062d\u0635 \u0627\u0644\u062a\u0644\u0641\u0632\u064a\u0648\u0646 \u0648USB \u0628\u0642\u062a \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a \u0643\u0645\u0627\u0646",
         "\u2714 8.7.25: \u0642\u0627\u0631\u0626 \u0627\u0644\u0645\u0635\u062d\u0641 \u0648\u0645\u0634\u063a\u0651\u0644 \u0627\u0644\u0642\u0631\u0622\u0646 \u0648\u0627\u0644\u0641\u062d\u0635 \u0648\u0643\u0644 \u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a \u0628\u0642\u062a \u0628\u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a \u0643\u0627\u0645\u0644 \u0644\u0645\u0627 \u0627\u0644\u0644\u063a\u0629 English",
         "\u2714 \u0632\u0631 \u062d\u0648\u0627\u0641 \u0627\u0644\u0634\u0627\u0634\u0629 \u0641\u064a \u0627\u0644\u0645\u0635\u062d\u0641 \u0628\u0642\u0649 \u064a\u0646\u0641\u0639 \u062a\u0648\u0635\u0644\u0647 \u0628\u0627\u0644\u0631\u064a\u0645\u0648\u062a",
         "\u2714 \u0627\u0644\u0637\u0642\u0633 \u0645\u0628\u0642\u0627\u0634 \u064a\u0639\u0631\u0636 \u0642\u0631\u0627\u0621\u0629 \u0645\u062f\u064a\u0646\u0629 \u062a\u0627\u0646\u064a\u0629 \u0628\u0639\u062f \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0623\u0648 \u0627\u0644\u0648\u062d\u062f\u0629",
@@ -23608,6 +23651,10 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.26: Umm Al-Qura Isha in Ramadan is now 120 minutes after Maghrib even when the times are calculated offline",
+        "✔ A searched city now gets its real time zone (looked up if missing) instead of silently using Cairo time",
+        "✔ Occasion names you type stay exactly as you wrote them in English mode",
+        "✔ The TV Check and USB messages are now in English too",
         "\u2714 8.7.25: the Quran reader, the Quran player, the diagnostics and every setting are now fully in English when the language is English",
         "\u2714 The Screen margins button in the Quran reader can now be reached with the remote",
         "\u2714 Weather no longer shows another city's reading after you change the city or the unit",
@@ -26247,7 +26294,7 @@ window.APL_DEVICES = [
         items.slice().sort(function (a, b) { return nextDate(a, new Date()) - nextDate(b, new Date()); }).forEach(function (it) {
             var c = el("div", "pe__f pe__card"); c._id = "i-" + it.id; c._run = function () { draft = JSON.parse(JSON.stringify(it)); mode = "form"; paint("name-0"); };
             var ty = typeOf(it.type);
-            c.appendChild(el("div", "pe__cname", ty[2] + " " + APL.enx(it.name) + " · " + APL.enx(ty[1])));
+            var cn = el("div", "pe__cname"); cn.textContent = ty[2] + " " + APL.enxName(it.name) + " \u00b7 " + APL.enx(ty[1]); c.appendChild(cn);   /* v8.7.26: typed names are not run through the phrase translator */
             c.appendChild(el("div", "pe__cdate", dg(it.d) + " " + MONTHS[it.m] + " " + dg(it.y)));
             var a = el("div", "pe__age"), l = el("div", "pe__left"); c.appendChild(a); c.appendChild(l); ageEls.push({ it: it, a: a, l: l });
             grid.appendChild(c);
@@ -26334,7 +26381,7 @@ window.APL_DEVICES = [
                 key = String(it.id || (it.type + it.m + "-" + it.d));
                 if (seen[key] === today) continue;
                 seen[key] = today;
-                name = typeOf(it.type)[2] + " " + APL.enx(it.name);
+                name = typeOf(it.type)[2] + " \uE000" + APL.enxName(it.name) + "\uE001";
                 msgs.push({ d: days, t: days === 0 ? "🎉 النهارده: " + name : days === 1 ? "⏰ بكرة: " + name : "⏰ بعد " + dg(days) + " أيام: " + name });
             }
             if (!msgs.length) return;
@@ -26351,7 +26398,7 @@ window.APL_DEVICES = [
             if (!it || typeof it.m !== "number" || typeof it.d !== "number") continue;
             d = Math.round((nextDate(it, now).getTime() - mid) / 86400000);
             if (d < 0) continue;
-            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + APL.enx(it.name) };
+            if (!best || d < best.days) best = { days: d, name: typeOf(it.type)[2] + " " + APL.enxName(it.name) };
         }
         return best;
     }

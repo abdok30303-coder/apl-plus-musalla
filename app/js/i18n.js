@@ -321,12 +321,28 @@
 "تم إخفاء التفسير": "Tafsir hidden"
 };
     var ENX_KEYS = Object.keys(ENX_FRAG).sort(function (a, b) { return b.length - a.length; });
-    APL.enx = function (s) {
+    /* v8.7.26: text between \uE000 and \uE001 (a name the user typed) is kept exactly as written; the marks are removed. */
+    var enxRaw = function (s) {
         if (lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
         if (Object.prototype.hasOwnProperty.call(ENX_EXACT, s)) return ENX_EXACT[s];
         var out = s;
         for (var i = 0; i < ENX_KEYS.length; i++) { if (out.indexOf(ENX_KEYS[i]) >= 0) out = out.split(ENX_KEYS[i]).join(ENX_FRAG[ENX_KEYS[i]]); }
         return out;
+    };
+    APL.enx = function (s) {
+        if (typeof s !== "string" || s.indexOf("\uE000") < 0) return enxRaw(s);
+        return s.split("\uE000").map(function (seg, i) {
+            if (i === 0) return enxRaw(seg);
+            var k = seg.indexOf("\uE001");
+            return k < 0 ? seg : seg.slice(0, k) + enxRaw(seg.slice(k + 1));
+        }).join("");
+    };
+
+    /* v8.7.26: for names the user typed (occasions): only an exact match with a known suggested name is translated.
+       Words inside a typed name are never replaced, so text the user wrote stays exactly as written. */
+    APL.enxName = function (s) {
+        if (lang === "ar" || typeof s !== "string" || !/[\u0600-\u06FF]/.test(s)) return s;
+        return Object.prototype.hasOwnProperty.call(ENX_EXACT, s) ? ENX_EXACT[s] : s;
     };
 
     APL.t = t;

@@ -1,3 +1,11 @@
+## 8.7.26 (offline Isha for Umm Al-Qura in Ramadan; time zone for searched cities; typed names kept; Untested on physical TV)
+- **Prayer (offline):** with the Umm Al-Qura method the local calculation now puts Isha 120 minutes after Maghrib on Ramadan days (it was always 90), like AlAdhan.
+- **Searched city:** if the geocoder sends no time zone, the app asks the weather service for it and sets the city only when a real zone is known (before, it silently used Cairo time). A custom city saved earlier without a zone gets its zone on the next weather refresh.
+- **English phrase translator:** names of occasions typed by the user are no longer rewritten word by word in English mode (only the built-in suggestions are translated). Toasts mark typed names so they stay as written.
+- **English:** TV Check summary and its USB messages.
+- **What's New:** updated.
+- Left as is: verse and tafsir text and Hikma section names (Arabic data), the language and digits options.
+
 ## 8.7.25 (Quran reader and player in English; remote reach for Screen margins; Untested on physical TV)
 - **Fix:** the Screen margins button in the Mushaf and tafsir tool panel was not in the remote navigation rows, so the remote could not reach it. It is now (Mushaf and tafsir).
 - **English:** the Quran reader (page and surah headers, index cards, search and tafsir search texts, source page, toasts) and the Quran listening player (buttons, tooltips, surah and reciter pickers, search and options, surah and reciter names, digits) now show English when the language is English. The diagnostics screen (Settings > Performance) is in English too.

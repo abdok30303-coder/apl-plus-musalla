@@ -91,10 +91,17 @@
                   "&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m,surface_pressure" +
                   "&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,sunrise,sunset,uv_index_max,precipitation_probability_max,wind_speed_10m_max" +
                   "&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weather_code" +
-                  "&timezone=" + encodeURIComponent(p.tz || (SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo") + unitParams();
+                  "&timezone=" + encodeURIComponent(p.tz || (p.key === "custom" ? "auto" : ((SITE.prayer && SITE.prayer.timezone) || "Africa/Cairo"))) + unitParams();
         busy = true;
         return APL.fetchJSON(url, 12000).then(function (j) {   // v1.2.115: 12 s limit (a stalled request left busy = true for ever)
             busy = false;
+            /* v8.7.26: a searched city saved earlier without a time zone gets the one the weather service found (no silent Cairo time) */
+            try {
+                if (p.key === "custom" && !p.tz && j && typeof j.timezone === "string" && j.timezone.length > 2 && j.timezone !== "GMT") {
+                    var cp = sys.pref("customPlace");
+                    if (cp && typeof cp === "object" && !cp.tz) { cp.tz = j.timezone; sys.setPref("customPlace", cp); if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); }
+                }
+            } catch (eTz) {}
             var cur = (j && j.current) || {};
             var daily = (j && j.daily) || {};
             var hourly = (j && j.hourly) || {};

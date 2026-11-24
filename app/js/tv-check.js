@@ -11,7 +11,7 @@
 
     var OK = "\u2714", WARN = "\u26A0", BAD = "\u2716";
     /* v8.7.25: English for the diagnostics lines (exact texts first, then phrases, longest first) */
-    var TE_D = {"الإصدار": "Version", "مواقيت الصلاة": "Prayer times", "متحمّلة": "Loaded", "مفيش بيانات": "No data", "خطأ": "Error", "معايرة المواقيت": "Prayer time calibration", "مش محسوبة لسه": "Not calculated yet", "تحديث الويدجت": "Widget refresh", "موجود": "Present", "مش متسجل": "Not registered", "قفل الطفل": "Child lock", "جاهز": "Ready", "مش متحمّل": "Not loaded", "المحراب الحي": "Live mihrab", "المصحف والختمة": "Mushaf and khatma", "مصحف حفص أوفلاين": "Hafs Mushaf offline", "قارئ وفهارس وبحث؛ تجربة الشاشة لسه مطلوبة": "Reader, indexes and search; a test on the screen is still needed", "مصحف حفص": "Hafs Mushaf", "وضع رمضان": "Ramadan mode", "شغّال": "On", "مش في رمضان": "Not in Ramadan", "الراديو": "Radio", "الصوت (AVPlay)": "Audio (AVPlay)", "مش جاهز": "Not ready", "الذاكرة": "Memory", "مش متاحة": "Not available", "سجل الأخطاء": "Error log", "الجسر": "Bridge", "شغال": "Running", "مش بيرد": "Not answering", "حارس التنبيهات": "Alert guard", "مفيش فحص ناجح": "No successful check", "فشل متكرر": "Repeated failure", "ماردّش لسه": "No answer yet", "مفيش رد": "No answer", "مش متاح هنا": "Not available here", "مفيش فلاشة": "No USB stick", "USB مش متاح": "USB not available", "مفيش فلاشة USB": "No USB stick", "مقدرتش أكتب على USB": "Could not write to USB"};
+    var TE_D = {"USB \u0645\u0634 \u0645\u062A\u0627\u062D": "USB not available", "\u0645\u0642\u062F\u0631\u062A\u0634 \u0623\u0643\u062A\u0628 \u0639\u0644\u0649 USB": "Could not write to the USB stick", "الإصدار": "Version", "مواقيت الصلاة": "Prayer times", "متحمّلة": "Loaded", "مفيش بيانات": "No data", "خطأ": "Error", "معايرة المواقيت": "Prayer time calibration", "مش محسوبة لسه": "Not calculated yet", "تحديث الويدجت": "Widget refresh", "موجود": "Present", "مش متسجل": "Not registered", "قفل الطفل": "Child lock", "جاهز": "Ready", "مش متحمّل": "Not loaded", "المحراب الحي": "Live mihrab", "المصحف والختمة": "Mushaf and khatma", "مصحف حفص أوفلاين": "Hafs Mushaf offline", "قارئ وفهارس وبحث؛ تجربة الشاشة لسه مطلوبة": "Reader, indexes and search; a test on the screen is still needed", "مصحف حفص": "Hafs Mushaf", "وضع رمضان": "Ramadan mode", "شغّال": "On", "مش في رمضان": "Not in Ramadan", "الراديو": "Radio", "الصوت (AVPlay)": "Audio (AVPlay)", "مش جاهز": "Not ready", "الذاكرة": "Memory", "مش متاحة": "Not available", "سجل الأخطاء": "Error log", "الجسر": "Bridge", "شغال": "Running", "مش بيرد": "Not answering", "حارس التنبيهات": "Alert guard", "مفيش فحص ناجح": "No successful check", "فشل متكرر": "Repeated failure", "ماردّش لسه": "No answer yet", "مفيش رد": "No answer", "مش متاح هنا": "Not available here", "مفيش فلاشة": "No USB stick", "USB مش متاح": "USB not available", "مفيش فلاشة USB": "No USB stick", "مقدرتش أكتب على USB": "Could not write to USB"};
     var TE_F = {" MB عالية": " MB (high)", "المرحلة: ": "Phase: ", "صفحة ": "Page ", "آخر فحص من ": "Last check ", "آخر رد من ": "Last reply ", " · من ": " · ", "من ": "", " د": " min", " يوم": " days", " خطأ": " errors", " مش شغال": " not running", " محتاج انتباه": " needs attention", " كله تمام": " all good", "اتحفظ:\n": "Saved:\n"};
     var TE_K = Object.keys(TE_F).sort(function (a, b) { return b.length - a.length; });
     function TE(s) {
@@ -99,7 +99,7 @@
             var head = bad ? BAD + " " + bad + " \u0645\u0634 \u0634\u063A\u0627\u0644" : (warn ? WARN + " " + warn + " \u0645\u062D\u062A\u0627\u062C \u0627\u0646\u062A\u0628\u0627\u0647" : OK + " \u0643\u0644\u0647 \u062A\u0645\u0627\u0645");
             APL.alert({
                 title: APL.t("TV Check"),
-                message: head + "\n\n" + L.join("\n"),
+                message: TE(head) + "\n\n" + L.join("\n"),
                 buttons: [
                     { label: "USB", run: function () { exportUsb(L); } },
                     { label: APL.t("OK") }
@@ -111,7 +111,7 @@
     function exportUsb(L) {
         var el = APL.errorLog, d = new Date();
         function p(n) { return (n < 10 ? "0" : "") + n; }
-        function say(m) { APL.alert({ title: APL.t("TV Check"), message: m, buttons: [{ label: APL.t("OK") }] }); }
+        function say(m) { APL.alert({ title: APL.t("TV Check"), message: TE(m), buttons: [{ label: APL.t("OK") }] }); }
         if (!el || !el.usbLabels || !el.writeText) { say("USB \u0645\u0634 \u0645\u062A\u0627\u062D"); return; }
         el.usbLabels().then(function (r) {
             if (!r || !r.usb || !r.usb.length) { say("\u0645\u0641\u064A\u0634 \u0641\u0644\u0627\u0634\u0629 USB"); return; }
