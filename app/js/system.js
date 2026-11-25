@@ -117,6 +117,8 @@
         prayerAuto: false,          // v8.7.28: OFF by default (opt-in). v8.7.27: the city is found from the screen's settings and the Internet address (js/auto-location.js); choosing a city by hand turns it off
         hijriOffset: 0,             // v8.7.31: had no default, so the Hijri Date Adjustment row showed "undefined"
         hijriSource: "auto",        // v8.7.27: "auto" (by the country of the city) | "egypt" | "HJCoSA" | "UAQ" | "DIYANET" (js/islamic.js, js/prayer.js)
+        hijriCountry: "auto",       // v8.7.50: whose announcements set Ramadan and the Eids: "auto" (Egypt for the Egyptian calendar, else the city's country) or a country code
+        hijriFeedStamp: 0,          // v8.7.50: changes when new announced dates arrive online (js/islamic.js)
         hijriFix: {},               // v8.7.27: Ramadan / Eid corrected by hand: { "1448-9": 1 } = month 9 of 1448 starts 1 day later (js/islamic.js setFix)
         prayerAlerts: true,         // a short spoken alert at each prayer time
         prayerAlertVolume: 0.92,

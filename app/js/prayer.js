@@ -823,7 +823,7 @@
     applyScale();
     sys.onPref("prayerWidgetScale", function () { applyScale(); render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
     /* v8.7.27: the Hijri offset, the month corrections and the calendar source change the Ramadan marks of the background schedule and the pages */
-    ["hijriOffset", "hijriFix", "hijriSource"].forEach(function (k) {
+    ["hijriOffset", "hijriFix", "hijriSource", "hijriCountry", "hijriFeedStamp"].forEach(function (k) {
         sys.onPref(k, function () {
             try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             if (k === "hijriSource") { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); return; }

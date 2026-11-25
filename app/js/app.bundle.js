@@ -1540,6 +1540,19 @@ window.APL_LANG_AR_EXTRA = {
     "Updating prayer times & calendar…": "جارٍ تحديث مواقيت الصلاة والتقويم الهجري…",
     "Prayer times and Islamic calendar updated successfully": "تم تحديث مواقيت الصلاة والتقويم الهجري بنجاح",
     "Hijri Date Adjustment": "تعديل التاريخ الهجري (تعديل الأيام)",
+    "Announcements Country": "دولة إعلان الأهلّة",
+    "Whose fatwa authority announces Ramadan and the Eids. Each country announces its own dates, so the dates shown follow this country.": "جهة الإفتاء التي تعلن رمضان والأعياد. لكل دولة إعلانها، فالتواريخ المعروضة تتبع هذه الدولة.",
+    "Online Dates Status": "حالة التواريخ من الإنترنت",
+    "Announced dates of the chosen country are fetched online and saved; without internet the saved dates, then the estimate, are used.": "تُجلب التواريخ المعلنة للدولة المختارة من الإنترنت وتُحفظ؛ وبدون إنترنت تُستخدم المحفوظة ثم التقدير.",
+    "Update Announced Dates Now": "تحديث التواريخ المعلنة الآن",
+    "Checking for announced dates…": "جارٍ البحث عن التواريخ المعلنة…",
+    "Announced dates checked": "تم فحص التواريخ المعلنة",
+    "Could not reach the internet; the saved dates are used": "تعذّر الاتصال بالإنترنت؛ تُستخدم التواريخ المحفوظة",
+    "Checks online now for Ramadan and Eid dates announced by the chosen country.": "يبحث الآن في الإنترنت عن مواعيد رمضان والعيد التي أعلنتها الدولة المختارة.",
+    "announced months": "شهر معلن",
+    "no announced dates yet (estimate)": "لا توجد تواريخ معلنة بعد (تقدير)",
+    "checked": "آخر فحص",
+    "not checked yet": "لم يُفحص بعد",
     "Adjust Hijri calendar by ±1 or ±2 days according to Dar Al-Ifta Egypt moon sighting announcement.": "تعديل التقويم الهجري بزيادة أو إنقاص يومين بحسب إعلان دار الإفتاء المصرية لرؤية الهلال.",
     "Automatic (Egypt Official)": "تلقائي (الرسمي المعتمد في مصر)",
     "Hijri calendar adjusted": "تم تعديل التاريخ الهجري",
@@ -3221,6 +3234,8 @@ window.APL_CATALOG = [
         prayerAuto: false,          // v8.7.28: OFF by default (opt-in). v8.7.27: the city is found from the screen's settings and the Internet address (js/auto-location.js); choosing a city by hand turns it off
         hijriOffset: 0,             // v8.7.31: had no default, so the Hijri Date Adjustment row showed "undefined"
         hijriSource: "auto",        // v8.7.27: "auto" (by the country of the city) | "egypt" | "HJCoSA" | "UAQ" | "DIYANET" (js/islamic.js, js/prayer.js)
+        hijriCountry: "auto",       // v8.7.50: whose announcements set Ramadan and the Eids: "auto" (Egypt for the Egyptian calendar, else the city's country) or a country code
+        hijriFeedStamp: 0,          // v8.7.50: changes when new announced dates arrive online (js/islamic.js)
         hijriFix: {},               // v8.7.27: Ramadan / Eid corrected by hand: { "1448-9": 1 } = month 9 of 1448 starts 1 day later (js/islamic.js setFix)
         prayerAlerts: true,         // a short spoken alert at each prayer time
         prayerAlertVolume: 0.92,
@@ -9281,7 +9296,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     applyScale();
     sys.onPref("prayerWidgetScale", function () { applyScale(); render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
     /* v8.7.27: the Hijri offset, the month corrections and the calendar source change the Ramadan marks of the background schedule and the pages */
-    ["hijriOffset", "hijriFix", "hijriSource"].forEach(function (k) {
+    ["hijriOffset", "hijriFix", "hijriSource", "hijriCountry", "hijriFeedStamp"].forEach(function (k) {
         sys.onPref(k, function () {
             try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             if (k === "hijriSource") { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); return; }
@@ -9746,6 +9761,103 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         "1448-5": jdn(2026, 10, 12),
         "1448-6": jdn(2026, 11, 11)
     };
+    /* v8.7.50: month starts announced by each country's fatwa authority, fetched from a small file in the project's own repository
+       (feed/hijri-announced.json: { "updated": "YYYY-MM-DD", "countries": { "EG": { "1448-9": "2027-02-08" } } }).
+       Treated as data only: the text is parsed as JSON and only month keys and dates are kept; anything else is dropped.
+       Cached in storage; offline, or before the first fetch, the saved copy and then the crescent estimate are used. */
+    var FEED_URL = "https://raw.githubusercontent.com/abdok30303-coder/apl-plus-musalla/main/feed/hijri-announced.json";
+    var FEED_KEY = "apl.hijri.feed", FEED_EVERY = 12 * 3600 * 1000, FEED_RETRY = 3600 * 1000;
+    var feedMem = null, feedBusy = false;
+    function feedSanitize(txt) {
+        var j = null, out = {}, n = 0, cc, k, m, d;
+        try { j = JSON.parse(String(txt)); } catch (e) { return null; }
+        if (!j || typeof j !== "object" || !j.countries || typeof j.countries !== "object") return null;
+        for (cc in j.countries) {
+            if (!/^[A-Z]{2}$/.test(cc) || !j.countries[cc] || typeof j.countries[cc] !== "object") continue;
+            for (k in j.countries[cc]) {
+                var km = /^(\d{4})-(\d{1,2})$/.exec(k), v = j.countries[cc][k];
+                if (!km || typeof v !== "string") continue;
+                var y = parseInt(km[1], 10), mo = parseInt(km[2], 10);
+                m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+                if (y < 1447 || y > 1500 || mo < 1 || mo > 12 || !m) continue;
+                var yy = parseInt(m[1], 10), mm = parseInt(m[2], 10), dd = parseInt(m[3], 10);
+                if (yy < 2026 || yy > 2100 || mm < 1 || mm > 12 || dd < 1 || dd > 31) continue;
+                (out[cc] = out[cc] || {})[y + "-" + mo] = jdn(yy, mm, dd);
+                n++;
+            }
+        }
+        var upd = (typeof j.updated === "string" && /^\d{4}-\d{2}-\d{2}$/.test(j.updated)) ? j.updated : "";
+        return { data: out, n: n, upd: upd };
+    }
+    function feedLoad() {
+        if (feedMem) return feedMem;
+        var o = { at: 0, tried: 0, upd: "", n: 0, data: {} };
+        try {
+            var s = JSON.parse(global.localStorage.getItem(FEED_KEY) || "null");
+            if (s && typeof s === "object") {
+                o.at = +s.at || 0; o.tried = +s.tried || 0; o.upd = typeof s.upd === "string" ? s.upd : ""; o.n = +s.n || 0;
+                var chk = feedSanitize(JSON.stringify({ updated: o.upd, countries: s.iso || {} }));
+                if (chk) o.data = chk.data;
+            }
+        } catch (e) {}
+        feedMem = o;
+        return o;
+    }
+    function feedSave(o, iso) {
+        try { global.localStorage.setItem(FEED_KEY, JSON.stringify({ at: o.at, tried: o.tried, upd: o.upd, n: o.n, iso: iso })); } catch (e) {}
+    }
+    var feedIso = {};
+    /* The country whose announcements are followed: the one picked in Settings, else Egypt for the Egyptian calendar, else the country of the city. */
+    function feedCountry() {
+        var p = "auto";
+        try { p = APL.sys && APL.sys.pref("hijriCountry") || "auto"; } catch (e) { p = "auto"; }
+        if (/^[A-Z]{2}$/.test(p)) return p;
+        if (source() === "egypt") return "EG";
+        var c = where().cc;
+        return /^[A-Z]{2}$/.test(String(c || "").toUpperCase()) ? String(c).toUpperCase() : "EG";
+    }
+    function feedMonths() {
+        var cc = feedCountry(), d = feedLoad().data[cc] || {};
+        return d;
+    }
+    function feedUpdate(force, done) {
+        var o = feedLoad(), now = Date.now();
+        if (feedBusy) { if (done) done(false, "busy"); return; }
+        if (!force && (now - o.at < FEED_EVERY || now - o.tried < FEED_RETRY)) { if (done) done(true, "fresh"); return; }
+        feedBusy = true;
+        function fin(ok, why, parsed) {
+            feedBusy = false;
+            o.tried = Date.now();
+            if (ok && parsed) {
+                var before = JSON.stringify(o.data);
+                o.at = o.tried; o.upd = parsed.upd; o.n = parsed.n; o.data = parsed.data;
+                feedSave(o, isoOf2(parsed.data));
+                if (JSON.stringify(o.data) !== before) {
+                    clearCache();
+                    try { APL.sys && APL.sys.setPref("hijriFeedStamp", o.at); } catch (e) {}
+                }
+            } else feedSave(o, isoOf2(o.data));
+            if (done) done(ok, why);
+        }
+        try {
+            var x = new global.XMLHttpRequest();
+            x.open("GET", FEED_URL + "?t=" + Math.floor(now / 600000), true);
+            x.timeout = 15000;
+            x.onload = function () {
+                var p = (x.status === 200 && x.responseText && x.responseText.length < 200000) ? feedSanitize(x.responseText) : null;
+                if (p) fin(true, "ok", p); else fin(false, "bad");
+            };
+            x.onerror = function () { fin(false, "offline"); };
+            x.ontimeout = function () { fin(false, "offline"); };
+            x.send();
+        } catch (e) { fin(false, "offline"); }
+    }
+    function isoOf2(data) {
+        var out = {}, cc, k;
+        for (cc in data) for (k in data[cc]) { var p = ymd(data[cc][k]); (out[cc] = out[cc] || {})[k] = p.y + "-" + (p.m < 10 ? "0" : "") + p.m + "-" + (p.d < 10 ? "0" : "") + p.d; }
+        return out;
+    }
+    function feedStatus() { var o = feedLoad(); return { at: o.at, upd: o.upd, n: o.n, country: feedCountry(), count: Object.keys(feedMonths()).length }; }
     var rule = { sig: "", list: [] };
     function ruleList(w, upto) {
         var sig = w.lat.toFixed(2) + "," + w.lon.toFixed(2);
@@ -9781,13 +9893,14 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
          3. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
          4. the crescent rule: exact once the month has begun and its start was firm. */
     function monthsFrom(j, count) {
-        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i;
+        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i, cc = feedCountry(), fm = feedMonths();
         if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
         var L = ruleList(w, j + (count + 3) * 31), eff = [];
         for (i = 0; i < L.length - 1; i++) {
             var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10);
-            if (ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; }
+            if (cc === "EG" && ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; }
             if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; }
+            if (fm[key] !== undefined && Math.abs(fm[key] - r.start) <= 3) { s = fm[key]; ex = true; }      // announced by the country, online (a date far from the estimate is ignored)
             if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; }
             eff.push({ y: r.y, m: r.m, start: s, exact: ex });
         }
@@ -9947,7 +10060,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
 
     function occasions() {
         var off = offset(), today = todayJdn() + off, h = hijriOnDay(today), saved = source() === "egypt" ? { last: 0 } : savedMonths(), w = where();
-        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, APL.lang].join("|");
+        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, feedCountry(), APL.lang].join("|");
         if (cache.sig === sig && cache.data) return cache.data;
         var months = monthsFrom(today, 26), all = [], i;
         for (i = 0; i < EVENTS.length; i++) {
@@ -9995,6 +10108,11 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         APL.sys.setPref("hijriFix", o);
     }
     function clearCache() { cache = { sig: "", data: null }; rule = { sig: "", list: [] }; version++; }
+    /* v8.7.50: look for announced dates a little after start-up, then about hourly (a fetch happens at most every 12 hours; a failed one is retried after an hour). */
+    try {
+        global.setTimeout(function () { feedUpdate(false); }, 25000);
+        global.setInterval(function () { feedUpdate(false); }, 3600000);
+    } catch (e) {}
 
     APL.islamic = {
         jdn: jdn, ymd: ymd, isoOf: isoOf, weekday: weekday, today: todayJdn,
@@ -10005,8 +10123,9 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
         /* v8.7.27 */
         clearCache: clearCache,
-        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version].join(":"); },
+        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version, feedCountry()].join(":"); },
         source: source, keyDates: keyDates, setFix: setFix,
+        feedUpdate: feedUpdate, feedStatus: feedStatus, feedCountry: feedCountry, _feedSanitize: feedSanitize, _feedUrl: FEED_URL,
         /* for the tests: the pieces that can be checked on their own */
         _newMoon: newMoon, _sunsetJd: sunsetJd, _tabular: tabular, _crescentCounted: crescentCounted, _crescentAge: crescentAge,
         _monthsFrom: monthsFrom, _ruleList: ruleList
@@ -16936,6 +17055,18 @@ window.APL_KEYS = {
         APL.toast(APL.t("City set: {name}", { name: x.name }), true);
     }
     /* v8.7.27: Ramadan and the two Eids: the next date of each, corrected by hand when the announcement differs. */
+    var HIJRI_COUNTRIES = [["EG", "مصر", "Egypt"], ["SA", "السعودية", "Saudi Arabia"], ["AE", "الإمارات", "UAE"], ["KW", "الكويت", "Kuwait"], ["QA", "قطر", "Qatar"],
+        ["BH", "البحرين", "Bahrain"], ["OM", "عُمان", "Oman"], ["JO", "الأردن", "Jordan"], ["PS", "فلسطين", "Palestine"], ["LB", "لبنان", "Lebanon"],
+        ["IQ", "العراق", "Iraq"], ["SY", "سوريا", "Syria"], ["LY", "ليبيا", "Libya"], ["TN", "تونس", "Tunisia"], ["DZ", "الجزائر", "Algeria"],
+        ["MA", "المغرب", "Morocco"], ["SD", "السودان", "Sudan"], ["TR", "تركيا", "Turkey"]];
+    function hijriFeedText() {
+        var I = APL.islamic, s = I && I.feedStatus ? I.feedStatus() : null;
+        if (!s) return "";
+        var name = s.country;
+        HIJRI_COUNTRIES.forEach(function (c) { if (c[0] === s.country) name = APL.lang === "ar" ? c[1] : c[2]; });
+        var when = s.at ? new Date(s.at).toISOString().slice(0, 10) : "";
+        return name + ": " + (s.count ? s.count + " " + APL.t("announced months") : APL.t("no announced dates yet (estimate)")) + (when ? "  \u00b7  " + APL.t("checked") + " " + when : "  \u00b7  " + APL.t("not checked yet"));
+    }
     function keyDatesText() {
         var I = APL.islamic;
         if (!I || !I.keyDates) return "";
@@ -17255,6 +17386,19 @@ window.APL_KEYS = {
                 ], APL.t("Which authority's Hijri calendar sets Ramadan and the Eids. Automatic follows the country of the city."), function () {
                     APL.toast(APL.t("Hijri calendar updated"), true);
                 }),
+                choice(APL.t("Announcements Country"), "hijriCountry", [["auto", APL.t("Automatic (by the country)")]].concat(HIJRI_COUNTRIES.map(function (c) { return [c[0], APL.lang === "ar" ? c[1] : c[2]]; })),
+                    APL.t("Whose fatwa authority announces Ramadan and the Eids. Each country announces its own dates, so the dates shown follow this country."), function () {
+                    APL.toast(APL.t("Hijri calendar updated"), true);
+                }),
+                info(APL.t("Online Dates Status"), hijriFeedText,
+                    APL.t("Announced dates of the chosen country are fetched online and saved; without internet the saved dates, then the estimate, are used.")),
+                action(APL.t("Update Announced Dates Now"), function () {
+                    if (!APL.islamic || !APL.islamic.feedUpdate) return;
+                    APL.toast(APL.t("Checking for announced dates…"), true);
+                    APL.islamic.feedUpdate(true, function (ok) {
+                        APL.toast(ok ? APL.t("Announced dates checked") : APL.t("Could not reach the internet; the saved dates are used"), ok);
+                    });
+                }, APL.t("Checks online now for Ramadan and Eid dates announced by the chosen country."), "refresh"),
                 info(APL.t("Ramadan & Eid Dates"), keyDatesText,
                     APL.t("Worked out from the moon and renewed by itself; \u2248 means not announced yet.")),
                 action(APL.t("Correct Ramadan & Eid Dates"), fixDates,
@@ -25209,6 +25353,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.50: بداية رمضان والأعياد بتتحدث أونلاين حسب دولتك (الإعدادات ← دولة إعلان الأهلّة). مصر بس اللي فيها تواريخ معلنة دلوقتي، والباقي تقدير.",
         "✔ 8.7.49: شلت دعاء ليلة القدر المكرر من العشر الأواخر (١٥٠ عنصر دلوقتي).",
         "✔ 8.7.48: القائمة اسمها «الأناشيد». رجوع من مشغل النشيد بيقفله ويوقف الصوت ومبيسيبش حاجة على الشاشة.",
         "✔ 8.7.47: ٧ أناشيد وقصائد زيادة بتشتغل من رابط archive.org بتاعك وفي أول القائمة؛ والقائمة اسمها «الأناشيد والأغاني». زر رجوع دلوقتي بيقفل المشغل ويوقف الصوت دايمًا.",
@@ -25248,6 +25393,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.50: Ramadan and Eid dates now update online for your country (Settings > Announcements Country). Only Egypt has announced dates filled in so far; the rest use the estimate.",
         "✔ 8.7.49: removed a repeated Laylat al-Qadr dua from the last-ten items (150 items now).",
         "✔ 8.7.48: the songs menu is now just “Nasheeds”. Back from the player closes it, stops the sound and leaves nothing on screen.",
         "✔ 8.7.47: seven more nasheeds and recitations stream from your archive.org item and are listed first; the menu is now “Nasheeds & Songs”. Back always closes the player and stops the sound.",

@@ -1,3 +1,11 @@
+## 8.7.50
+
+- Ramadan and Eid dates update online, per country. The launcher fetches feed/hijri-announced.json from the project repository (HTTPS), keeps the last copy in storage, checks at most every 12 hours (a failed check is retried after an hour), and uses the saved copy and then the estimate when offline. The text is read as data only: only month keys and dates are kept, and a date more than 3 days from the estimate is ignored.
+- Settings: Announcements Country (automatic: Egypt for the Egyptian calendar, else the city's country), Online Dates Status, Update Announced Dates Now. The manual correction still applies on top.
+- The built-in Egyptian announced table is now used only when the country is Egypt.
+- Only Egypt is filled in the feed. Other countries use the estimate until their announcements are added.
+- Not verified on the TV: that the TV can fetch raw.githubusercontent.com over HTTPS, and the Settings rows on the real screen.
+
 ## 8.7.49
 
 - Ramadan widget: the Laylat al-Qadr dua "O Allah, You are Forgiving and love forgiveness" was in the last-ten items twice (once plain, once with Aisha's question). The plain copy is removed. 150 items: 99 before and early Ramadan, 23 last ten, 28 Eid. Phases are still never mixed.

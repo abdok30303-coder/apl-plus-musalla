@@ -1,0 +1,18 @@
+{
+  "updated": "2026-11-25",
+  "note": "Month starts announced by each country's fatwa authority. Only countries with a verified announcement are listed; others use the launcher's estimate.",
+  "countries": {
+    "EG": {
+      "1447-9": "2026-02-19",
+      "1447-10": "2026-03-20",
+      "1447-11": "2026-04-19",
+      "1447-12": "2026-05-18",
+      "1448-1": "2026-06-16",
+      "1448-2": "2026-07-15",
+      "1448-3": "2026-08-14",
+      "1448-4": "2026-09-13",
+      "1448-5": "2026-10-12",
+      "1448-6": "2026-11-11"
+    }
+  }
+}

@@ -235,6 +235,18 @@
         APL.toast(APL.t("City set: {name}", { name: x.name }), true);
     }
     /* v8.7.27: Ramadan and the two Eids: the next date of each, corrected by hand when the announcement differs. */
+    var HIJRI_COUNTRIES = [["EG", "مصر", "Egypt"], ["SA", "السعودية", "Saudi Arabia"], ["AE", "الإمارات", "UAE"], ["KW", "الكويت", "Kuwait"], ["QA", "قطر", "Qatar"],
+        ["BH", "البحرين", "Bahrain"], ["OM", "عُمان", "Oman"], ["JO", "الأردن", "Jordan"], ["PS", "فلسطين", "Palestine"], ["LB", "لبنان", "Lebanon"],
+        ["IQ", "العراق", "Iraq"], ["SY", "سوريا", "Syria"], ["LY", "ليبيا", "Libya"], ["TN", "تونس", "Tunisia"], ["DZ", "الجزائر", "Algeria"],
+        ["MA", "المغرب", "Morocco"], ["SD", "السودان", "Sudan"], ["TR", "تركيا", "Turkey"]];
+    function hijriFeedText() {
+        var I = APL.islamic, s = I && I.feedStatus ? I.feedStatus() : null;
+        if (!s) return "";
+        var name = s.country;
+        HIJRI_COUNTRIES.forEach(function (c) { if (c[0] === s.country) name = APL.lang === "ar" ? c[1] : c[2]; });
+        var when = s.at ? new Date(s.at).toISOString().slice(0, 10) : "";
+        return name + ": " + (s.count ? s.count + " " + APL.t("announced months") : APL.t("no announced dates yet (estimate)")) + (when ? "  \u00b7  " + APL.t("checked") + " " + when : "  \u00b7  " + APL.t("not checked yet"));
+    }
     function keyDatesText() {
         var I = APL.islamic;
         if (!I || !I.keyDates) return "";
@@ -554,6 +566,19 @@
                 ], APL.t("Which authority's Hijri calendar sets Ramadan and the Eids. Automatic follows the country of the city."), function () {
                     APL.toast(APL.t("Hijri calendar updated"), true);
                 }),
+                choice(APL.t("Announcements Country"), "hijriCountry", [["auto", APL.t("Automatic (by the country)")]].concat(HIJRI_COUNTRIES.map(function (c) { return [c[0], APL.lang === "ar" ? c[1] : c[2]]; })),
+                    APL.t("Whose fatwa authority announces Ramadan and the Eids. Each country announces its own dates, so the dates shown follow this country."), function () {
+                    APL.toast(APL.t("Hijri calendar updated"), true);
+                }),
+                info(APL.t("Online Dates Status"), hijriFeedText,
+                    APL.t("Announced dates of the chosen country are fetched online and saved; without internet the saved dates, then the estimate, are used.")),
+                action(APL.t("Update Announced Dates Now"), function () {
+                    if (!APL.islamic || !APL.islamic.feedUpdate) return;
+                    APL.toast(APL.t("Checking for announced dates…"), true);
+                    APL.islamic.feedUpdate(true, function (ok) {
+                        APL.toast(ok ? APL.t("Announced dates checked") : APL.t("Could not reach the internet; the saved dates are used"), ok);
+                    });
+                }, APL.t("Checks online now for Ramadan and Eid dates announced by the chosen country."), "refresh"),
                 info(APL.t("Ramadan & Eid Dates"), keyDatesText,
                     APL.t("Worked out from the moon and renewed by itself; \u2248 means not announced yet.")),
                 action(APL.t("Correct Ramadan & Eid Dates"), fixDates,

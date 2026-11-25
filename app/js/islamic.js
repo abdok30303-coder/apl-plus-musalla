@@ -217,6 +217,103 @@
         "1448-5": jdn(2026, 10, 12),
         "1448-6": jdn(2026, 11, 11)
     };
+    /* v8.7.50: month starts announced by each country's fatwa authority, fetched from a small file in the project's own repository
+       (feed/hijri-announced.json: { "updated": "YYYY-MM-DD", "countries": { "EG": { "1448-9": "2027-02-08" } } }).
+       Treated as data only: the text is parsed as JSON and only month keys and dates are kept; anything else is dropped.
+       Cached in storage; offline, or before the first fetch, the saved copy and then the crescent estimate are used. */
+    var FEED_URL = "https://raw.githubusercontent.com/abdok30303-coder/apl-plus-musalla/main/feed/hijri-announced.json";
+    var FEED_KEY = "apl.hijri.feed", FEED_EVERY = 12 * 3600 * 1000, FEED_RETRY = 3600 * 1000;
+    var feedMem = null, feedBusy = false;
+    function feedSanitize(txt) {
+        var j = null, out = {}, n = 0, cc, k, m, d;
+        try { j = JSON.parse(String(txt)); } catch (e) { return null; }
+        if (!j || typeof j !== "object" || !j.countries || typeof j.countries !== "object") return null;
+        for (cc in j.countries) {
+            if (!/^[A-Z]{2}$/.test(cc) || !j.countries[cc] || typeof j.countries[cc] !== "object") continue;
+            for (k in j.countries[cc]) {
+                var km = /^(\d{4})-(\d{1,2})$/.exec(k), v = j.countries[cc][k];
+                if (!km || typeof v !== "string") continue;
+                var y = parseInt(km[1], 10), mo = parseInt(km[2], 10);
+                m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+                if (y < 1447 || y > 1500 || mo < 1 || mo > 12 || !m) continue;
+                var yy = parseInt(m[1], 10), mm = parseInt(m[2], 10), dd = parseInt(m[3], 10);
+                if (yy < 2026 || yy > 2100 || mm < 1 || mm > 12 || dd < 1 || dd > 31) continue;
+                (out[cc] = out[cc] || {})[y + "-" + mo] = jdn(yy, mm, dd);
+                n++;
+            }
+        }
+        var upd = (typeof j.updated === "string" && /^\d{4}-\d{2}-\d{2}$/.test(j.updated)) ? j.updated : "";
+        return { data: out, n: n, upd: upd };
+    }
+    function feedLoad() {
+        if (feedMem) return feedMem;
+        var o = { at: 0, tried: 0, upd: "", n: 0, data: {} };
+        try {
+            var s = JSON.parse(global.localStorage.getItem(FEED_KEY) || "null");
+            if (s && typeof s === "object") {
+                o.at = +s.at || 0; o.tried = +s.tried || 0; o.upd = typeof s.upd === "string" ? s.upd : ""; o.n = +s.n || 0;
+                var chk = feedSanitize(JSON.stringify({ updated: o.upd, countries: s.iso || {} }));
+                if (chk) o.data = chk.data;
+            }
+        } catch (e) {}
+        feedMem = o;
+        return o;
+    }
+    function feedSave(o, iso) {
+        try { global.localStorage.setItem(FEED_KEY, JSON.stringify({ at: o.at, tried: o.tried, upd: o.upd, n: o.n, iso: iso })); } catch (e) {}
+    }
+    var feedIso = {};
+    /* The country whose announcements are followed: the one picked in Settings, else Egypt for the Egyptian calendar, else the country of the city. */
+    function feedCountry() {
+        var p = "auto";
+        try { p = APL.sys && APL.sys.pref("hijriCountry") || "auto"; } catch (e) { p = "auto"; }
+        if (/^[A-Z]{2}$/.test(p)) return p;
+        if (source() === "egypt") return "EG";
+        var c = where().cc;
+        return /^[A-Z]{2}$/.test(String(c || "").toUpperCase()) ? String(c).toUpperCase() : "EG";
+    }
+    function feedMonths() {
+        var cc = feedCountry(), d = feedLoad().data[cc] || {};
+        return d;
+    }
+    function feedUpdate(force, done) {
+        var o = feedLoad(), now = Date.now();
+        if (feedBusy) { if (done) done(false, "busy"); return; }
+        if (!force && (now - o.at < FEED_EVERY || now - o.tried < FEED_RETRY)) { if (done) done(true, "fresh"); return; }
+        feedBusy = true;
+        function fin(ok, why, parsed) {
+            feedBusy = false;
+            o.tried = Date.now();
+            if (ok && parsed) {
+                var before = JSON.stringify(o.data);
+                o.at = o.tried; o.upd = parsed.upd; o.n = parsed.n; o.data = parsed.data;
+                feedSave(o, isoOf2(parsed.data));
+                if (JSON.stringify(o.data) !== before) {
+                    clearCache();
+                    try { APL.sys && APL.sys.setPref("hijriFeedStamp", o.at); } catch (e) {}
+                }
+            } else feedSave(o, isoOf2(o.data));
+            if (done) done(ok, why);
+        }
+        try {
+            var x = new global.XMLHttpRequest();
+            x.open("GET", FEED_URL + "?t=" + Math.floor(now / 600000), true);
+            x.timeout = 15000;
+            x.onload = function () {
+                var p = (x.status === 200 && x.responseText && x.responseText.length < 200000) ? feedSanitize(x.responseText) : null;
+                if (p) fin(true, "ok", p); else fin(false, "bad");
+            };
+            x.onerror = function () { fin(false, "offline"); };
+            x.ontimeout = function () { fin(false, "offline"); };
+            x.send();
+        } catch (e) { fin(false, "offline"); }
+    }
+    function isoOf2(data) {
+        var out = {}, cc, k;
+        for (cc in data) for (k in data[cc]) { var p = ymd(data[cc][k]); (out[cc] = out[cc] || {})[k] = p.y + "-" + (p.m < 10 ? "0" : "") + p.m + "-" + (p.d < 10 ? "0" : "") + p.d; }
+        return out;
+    }
+    function feedStatus() { var o = feedLoad(); return { at: o.at, upd: o.upd, n: o.n, country: feedCountry(), count: Object.keys(feedMonths()).length }; }
     var rule = { sig: "", list: [] };
     function ruleList(w, upto) {
         var sig = w.lat.toFixed(2) + "," + w.lon.toFixed(2);
@@ -252,13 +349,14 @@
          3. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
          4. the crescent rule: exact once the month has begun and its start was firm. */
     function monthsFrom(j, count) {
-        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i;
+        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i, cc = feedCountry(), fm = feedMonths();
         if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
         var L = ruleList(w, j + (count + 3) * 31), eff = [];
         for (i = 0; i < L.length - 1; i++) {
             var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10);
-            if (ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; }
+            if (cc === "EG" && ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; }
             if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; }
+            if (fm[key] !== undefined && Math.abs(fm[key] - r.start) <= 3) { s = fm[key]; ex = true; }      // announced by the country, online (a date far from the estimate is ignored)
             if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; }
             eff.push({ y: r.y, m: r.m, start: s, exact: ex });
         }
@@ -418,7 +516,7 @@
 
     function occasions() {
         var off = offset(), today = todayJdn() + off, h = hijriOnDay(today), saved = source() === "egypt" ? { last: 0 } : savedMonths(), w = where();
-        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, APL.lang].join("|");
+        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, feedCountry(), APL.lang].join("|");
         if (cache.sig === sig && cache.data) return cache.data;
         var months = monthsFrom(today, 26), all = [], i;
         for (i = 0; i < EVENTS.length; i++) {
@@ -466,6 +564,11 @@
         APL.sys.setPref("hijriFix", o);
     }
     function clearCache() { cache = { sig: "", data: null }; rule = { sig: "", list: [] }; version++; }
+    /* v8.7.50: look for announced dates a little after start-up, then about hourly (a fetch happens at most every 12 hours; a failed one is retried after an hour). */
+    try {
+        global.setTimeout(function () { feedUpdate(false); }, 25000);
+        global.setInterval(function () { feedUpdate(false); }, 3600000);
+    } catch (e) {}
 
     APL.islamic = {
         jdn: jdn, ymd: ymd, isoOf: isoOf, weekday: weekday, today: todayJdn,
@@ -476,8 +579,9 @@
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
         /* v8.7.27 */
         clearCache: clearCache,
-        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version].join(":"); },
+        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version, feedCountry()].join(":"); },
         source: source, keyDates: keyDates, setFix: setFix,
+        feedUpdate: feedUpdate, feedStatus: feedStatus, feedCountry: feedCountry, _feedSanitize: feedSanitize, _feedUrl: FEED_URL,
         /* for the tests: the pieces that can be checked on their own */
         _newMoon: newMoon, _sunsetJd: sunsetJd, _tabular: tabular, _crescentCounted: crescentCounted, _crescentAge: crescentAge,
         _monthsFrom: monthsFrom, _ruleList: ruleList
