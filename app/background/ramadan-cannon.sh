@@ -17,7 +17,7 @@ uploaded=0
 
 report() { printf '%s\n' "$1" > "$status"; printf '%s\n' "$1"; }
 cleanup() {
-    if [ "$uploaded" = 1 ]; then pactl remove-sample "$sample" >/dev/null 2>&1 || true; fi
+    if [ "$uploaded" = 1 ]; then $CTMO pactl remove-sample "$sample" >/dev/null 2>&1 || true; fi
     if [ "$owned" = 1 ]; then rm -f "$lock/pid"; rmdir "$lock" 2>/dev/null || true; fi
 }
 trap 'cleanup' EXIT
@@ -58,27 +58,36 @@ done
 
 # Exactly the Pulse sample route already used successfully by the old alerts,
 # but a unique sample, no alert-worker lock and NO sink/stream reconfiguration.
-found=0
-if pactl info >/dev/null 2>&1; then
-    found=1
-else
-    for d in /run/user/*/pulse /var/run/user/*/pulse /run/pulse /var/run/pulse /tmp/pulse-* /home/*/.config/pulse; do
-        [ -S "$d/native" ] || continue
-        if PULSE_RUNTIME_PATH="$d" PULSE_SERVER="unix:$d/native" pactl info >/dev/null 2>&1; then
-            PULSE_RUNTIME_PATH="$d"; PULSE_SERVER="unix:$d/native"
-            export PULSE_RUNTIME_PATH PULSE_SERVER
-            found=1; break
-        fi
-    done
+# v8.7.37: the cannon must START fast. The Pulse folder the daemon last verified is tried
+# first (pulse.dir), and every pactl probe is wrapped in a timeout: before, each pactl info
+# against a dead socket could wait seconds, and the test cannon was heard only after ~8 s.
+CTMO=""
+if command -v timeout >/dev/null 2>&1; then
+    if timeout 1 true >/dev/null 2>&1; then CTMO="timeout 5"; elif timeout -t 1 true >/dev/null 2>&1; then CTMO="timeout -t 5"; fi
 fi
+pulse_ok() {
+    d="$1"
+    [ -n "$d" ] && [ -S "$d/native" ] || return 1
+    PULSE_RUNTIME_PATH="$d" PULSE_SERVER="unix:$d/native" $CTMO pactl info >/dev/null 2>&1
+}
+found=0
+hint=$(cat /run/apl-bg/pulse.dir /tmp/apl-bg/pulse.dir 2>/dev/null | head -n 1)
+for d in "$hint" /run/user/*/pulse /var/run/user/*/pulse /run/pulse /var/run/pulse /tmp/pulse-* /home/*/.config/pulse; do
+    if pulse_ok "$d"; then
+        PULSE_RUNTIME_PATH="$d"; PULSE_SERVER="unix:$d/native"
+        export PULSE_RUNTIME_PATH PULSE_SERVER
+        found=1; break
+    fi
+done
+if [ "$found" = 0 ] && $CTMO pactl info >/dev/null 2>&1; then found=1; fi
 [ "$found" = 1 ] || { report CANNON_NO_PULSE; exit 1; }
 PULSE_PROP='media.role=event application.name=APL_Ramadan_Cannon application.id=APLMusalla.Home'
 export PULSE_PROP
-pactl upload-sample "$wav" "$sample" || { report CANNON_UPLOAD_FAILED; exit 1; }
+$CTMO pactl upload-sample "$wav" "$sample" || { report CANNON_UPLOAD_FAILED; exit 1; }
 uploaded=1
 # Avoid starting over a prayer that began while Pulse was being discovered.
 [ -d /run/apl-bg/alert.lock ] && { report CANNON_SKIPPED_ALERT_BUSY; exit 0; }
-pactl play-sample "$sample" || { report CANNON_PLAY_FAILED; exit 1; }
+$CTMO pactl play-sample "$sample" || { report CANNON_PLAY_FAILED; exit 1; }
 report CANNON_PLAY_REQUESTED
 # Bundled Egyptian Radio cannon WAV lasts 7.7 s. Leave a margin, then remove only our own sample.
 sleep 9

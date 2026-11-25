@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.37: تجربة المدفع بتشتغل فوراً (كانت بتاخد حوالي 8 ثواني وهي بتدوّر على مخرج الصوت)؛ وأزرار الريموت المربوطة بتطبيقات بترجع لوحدها لو Vetro فقد قائمة الأزرار كلها",
         "✔ 8.7.36: أزرار الريموت المربوطة بتطبيقات ما بتضيعش لو خرجت من اللانشر وانت بتربط زر؛ القائمة بتتحفظ قبل ما Vetro تتفضى وبترجع لما اللانشر يرجع",
         "✔ 8.7.35: تنبيه الأذان والتجربة بالخلفية اتصلحوا (المشغّل الخلفي كان ما بيتثبتش)؛ وزر تجربة 8 ثواني بقى بيشتغل والتطبيق التاني قدامك؛ وفحص الجاهزية بقى بيقول الحقيقة",
         "✔ 8.7.34: تثبيت التحديث بقى يقول بالظبط أنهي خطوة فشلت وليه؛ وبيفحص التلفزيون الأول (Vetro والمجلد والأدوات) وبيتأكد من الملف المحمّل",
@@ -65,6 +66,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.37: the cannon test plays right away (it used to spend about 8 s finding the sound route); remote buttons bound to apps are put back by the launcher whenever Vetro loses the whole button list",
         "✔ 8.7.36: remote buttons bound to apps are no longer lost if you leave the launcher while binding a button; the list is saved before Vetro is emptied and put back when the launcher returns",
         "✔ 8.7.35: the prayer alert and the background test are fixed (the background player could not install); the 8-second test now plays with another app in front; the readiness check tells the truth",
         "✔ 8.7.34: Install Update now says exactly which step failed and why; it checks the TV first (Vetro, folder, tools) and checks the downloaded file",

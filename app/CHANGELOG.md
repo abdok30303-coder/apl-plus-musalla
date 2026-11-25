@@ -1,3 +1,10 @@
+## 8.7.37
+
+- Ramadan cannon test starts right away: the cannon script looked for the Pulse sound route with pactl probes that could each wait on a dead socket (about 8 s before the sound on the TV). The Pulse folder the background player last verified (pulse.dir) is tried first, and every pactl probe is cut after 5 s. The automatic iftar cannon is unchanged (it still gives the adhan priority).
+- Remote buttons bound to apps: 8.7.36 put the button list back after an interrupted binding. The launcher now also puts its saved copy back whenever Vetro answers with an EMPTY button list (for example after its service restarted), still only when Vetro's list is empty, so a list changed meanwhile in Vetro is never overwritten. Every non-empty list the launcher reads from Vetro refreshes the saved copy, so buttons bound in Vetro's own Remapper are backed up too. One honest limit: clearing every button inside Vetro's own Remapper is undone by this restore; clear them from the launcher (Restore Default Remote Buttons) instead.
+- The cause of the reported binding loss is still not proven: no code in the alert test, the Background Test, the keeper or the supervisors writes Vetro's button list (checked again in this pass). This release makes the launcher repair the loss when it sees it.
+- Untested on a physical TV.
+
 ## 8.7.36
 
 - Remote buttons bound to apps: while a button is being bound, the launcher empties Vetro's button list and puts it back with a 90 s timer. That timer stops when another app comes in front, so leaving the launcher at that moment left Vetro with no bindings. The list is now saved to disk before Vetro is emptied, and put back when the launcher starts or comes back to the front (only if Vetro's list is still empty). Saving a new binding or clearing all bindings drops the saved copy.

@@ -4684,7 +4684,11 @@ window.APL_CATALOG = [
     function getRemapRules() {
         if (PREVIEW) return Promise.resolve(pref("mockRemapRules") || []);
         return vetroGet("/remap").then(function (d) {
-            return (d && Array.isArray(d.rules)) ? d.rules : [];
+            var rules = (d && Array.isArray(d.rules)) ? d.rules : [];
+            /* v8.7.37: every live non-empty list refreshes the saved copy, so buttons bound in Vetro's own
+               Remapper are backed up too and can be put back when Vetro loses the whole list (recoverRemapHold). */
+            if (rules.length) setPref("vetroRemapRules", rules);
+            return rules;
         }).catch(function () {
             return pref("vetroRemapRules") || [];
         });
@@ -4800,11 +4804,20 @@ window.APL_CATALOG = [
     function recoverRemapHold() {
         if (PREVIEW || remapHold || isCapturingKey) return Promise.resolve(false);
         var kept = pref("remapHeld");
+        if (!Array.isArray(kept) || !kept.length) {
+            /* v8.7.37: no interrupted binding to put back - use the launcher's saved copy of the button list.
+               Vetro losing EVERY binding (its service restarted, or its stored list was lost) looked exactly like
+               an interrupted binding from here: Vetro answers with an empty list. The saved copy is put back the
+               same way, and still only when Vetro's own list is empty, so a list changed meanwhile in Vetro is
+               never overwritten. Clearing every button from the launcher empties the copy too, so a deliberate
+               clear is not undone; clearing them inside Vetro's own Remapper is (the copy is the launcher's). */
+            kept = pref("vetroRemapRules");
+        }
         if (!Array.isArray(kept) || !kept.length) return Promise.resolve(false);
         return vetroGet("/remap").then(function (d) {
             var now = (d && Array.isArray(d.rules)) ? d.rules : null;
             if (now === null) return false;                       // Vetro did not answer: try again next time
-            if (now.length) { setPref("remapHeld", null); return false; }
+            if (now.length) { setPref("remapHeld", null); setPref("vetroRemapRules", now); return false; }
             return vetroPost("/remap", { rules: kept }).then(function () {
                 setPref("remapHeld", null);
                 setPref("vetroRemapRules", kept);
@@ -24897,6 +24910,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.37: تجربة المدفع بتشتغل فوراً (كانت بتاخد حوالي 8 ثواني وهي بتدوّر على مخرج الصوت)؛ وأزرار الريموت المربوطة بتطبيقات بترجع لوحدها لو Vetro فقد قائمة الأزرار كلها",
         "✔ 8.7.36: أزرار الريموت المربوطة بتطبيقات ما بتضيعش لو خرجت من اللانشر وانت بتربط زر؛ القائمة بتتحفظ قبل ما Vetro تتفضى وبترجع لما اللانشر يرجع",
         "✔ 8.7.35: تنبيه الأذان والتجربة بالخلفية اتصلحوا (المشغّل الخلفي كان ما بيتثبتش)؛ وزر تجربة 8 ثواني بقى بيشتغل والتطبيق التاني قدامك؛ وفحص الجاهزية بقى بيقول الحقيقة",
         "✔ 8.7.34: تثبيت التحديث بقى يقول بالظبط أنهي خطوة فشلت وليه؛ وبيفحص التلفزيون الأول (Vetro والمجلد والأدوات) وبيتأكد من الملف المحمّل",
@@ -24923,6 +24937,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.37: the cannon test plays right away (it used to spend about 8 s finding the sound route); remote buttons bound to apps are put back by the launcher whenever Vetro loses the whole button list",
         "✔ 8.7.36: remote buttons bound to apps are no longer lost if you leave the launcher while binding a button; the list is saved before Vetro is emptied and put back when the launcher returns",
         "✔ 8.7.35: the prayer alert and the background test are fixed (the background player could not install); the 8-second test now plays with another app in front; the readiness check tells the truth",
         "✔ 8.7.34: Install Update now says exactly which step failed and why; it checks the TV first (Vetro, folder, tools) and checks the downloaded file",

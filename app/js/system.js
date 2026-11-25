@@ -1605,7 +1605,11 @@
     function getRemapRules() {
         if (PREVIEW) return Promise.resolve(pref("mockRemapRules") || []);
         return vetroGet("/remap").then(function (d) {
-            return (d && Array.isArray(d.rules)) ? d.rules : [];
+            var rules = (d && Array.isArray(d.rules)) ? d.rules : [];
+            /* v8.7.37: every live non-empty list refreshes the saved copy, so buttons bound in Vetro's own
+               Remapper are backed up too and can be put back when Vetro loses the whole list (recoverRemapHold). */
+            if (rules.length) setPref("vetroRemapRules", rules);
+            return rules;
         }).catch(function () {
             return pref("vetroRemapRules") || [];
         });
@@ -1721,11 +1725,20 @@
     function recoverRemapHold() {
         if (PREVIEW || remapHold || isCapturingKey) return Promise.resolve(false);
         var kept = pref("remapHeld");
+        if (!Array.isArray(kept) || !kept.length) {
+            /* v8.7.37: no interrupted binding to put back - use the launcher's saved copy of the button list.
+               Vetro losing EVERY binding (its service restarted, or its stored list was lost) looked exactly like
+               an interrupted binding from here: Vetro answers with an empty list. The saved copy is put back the
+               same way, and still only when Vetro's own list is empty, so a list changed meanwhile in Vetro is
+               never overwritten. Clearing every button from the launcher empties the copy too, so a deliberate
+               clear is not undone; clearing them inside Vetro's own Remapper is (the copy is the launcher's). */
+            kept = pref("vetroRemapRules");
+        }
         if (!Array.isArray(kept) || !kept.length) return Promise.resolve(false);
         return vetroGet("/remap").then(function (d) {
             var now = (d && Array.isArray(d.rules)) ? d.rules : null;
             if (now === null) return false;                       // Vetro did not answer: try again next time
-            if (now.length) { setPref("remapHeld", null); return false; }
+            if (now.length) { setPref("remapHeld", null); setPref("vetroRemapRules", now); return false; }
             return vetroPost("/remap", { rules: kept }).then(function () {
                 setPref("remapHeld", null);
                 setPref("vetroRemapRules", kept);
