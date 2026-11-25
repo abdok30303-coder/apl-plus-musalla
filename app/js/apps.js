@@ -433,6 +433,63 @@
         });
     }
 
+    /* v8.7.46: the Ramadan & Eid songs stream from the archive.org links the user supplied (nothing is stored in the launcher or
+       the release). A small full-screen player: OK = pause / play, Left / Right = 10 s back / forward, Back or Stop = close. If the file
+       cannot start within 15 s, or fails, the YouTube route (openYouTube) is used instead. */
+    var SONG_PLAYER = null;
+    function closeSongPlayer() {
+        var p = SONG_PLAYER; if (!p) return; SONG_PLAYER = null;
+        try { clearInterval(p.tick); clearTimeout(p.guard); p.audio.pause(); p.audio.removeAttribute("src"); p.audio.load(); } catch (e) {}
+        try { if (p.box && p.box.parentNode) p.box.parentNode.removeChild(p.box); } catch (e) {}
+    }
+    function playSongStream(song) {
+        var doc = global.document, A = global.APL;
+        closeSongPlayer();
+        function fallback() {
+            closeSongPlayer();
+            if (A.toast) A.toast(A.t("Couldn't stream the song, opening YouTube"), false);
+            if (song.yt && A.openYouTube) A.openYouTube(song.yt).catch(function () {});
+        }
+        try { if (A.quranAudio && A.quranAudio.pause) A.quranAudio.pause(); } catch (e) {}
+        try { if (A.radio && A.radio.isPlaying && A.radio.isPlaying()) A.radio.stop(); } catch (e) {}
+        var box = doc.createElement("div");
+        box.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;background:rgba(6,10,20,.94);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center";
+        var ttl = doc.createElement("div"); ttl.style.cssText = "font-size:54px;font-weight:700;color:#ffe2a0;margin:0 80px 30px"; ttl.textContent = song.title;
+        var st = doc.createElement("div"); st.style.cssText = "font-size:34px;opacity:.9;margin-bottom:26px"; st.textContent = A.t("Loading…");
+        var bar = doc.createElement("div"); bar.style.cssText = "width:1000px;height:10px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden";
+        var fill = doc.createElement("div"); fill.style.cssText = "width:0;height:100%;background:#ffd98a"; bar.appendChild(fill);
+        var tm = doc.createElement("div"); tm.style.cssText = "font-size:30px;margin-top:18px;direction:ltr"; tm.textContent = "0:00";
+        var hint = doc.createElement("div"); hint.style.cssText = "font-size:26px;opacity:.7;margin-top:34px"; hint.textContent = A.t("OK: pause / play   Left / Right: 10 s   Back: close");
+        box.appendChild(ttl); box.appendChild(st); box.appendChild(bar); box.appendChild(tm); box.appendChild(hint);
+        doc.body.appendChild(box);
+        var au = new global.Audio(); au.preload = "auto";
+        var p = SONG_PLAYER = { box: box, audio: au, tick: 0, guard: 0 };
+        function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
+        au.addEventListener("playing", function () { clearTimeout(p.guard); st.textContent = A.t("Playing"); });
+        au.addEventListener("waiting", function () { if (SONG_PLAYER === p) st.textContent = A.t("Loading…"); });
+        au.addEventListener("pause", function () { if (SONG_PLAYER === p && !au.ended) st.textContent = A.t("Paused"); });
+        au.addEventListener("ended", function () { closeSongPlayer(); });
+        au.addEventListener("error", function () { if (SONG_PLAYER === p) fallback(); });
+        p.tick = setInterval(function () {
+            if (SONG_PLAYER !== p) return;
+            var d = au.duration;
+            fill.style.width = (d > 0 ? Math.min(100, au.currentTime / d * 100) : 0) + "%";
+            tm.textContent = fmt(au.currentTime) + (d > 0 && isFinite(d) ? " / " + fmt(d) : "");
+        }, 500);
+        p.guard = setTimeout(function () { if (SONG_PLAYER === p && (au.paused || au.readyState < 3)) fallback(); }, 15000);
+        au.src = song.url;
+        try { var pr = au.play(); if (pr && pr.catch) pr.catch(function () { if (SONG_PLAYER === p && au.error) fallback(); }); } catch (e) { fallback(); }
+    }
+    if (global.APL && global.APL.addHotkey) global.APL.addHotkey(function (code) {
+        var p = SONG_PLAYER; if (!p) return false;
+        var au = p.audio;
+        if (code === 13 || code === 415 || code === 19 || code === 10252) { if (au.paused) { var q = au.play(); if (q && q.catch) q.catch(function () {}); } else au.pause(); return true; }
+        if (code === 37 || code === 412) { try { au.currentTime = Math.max(0, au.currentTime - 10); } catch (e) {} return true; }
+        if (code === 39 || code === 417) { try { au.currentTime = au.currentTime + 10; } catch (e) {} return true; }
+        if (code === 10009 || code === 27 || code === 8 || code === 413 || code === 38 || code === 40) { closeSongPlayer(); return true; }
+        return false;
+    });
+
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {
         return new Promise(function (resolve) {
@@ -457,6 +514,7 @@
     global.APL.launchDeepLink = launchDeepLink;
     global.APL.launchTizenTube = launchTizenTube;
     global.APL.openYouTube = openYouTube;
+    global.APL.playSongStream = playSongStream;
     global.APL.TIZENTUBE_ART = { tile: asset(TIZENTUBE.tile) };
     global.APL.FAVORITES = FAVORITES;
 

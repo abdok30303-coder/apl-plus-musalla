@@ -1,3 +1,10 @@
+## 8.7.46
+
+- Ramadan & Eid Songs now stream from the two WAV links the user supplied (archive.org; 10.8 MB and 7.9 MB, 22,050 Hz mono PCM, 4:06 and 3:00). A small in-app player shows the title, a progress bar and the time. OK pauses or plays, Left / Right move 10 seconds, Back or Stop closes it and the sound stops. Radio and Quran audio are paused when a song starts.
+- If the file cannot start within 15 seconds, or the player reports an error, the song opens on YouTube (the 8.7.44 route: YouTube app, TizenTube, Dummy, browser).
+- No audio is stored in the launcher or the release. The songs play only while the TV is online and the archive.org links stay available.
+- Checked in headless Chrome against the real links: progressive streaming starts at once, seeking (range requests) works, pause/resume works, close works, and a bad link falls back to YouTube. Not verified on the TV: that its browser engine plays a WAV of this size smoothly (the files are small by video standards and the server supports ranges).
+
 ## 8.7.45
 
 - Living Mihrab radio: the first OK press now starts the radio. Before, starting needed two presses while stopping worked at once. Cause (from the code, not seen on the TV): the OK handler called the radio's toggle, which treats the radio as "on" when the saved "radio wanted" flag is set or the player is left in a READY/PAUSED state, even if nothing is sounding. The first OK then "stopped" a silent radio and only the second one started it. The handler now checks whether the radio is really playing or connecting. The toast ("Radio turned on" / "Radio turned off") is unchanged.

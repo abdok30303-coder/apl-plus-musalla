@@ -707,13 +707,16 @@ window.APL_LANG_AR = {
     "Ramadan Widget": "ويدجت رمضان",
     "From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.": "من اليوم اللي قبل رمضان لحد تالت يوم العيد: هلال (وفانوس في الأيام الأولى) مع أدعية ونصايح، وأدعية ليلة القدر في العشر الأواخر، ونصايح العيد، فوق صف التطبيقات. مقفول: مش بيظهر خالص.",
     "Ramadan Widget Preview": "معاينة ويدجت رمضان",
+    "OK: pause / play   Left / Right: 10 s   Back: close": "OK: إيقاف / تشغيل   يمين / شمال: ١٠ ثواني   رجوع: إغلاق",
+    "Paused": "واقف مؤقتًا",
+    "Couldn't stream the song, opening YouTube": "مقدرتش أشغّل الأغنية، بفتحها على يوتيوب",
     "Day before Ramadan (lantern)": "قبل رمضان بيوم (فانوس)",
     "Day 21 (last ten nights begin)": "اليوم ٢١ (بداية العشر الأواخر)",
     "Eid al-Fitr (day 1)": "عيد الفطر (اليوم الأول)",
     "Ramadan & Eid Songs": "أغاني رمضان والعيد",
-    "Opens the song on YouTube (online, with picture).": "بيفتح الأغنية على يوتيوب (أونلاين، بالصورة).",
-    "Opens the old Ramadan song on YouTube (online, with picture).": "بيفتح أغنية رمضان القديمة على يوتيوب (أونلاين، بالصورة).",
-    "Songs that open on YouTube: the YouTube app first, then TizenTube, then YouTube Dummy, then the TV browser.": "أغاني بتفتح على يوتيوب: تطبيق يوتيوب أول حاجة، وبعدها TizenTube، وبعدها YouTube Dummy، وبعدها متصفح التلفزيون.",
+    "Streams the song from the internet (YouTube if it cannot).": "بيشغّل الأغنية من الإنترنت (ويوتيوب لو مشتغلتش).",
+    "Streams the old Ramadan song from the internet (YouTube if it cannot).": "بيشغّل أغنية رمضان القديمة من الإنترنت (ويوتيوب لو مشتغلتش).",
+    "Songs that play from the internet. If one cannot start, it opens on YouTube.": "أغاني بتشتغل من الإنترنت. لو واحدة مقدرتش تشتغل، بتفتح على يوتيوب.",
     "Opening the song on YouTube…": "بنفتح الأغنية على يوتيوب…",
     "Can't open YouTube": "مش قادر أفتح يوتيوب",
     "Day 1 (lantern)": "اليوم ١ (فانوس)",
@@ -12210,6 +12213,63 @@ window.APL_KEYS = {
         });
     }
 
+    /* v8.7.46: the Ramadan & Eid songs stream from the archive.org links the user supplied (nothing is stored in the launcher or
+       the release). A small full-screen player: OK = pause / play, Left / Right = 10 s back / forward, Back or Stop = close. If the file
+       cannot start within 15 s, or fails, the YouTube route (openYouTube) is used instead. */
+    var SONG_PLAYER = null;
+    function closeSongPlayer() {
+        var p = SONG_PLAYER; if (!p) return; SONG_PLAYER = null;
+        try { clearInterval(p.tick); clearTimeout(p.guard); p.audio.pause(); p.audio.removeAttribute("src"); p.audio.load(); } catch (e) {}
+        try { if (p.box && p.box.parentNode) p.box.parentNode.removeChild(p.box); } catch (e) {}
+    }
+    function playSongStream(song) {
+        var doc = global.document, A = global.APL;
+        closeSongPlayer();
+        function fallback() {
+            closeSongPlayer();
+            if (A.toast) A.toast(A.t("Couldn't stream the song, opening YouTube"), false);
+            if (song.yt && A.openYouTube) A.openYouTube(song.yt).catch(function () {});
+        }
+        try { if (A.quranAudio && A.quranAudio.pause) A.quranAudio.pause(); } catch (e) {}
+        try { if (A.radio && A.radio.isPlaying && A.radio.isPlaying()) A.radio.stop(); } catch (e) {}
+        var box = doc.createElement("div");
+        box.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;background:rgba(6,10,20,.94);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center";
+        var ttl = doc.createElement("div"); ttl.style.cssText = "font-size:54px;font-weight:700;color:#ffe2a0;margin:0 80px 30px"; ttl.textContent = song.title;
+        var st = doc.createElement("div"); st.style.cssText = "font-size:34px;opacity:.9;margin-bottom:26px"; st.textContent = A.t("Loading…");
+        var bar = doc.createElement("div"); bar.style.cssText = "width:1000px;height:10px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden";
+        var fill = doc.createElement("div"); fill.style.cssText = "width:0;height:100%;background:#ffd98a"; bar.appendChild(fill);
+        var tm = doc.createElement("div"); tm.style.cssText = "font-size:30px;margin-top:18px;direction:ltr"; tm.textContent = "0:00";
+        var hint = doc.createElement("div"); hint.style.cssText = "font-size:26px;opacity:.7;margin-top:34px"; hint.textContent = A.t("OK: pause / play   Left / Right: 10 s   Back: close");
+        box.appendChild(ttl); box.appendChild(st); box.appendChild(bar); box.appendChild(tm); box.appendChild(hint);
+        doc.body.appendChild(box);
+        var au = new global.Audio(); au.preload = "auto";
+        var p = SONG_PLAYER = { box: box, audio: au, tick: 0, guard: 0 };
+        function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
+        au.addEventListener("playing", function () { clearTimeout(p.guard); st.textContent = A.t("Playing"); });
+        au.addEventListener("waiting", function () { if (SONG_PLAYER === p) st.textContent = A.t("Loading…"); });
+        au.addEventListener("pause", function () { if (SONG_PLAYER === p && !au.ended) st.textContent = A.t("Paused"); });
+        au.addEventListener("ended", function () { closeSongPlayer(); });
+        au.addEventListener("error", function () { if (SONG_PLAYER === p) fallback(); });
+        p.tick = setInterval(function () {
+            if (SONG_PLAYER !== p) return;
+            var d = au.duration;
+            fill.style.width = (d > 0 ? Math.min(100, au.currentTime / d * 100) : 0) + "%";
+            tm.textContent = fmt(au.currentTime) + (d > 0 && isFinite(d) ? " / " + fmt(d) : "");
+        }, 500);
+        p.guard = setTimeout(function () { if (SONG_PLAYER === p && (au.paused || au.readyState < 3)) fallback(); }, 15000);
+        au.src = song.url;
+        try { var pr = au.play(); if (pr && pr.catch) pr.catch(function () { if (SONG_PLAYER === p && au.error) fallback(); }); } catch (e) { fallback(); }
+    }
+    if (global.APL && global.APL.addHotkey) global.APL.addHotkey(function (code) {
+        var p = SONG_PLAYER; if (!p) return false;
+        var au = p.audio;
+        if (code === 13 || code === 415 || code === 19 || code === 10252) { if (au.paused) { var q = au.play(); if (q && q.catch) q.catch(function () {}); } else au.pause(); return true; }
+        if (code === 37 || code === 412) { try { au.currentTime = Math.max(0, au.currentTime - 10); } catch (e) {} return true; }
+        if (code === 39 || code === 417) { try { au.currentTime = au.currentTime + 10; } catch (e) {} return true; }
+        if (code === 10009 || code === 27 || code === 8 || code === 413 || code === 38 || code === 40) { closeSongPlayer(); return true; }
+        return false;
+    });
+
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {
         return new Promise(function (resolve) {
@@ -12234,6 +12294,7 @@ window.APL_KEYS = {
     global.APL.launchDeepLink = launchDeepLink;
     global.APL.launchTizenTube = launchTizenTube;
     global.APL.openYouTube = openYouTube;
+    global.APL.playSongStream = playSongStream;
     global.APL.TIZENTUBE_ART = { tile: asset(TIZENTUBE.tile) };
     global.APL.FAVORITES = FAVORITES;
 
@@ -16872,8 +16933,15 @@ window.APL_KEYS = {
         APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
     }
     /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
+    /* v8.7.46: the songs stream from the links the user supplied (archive.org); YouTube stays as the fallback */
+    var SONG_FILES = {
+        "3EYDurKhcDs": { title: "\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", url: "https://archive.org/download/20261125_20261125_1151/%D8%A3%D9%87%D9%84%D8%A7%D9%8B%20%D8%A8%D8%A7%D9%84%D8%B9%D9%8A%D8%AF%20-%20%D8%B5%D9%81%D8%A7%D8%A1%20%D8%A3%D8%A8%D9%88%20%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF.wav" },
+        "cAXU7ZqgUDE": { title: "\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629", url: "https://archive.org/download/20261125_20261125_1151/%D8%B1%D9%85%D8%B6%D8%A7%D9%86%20%D8%AC%D8%A7%D9%86%D8%A7%20-%20%D8%A7%D9%84%D8%A3%D8%B5%D9%84%D9%8A%D8%A9.wav" }
+    };
     function playSong(id) {
         APL.settings.close();
+        var S = SONG_FILES[id];
+        if (S && APL.playSongStream) { APL.playSongStream({ title: S.title, url: S.url, yt: id }); return; }
         if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
         if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
     }
@@ -17165,10 +17233,10 @@ window.APL_KEYS = {
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
                 menu(APL.t("Ramadan & Eid Songs"), "speaker", [
                     action("\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", function () { playSong("3EYDurKhcDs"); },
-                        APL.t("Opens the song on YouTube (online, with picture)."), "speaker"),
+                        APL.t("Streams the song from the internet (YouTube if it cannot)."), "speaker"),
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
-                        APL.t("Opens the old Ramadan song on YouTube (online, with picture)."), "speaker")
-                ], APL.t("Songs that open on YouTube: the YouTube app first, then TizenTube, then YouTube Dummy, then the TV browser.")),
+                        APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
+                ], APL.t("Songs that play from the internet. If one cannot start, it opens on YouTube.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
@@ -25098,6 +25166,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.46: أغنيتين رمضان والعيد بتشتغل دلوقتي مباشرة من الروابط اللي حطيتها (مشغّل صغير: OK إيقاف/تشغيل، يمين/شمال ١٠ ثواني، رجوع إغلاق). لو الملف ماشتغلش في ١٥ ثانية بتفتح على يوتيوب.",
         "✔ 8.7.45: في شاشة المحراب الحي، أول ضغطة OK بتشغّل الراديو (كانت محتاجة ضغطتين).",
         "✔ 8.7.44: أغاني رمضان والعيد بتفتح الفيديو نفسه بدل الشاشة الرئيسية ليوتيوب (تطبيق يوتيوب، وبعده TizenTube، وبعده YouTube Dummy، وآخر حاجة متصفح التلفزيون). الأغنيتين «أهلا بالعيد» و«رمضان جانا» بقوا الاتنين في الإعدادات > الصلاة والقرآن > أغاني رمضان والعيد.",
         "✔ 8.7.43: ودجت رمضان بقى على 3 مراحل مش بتتخلط: قبل رمضان بيوم لحد اليوم ٢٠ (أدعية ونصايح وفضائل)، من ٢١ لـ٣٠ (العشر الأواخر وليلة القدر وقيام الليل بس)، وأول ٣ أيام عيد الفطر (نصايح العيد بس). اليوم الإسلامي بيبدأ من المغرب. معاينات جديدة في الإعدادات، وإطار الشاشة الذهبي اتشال من المحراب الحي.",
@@ -25133,6 +25202,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.46: the two Ramadan & Eid songs now play straight from the links you gave (small player: OK pause/play, Left/Right 10 s, Back closes). If a file cannot start in 15 seconds, the song opens on YouTube.",
         "✔ 8.7.45: on the Living Mihrab screen saver, the first OK now starts the radio (it needed two presses).",
         "✔ 8.7.44: the Ramadan & Eid songs now open the video itself instead of the YouTube home screen (YouTube app, then TizenTube, then YouTube Dummy, then the TV browser). Both songs, “Ahlan bel Eid” and “Ramadan Gana”, are now in Settings > Prayer and Quran > Ramadan & Eid Songs.",
         "✔ 8.7.43: the Ramadan widget now has three phases that never mix: the day before Ramadan to day 20 (duas, tips, virtues), days 21-30 (last ten nights, Laylat al-Qadr and night prayer only) and the first 3 days of Eid (Eid tips only). The Islamic day starts at Maghrib. New previews in Settings, and the gold outline is gone from the Living Mihrab.",

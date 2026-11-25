@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.46: أغنيتين رمضان والعيد بتشتغل دلوقتي مباشرة من الروابط اللي حطيتها (مشغّل صغير: OK إيقاف/تشغيل، يمين/شمال ١٠ ثواني، رجوع إغلاق). لو الملف ماشتغلش في ١٥ ثانية بتفتح على يوتيوب.",
         "✔ 8.7.45: في شاشة المحراب الحي، أول ضغطة OK بتشغّل الراديو (كانت محتاجة ضغطتين).",
         "✔ 8.7.44: أغاني رمضان والعيد بتفتح الفيديو نفسه بدل الشاشة الرئيسية ليوتيوب (تطبيق يوتيوب، وبعده TizenTube، وبعده YouTube Dummy، وآخر حاجة متصفح التلفزيون). الأغنيتين «أهلا بالعيد» و«رمضان جانا» بقوا الاتنين في الإعدادات > الصلاة والقرآن > أغاني رمضان والعيد.",
         "✔ 8.7.43: ودجت رمضان بقى على 3 مراحل مش بتتخلط: قبل رمضان بيوم لحد اليوم ٢٠ (أدعية ونصايح وفضائل)، من ٢١ لـ٣٠ (العشر الأواخر وليلة القدر وقيام الليل بس)، وأول ٣ أيام عيد الفطر (نصايح العيد بس). اليوم الإسلامي بيبدأ من المغرب. معاينات جديدة في الإعدادات، وإطار الشاشة الذهبي اتشال من المحراب الحي.",
@@ -74,6 +75,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.46: the two Ramadan & Eid songs now play straight from the links you gave (small player: OK pause/play, Left/Right 10 s, Back closes). If a file cannot start in 15 seconds, the song opens on YouTube.",
         "✔ 8.7.45: on the Living Mihrab screen saver, the first OK now starts the radio (it needed two presses).",
         "✔ 8.7.44: the Ramadan & Eid songs now open the video itself instead of the YouTube home screen (YouTube app, then TizenTube, then YouTube Dummy, then the TV browser). Both songs, “Ahlan bel Eid” and “Ramadan Gana”, are now in Settings > Prayer and Quran > Ramadan & Eid Songs.",
         "✔ 8.7.43: the Ramadan widget now has three phases that never mix: the day before Ramadan to day 20 (duas, tips, virtues), days 21-30 (last ten nights, Laylat al-Qadr and night prayer only) and the first 3 days of Eid (Eid tips only). The Islamic day starts at Maghrib. New previews in Settings, and the gold outline is gone from the Living Mihrab.",

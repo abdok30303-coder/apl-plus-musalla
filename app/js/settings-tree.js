@@ -260,8 +260,15 @@
         APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
     }
     /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
+    /* v8.7.46: the songs stream from the links the user supplied (archive.org); YouTube stays as the fallback */
+    var SONG_FILES = {
+        "3EYDurKhcDs": { title: "\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", url: "https://archive.org/download/20261125_20261125_1151/%D8%A3%D9%87%D9%84%D8%A7%D9%8B%20%D8%A8%D8%A7%D9%84%D8%B9%D9%8A%D8%AF%20-%20%D8%B5%D9%81%D8%A7%D8%A1%20%D8%A3%D8%A8%D9%88%20%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF.wav" },
+        "cAXU7ZqgUDE": { title: "\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629", url: "https://archive.org/download/20261125_20261125_1151/%D8%B1%D9%85%D8%B6%D8%A7%D9%86%20%D8%AC%D8%A7%D9%86%D8%A7%20-%20%D8%A7%D9%84%D8%A3%D8%B5%D9%84%D9%8A%D8%A9.wav" }
+    };
     function playSong(id) {
         APL.settings.close();
+        var S = SONG_FILES[id];
+        if (S && APL.playSongStream) { APL.playSongStream({ title: S.title, url: S.url, yt: id }); return; }
         if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
         if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
     }
@@ -553,10 +560,10 @@
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
                 menu(APL.t("Ramadan & Eid Songs"), "speaker", [
                     action("\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", function () { playSong("3EYDurKhcDs"); },
-                        APL.t("Opens the song on YouTube (online, with picture)."), "speaker"),
+                        APL.t("Streams the song from the internet (YouTube if it cannot)."), "speaker"),
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
-                        APL.t("Opens the old Ramadan song on YouTube (online, with picture)."), "speaker")
-                ], APL.t("Songs that open on YouTube: the YouTube app first, then TizenTube, then YouTube Dummy, then the TV browser.")),
+                        APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
+                ], APL.t("Songs that play from the internet. If one cannot start, it opens on YouTube.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
