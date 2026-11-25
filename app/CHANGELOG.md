@@ -1,3 +1,8 @@
+## 8.7.49
+
+- Ramadan widget: the Laylat al-Qadr dua "O Allah, You are Forgiving and love forgiveness" was in the last-ten items twice (once plain, once with Aisha's question). The plain copy is removed. 150 items: 99 before and early Ramadan, 23 last ten, 28 Eid. Phases are still never mixed.
+- Audit of the 8.7.40-8.7.48 work found nothing else that needed a code change. Suggestions that need his choice are listed in the report.
+
 ## 8.7.48
 
 - The songs menu is renamed "Nasheeds" (الأناشيد).

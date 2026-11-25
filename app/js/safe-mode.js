@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.49: شلت دعاء ليلة القدر المكرر من العشر الأواخر (١٥٠ عنصر دلوقتي).",
         "✔ 8.7.48: القائمة اسمها «الأناشيد». رجوع من مشغل النشيد بيقفله ويوقف الصوت ومبيسيبش حاجة على الشاشة.",
         "✔ 8.7.47: ٧ أناشيد وقصائد زيادة بتشتغل من رابط archive.org بتاعك وفي أول القائمة؛ والقائمة اسمها «الأناشيد والأغاني». زر رجوع دلوقتي بيقفل المشغل ويوقف الصوت دايمًا.",
         "✔ 8.7.46: أغنيتين رمضان والعيد بتشتغل دلوقتي مباشرة من الروابط اللي حطيتها (مشغّل صغير: OK إيقاف/تشغيل، يمين/شمال ١٠ ثواني، رجوع إغلاق). لو الملف ماشتغلش في ١٥ ثانية بتفتح على يوتيوب.",
@@ -77,6 +78,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.49: removed a repeated Laylat al-Qadr dua from the last-ten items (150 items now).",
         "✔ 8.7.48: the songs menu is now just “Nasheeds”. Back from the player closes it, stops the sound and leaves nothing on screen.",
         "✔ 8.7.47: seven more nasheeds and recitations stream from your archive.org item and are listed first; the menu is now “Nasheeds & Songs”. Back always closes the player and stops the sound.",
         "✔ 8.7.46: the two Ramadan & Eid songs now play straight from the links you gave (small player: OK pause/play, Left/Right 10 s, Back closes). If a file cannot start in 15 seconds, the song opens on YouTube.",
