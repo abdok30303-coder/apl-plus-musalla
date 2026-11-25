@@ -1,3 +1,9 @@
+## 8.7.53
+
+- A Ramadan or Eid date corrected by hand (Correct Ramadan & Eid Dates) now wins over the announcements, online or built in. The correction is saved as an exact day: the automatic start of the month when you corrected it, plus your days. A later online update does not move it. Choosing "automatic" removes the correction, and the month follows the online date again. Corrections made before this version keep working as before (relative to the automatic date).
+- Reset all corrections clears the saved starts too.
+- A correction of +2 can still leave the month before it at 31 or 32 days when announced months on both sides leave no room (the manual date wins, by his choice).
+
 ## 8.7.52
 
 - Two settings texts that showed in English in Arabic mode now have Arabic: the duck.ai description and the Refresh hint on the prayer page.

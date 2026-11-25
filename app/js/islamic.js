@@ -178,6 +178,13 @@
         try { o = APL.sys && APL.sys.pref("hijriFix"); } catch (e) { o = null; }
         return (o && typeof o === "object") ? o : {};
     }
+    /* v8.7.52: the automatic start of a month at the moment it was corrected by hand: { "1448-9": JDN }. The correction is then
+       an exact day (this start + the days), so an online announcement that arrives later does not move it: the manual correction wins. */
+    function fixBases() {
+        var o = null;
+        try { o = APL.sys && APL.sys.pref("hijriFixBase"); } catch (e) { o = null; }
+        return (o && typeof o === "object") ? o : {};
+    }
     /* The calendar followed here: "egypt" (the rule), "HJCoSA", "UAQ" or "DIYANET" (AlAdhan's Hijri dates). */
     function source() {
         var s = "";
@@ -349,7 +356,7 @@
          3. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
          4. the crescent rule: exact once the month has begun and its start was firm. */
     function monthsFrom(j, count) {
-        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i, cc = feedCountry(), fm = feedMonths();
+        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), fb = fixBases(), i, cc = feedCountry(), fm = feedMonths();
         if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
         var L = ruleList(w, j + (count + 3) * 31), eff = [];
         for (i = 0; i < L.length - 1; i++) {
@@ -357,7 +364,12 @@
             if (cc === "EG" && ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; pin = true; }
             if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; pin = true; }
             if (fm[key] !== undefined && Math.abs(fm[key] - r.start) <= 3) { s = fm[key]; ex = true; pin = true; }      // announced by the country, online (a date far from the estimate is ignored)
-            if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; pin = true; }
+            if (d) {
+                var dd = Math.max(-2, Math.min(2, d));
+                if (typeof fb[key] === "number" && Math.abs(fb[key] - r.start) <= 5) s = fb[key] + dd;     // by hand: wins over the announcement, online or built in
+                else s += dd;
+                ex = true; pin = true;
+            }
             eff.push({ y: r.y, m: r.m, start: s, exact: ex, pin: pin });
         }
         /* v8.7.50: a month fixed by hand or announced must not leave its neighbours with 25 or 32 days: the months next to it
@@ -526,7 +538,7 @@
 
     function occasions() {
         var off = offset(), today = todayJdn() + off, h = hijriOnDay(today), saved = source() === "egypt" ? { last: 0 } : savedMonths(), w = where();
-        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, feedCountry(), APL.lang].join("|");
+        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), JSON.stringify(fixBases()), version, feedCountry(), APL.lang].join("|");
         if (cache.sig === sig && cache.data) return cache.data;
         var months = monthsFrom(today, 26), all = [], i;
         for (i = 0; i < EVENTS.length; i++) {
@@ -554,23 +566,26 @@
     /* v8.7.27: Ramadan and the two Eids the way Settings > Correct Ramadan & Eid dates lists them: the next one of each,
        with the Hijri month it belongs to, its date, and the correction made by hand (days). */
     function keyDates() {
-        var o = occasions(), fx = fixes(), out = [];
+        var o = occasions(), fx = fixes(), fb = fixBases(), out = [];
         ["ramadan", "fitr", "adha"].forEach(function (k) {
             for (var i = 0; i < o.all.length; i++) {
                 var st = o.all[i];
                 if (st.ev.key !== k) continue;
                 var d = parseInt(fx[st.hy + "-" + st.ev.m], 10) || 0;
-                out.push({ key: k, name: st.name, hy: st.hy, m: st.ev.m, start: st.start, auto: st.start - d, fix: d, exact: st.exact, dateText: st.dateText });
+                out.push({ key: k, name: st.name, hy: st.hy, m: st.ev.m, start: st.start, auto: (d && typeof fb[st.hy + "-" + st.ev.m] === "number") ? fb[st.hy + "-" + st.ev.m] : st.start - d, fix: d, exact: st.exact, dateText: st.dateText });
                 break;
             }
         });
         return out;
     }
     function setFix(y, m, delta) {
-        var cur = fixes(), o = {}, d = Math.max(-2, Math.min(2, parseInt(delta, 10) || 0)), hy = 0;
+        var cur = fixes(), cb = fixBases(), o = {}, ob = {}, d = Math.max(-2, Math.min(2, parseInt(delta, 10) || 0)), hy = 0, auto = null, ks = [];
         try { hy = hijriToday().y; } catch (e) { hy = 0; }
-        Object.keys(cur).forEach(function (q) { if (!hy || parseInt(q, 10) >= hy - 1) o[q] = cur[q]; });   // corrections of past years are dropped
-        if (d) o[y + "-" + m] = d; else delete o[y + "-" + m];
+        try { ks = keyDates(); } catch (e) { ks = []; }
+        for (var i = 0; i < ks.length; i++) if (ks[i].hy === y && ks[i].m === m) auto = ks[i].auto;
+        Object.keys(cur).forEach(function (q) { if (!hy || parseInt(q, 10) >= hy - 1) { o[q] = cur[q]; if (typeof cb[q] === "number") ob[q] = cb[q]; } });   // corrections of past years are dropped
+        if (d) { o[y + "-" + m] = d; if (typeof auto === "number") ob[y + "-" + m] = auto; else delete ob[y + "-" + m]; } else { delete o[y + "-" + m]; delete ob[y + "-" + m]; }
+        APL.sys.setPref("hijriFixBase", ob);
         APL.sys.setPref("hijriFix", o);
     }
     function clearCache() { cache = { sig: "", data: null }; rule = { sig: "", list: [] }; version++; }
@@ -589,7 +604,7 @@
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
         /* v8.7.27 */
         clearCache: clearCache,
-        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version, feedCountry()].join(":"); },
+        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), JSON.stringify(fixBases()), version, feedCountry()].join(":"); },
         source: source, keyDates: keyDates, setFix: setFix,
         feedUpdate: feedUpdate, feedStatus: feedStatus, feedCountry: feedCountry, _feedSanitize: feedSanitize, _feedUrl: FEED_URL,
         /* for the tests: the pieces that can be checked on their own */

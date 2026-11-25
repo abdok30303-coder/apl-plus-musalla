@@ -3238,6 +3238,7 @@ window.APL_CATALOG = [
         hijriSource: "auto",        // v8.7.27: "auto" (by the country of the city) | "egypt" | "HJCoSA" | "UAQ" | "DIYANET" (js/islamic.js, js/prayer.js)
         hijriCountry: "auto",       // v8.7.50: whose announcements set Ramadan and the Eids: "auto" (Egypt for the Egyptian calendar, else the city's country) or a country code
         hijriFeedStamp: 0,          // v8.7.50: changes when new announced dates arrive online (js/islamic.js)
+        hijriFixBase: {},           // v8.7.52: the automatic start of each corrected month when it was corrected (js/islamic.js setFix); a manual correction wins over online dates
         hijriFix: {},               // v8.7.27: Ramadan / Eid corrected by hand: { "1448-9": 1 } = month 9 of 1448 starts 1 day later (js/islamic.js setFix)
         prayerAlerts: true,         // a short spoken alert at each prayer time
         prayerAlertVolume: 0.92,
@@ -9298,7 +9299,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     applyScale();
     sys.onPref("prayerWidgetScale", function () { applyScale(); render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
     /* v8.7.27: the Hijri offset, the month corrections and the calendar source change the Ramadan marks of the background schedule and the pages */
-    ["hijriOffset", "hijriFix", "hijriSource", "hijriCountry", "hijriFeedStamp"].forEach(function (k) {
+    ["hijriOffset", "hijriFix", "hijriSource", "hijriCountry", "hijriFeedStamp", "hijriFixBase"].forEach(function (k) {
         sys.onPref(k, function () {
             try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             if (k === "hijriSource") { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); return; }
@@ -9724,6 +9725,13 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         try { o = APL.sys && APL.sys.pref("hijriFix"); } catch (e) { o = null; }
         return (o && typeof o === "object") ? o : {};
     }
+    /* v8.7.52: the automatic start of a month at the moment it was corrected by hand: { "1448-9": JDN }. The correction is then
+       an exact day (this start + the days), so an online announcement that arrives later does not move it: the manual correction wins. */
+    function fixBases() {
+        var o = null;
+        try { o = APL.sys && APL.sys.pref("hijriFixBase"); } catch (e) { o = null; }
+        return (o && typeof o === "object") ? o : {};
+    }
     /* The calendar followed here: "egypt" (the rule), "HJCoSA", "UAQ" or "DIYANET" (AlAdhan's Hijri dates). */
     function source() {
         var s = "";
@@ -9895,7 +9903,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
          3. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
          4. the crescent rule: exact once the month has begun and its start was firm. */
     function monthsFrom(j, count) {
-        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i, cc = feedCountry(), fm = feedMonths();
+        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), fb = fixBases(), i, cc = feedCountry(), fm = feedMonths();
         if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
         var L = ruleList(w, j + (count + 3) * 31), eff = [];
         for (i = 0; i < L.length - 1; i++) {
@@ -9903,7 +9911,12 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
             if (cc === "EG" && ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; pin = true; }
             if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; pin = true; }
             if (fm[key] !== undefined && Math.abs(fm[key] - r.start) <= 3) { s = fm[key]; ex = true; pin = true; }      // announced by the country, online (a date far from the estimate is ignored)
-            if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; pin = true; }
+            if (d) {
+                var dd = Math.max(-2, Math.min(2, d));
+                if (typeof fb[key] === "number" && Math.abs(fb[key] - r.start) <= 5) s = fb[key] + dd;     // by hand: wins over the announcement, online or built in
+                else s += dd;
+                ex = true; pin = true;
+            }
             eff.push({ y: r.y, m: r.m, start: s, exact: ex, pin: pin });
         }
         /* v8.7.50: a month fixed by hand or announced must not leave its neighbours with 25 or 32 days: the months next to it
@@ -10072,7 +10085,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
 
     function occasions() {
         var off = offset(), today = todayJdn() + off, h = hijriOnDay(today), saved = source() === "egypt" ? { last: 0 } : savedMonths(), w = where();
-        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, feedCountry(), APL.lang].join("|");
+        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), JSON.stringify(fixBases()), version, feedCountry(), APL.lang].join("|");
         if (cache.sig === sig && cache.data) return cache.data;
         var months = monthsFrom(today, 26), all = [], i;
         for (i = 0; i < EVENTS.length; i++) {
@@ -10100,23 +10113,26 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     /* v8.7.27: Ramadan and the two Eids the way Settings > Correct Ramadan & Eid dates lists them: the next one of each,
        with the Hijri month it belongs to, its date, and the correction made by hand (days). */
     function keyDates() {
-        var o = occasions(), fx = fixes(), out = [];
+        var o = occasions(), fx = fixes(), fb = fixBases(), out = [];
         ["ramadan", "fitr", "adha"].forEach(function (k) {
             for (var i = 0; i < o.all.length; i++) {
                 var st = o.all[i];
                 if (st.ev.key !== k) continue;
                 var d = parseInt(fx[st.hy + "-" + st.ev.m], 10) || 0;
-                out.push({ key: k, name: st.name, hy: st.hy, m: st.ev.m, start: st.start, auto: st.start - d, fix: d, exact: st.exact, dateText: st.dateText });
+                out.push({ key: k, name: st.name, hy: st.hy, m: st.ev.m, start: st.start, auto: (d && typeof fb[st.hy + "-" + st.ev.m] === "number") ? fb[st.hy + "-" + st.ev.m] : st.start - d, fix: d, exact: st.exact, dateText: st.dateText });
                 break;
             }
         });
         return out;
     }
     function setFix(y, m, delta) {
-        var cur = fixes(), o = {}, d = Math.max(-2, Math.min(2, parseInt(delta, 10) || 0)), hy = 0;
+        var cur = fixes(), cb = fixBases(), o = {}, ob = {}, d = Math.max(-2, Math.min(2, parseInt(delta, 10) || 0)), hy = 0, auto = null, ks = [];
         try { hy = hijriToday().y; } catch (e) { hy = 0; }
-        Object.keys(cur).forEach(function (q) { if (!hy || parseInt(q, 10) >= hy - 1) o[q] = cur[q]; });   // corrections of past years are dropped
-        if (d) o[y + "-" + m] = d; else delete o[y + "-" + m];
+        try { ks = keyDates(); } catch (e) { ks = []; }
+        for (var i = 0; i < ks.length; i++) if (ks[i].hy === y && ks[i].m === m) auto = ks[i].auto;
+        Object.keys(cur).forEach(function (q) { if (!hy || parseInt(q, 10) >= hy - 1) { o[q] = cur[q]; if (typeof cb[q] === "number") ob[q] = cb[q]; } });   // corrections of past years are dropped
+        if (d) { o[y + "-" + m] = d; if (typeof auto === "number") ob[y + "-" + m] = auto; else delete ob[y + "-" + m]; } else { delete o[y + "-" + m]; delete ob[y + "-" + m]; }
+        APL.sys.setPref("hijriFixBase", ob);
         APL.sys.setPref("hijriFix", o);
     }
     function clearCache() { cache = { sig: "", data: null }; rule = { sig: "", list: [] }; version++; }
@@ -10135,7 +10151,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
         /* v8.7.27 */
         clearCache: clearCache,
-        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version, feedCountry()].join(":"); },
+        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), JSON.stringify(fixBases()), version, feedCountry()].join(":"); },
         source: source, keyDates: keyDates, setFix: setFix,
         feedUpdate: feedUpdate, feedStatus: feedStatus, feedCountry: feedCountry, _feedSanitize: feedSanitize, _feedUrl: FEED_URL,
         /* for the tests: the pieces that can be checked on their own */
@@ -17100,7 +17116,7 @@ window.APL_KEYS = {
             return { label: k.name + " \u00b7 " + I.gregorian(k.start).date + (k.fix ? " (" + signed(k.fix) + ")" : "") + (k.exact ? "" : " \u2248"), icon: "calendar",
                      run: function () { setTimeout(function () { fixPick(k); }, 120); } };
         });
-        items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
+        items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFixBase", {}); APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
         APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
     }
     /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
@@ -25365,6 +25381,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.53: تصحيح رمضان أو العيد بالإيد بقى أقوى من التواريخ اللي بتيجي أونلاين، وتحديث أونلاين جاي مبيحركوش.",
         "✔ 8.7.52: نصين في الإعدادات كانوا بالإنجليزي في الوضع العربي واتترجموا.",
         "✔ 8.7.51: تصحيح التاريخ الهجري بالإيد (أو من الإنترنت) مبقاش يسيب الشهر اللي قبله 31 أو 32 يوم. اتظبطت صياغة حالة التواريخ.",
         "✔ 8.7.50: بداية رمضان والأعياد بتتحدث أونلاين حسب دولتك (الإعدادات ← دولة إعلان الأهلّة). مصر بس اللي فيها تواريخ معلنة دلوقتي، والباقي تقدير.",
@@ -25407,6 +25424,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.53: a Ramadan or Eid date you correct by hand now wins over the online dates; a later online update does not move it.",
         "✔ 8.7.52: two settings texts that were in English in Arabic mode are now translated.",
         "✔ 8.7.51: correcting a Hijri date by hand (or online) no longer leaves the neighbouring month with 25, 31 or 32 days; the Arabic wording of the online status is fixed.",
         "✔ 8.7.50: Ramadan and Eid dates now update online for your country (Settings > Announcements Country). Only Egypt has announced dates filled in so far; the rest use the estimate.",

@@ -268,7 +268,7 @@
             return { label: k.name + " \u00b7 " + I.gregorian(k.start).date + (k.fix ? " (" + signed(k.fix) + ")" : "") + (k.exact ? "" : " \u2248"), icon: "calendar",
                      run: function () { setTimeout(function () { fixPick(k); }, 120); } };
         });
-        items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
+        items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFixBase", {}); APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
         APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
     }
     /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
