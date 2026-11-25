@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salah Launcher | مواقيت الصلاة والمصحف على شاشة سامسونج</title>
+<meta name="description" content="Salah Launcher: free open-source Apple TV-style launcher for Samsung Tizen TVs with prayer times, offline Mushaf, tafsir, Quran radio and azkar. مشغّل مجاني مفتوح المصدر لشاشات سامسونج.">
+<meta property="og:title" content="Salah Launcher">
+<meta property="og:description" content="Prayer times and the Quran on your Samsung TV home screen. Free and open source.">
+<meta property="og:image" content="https://raw.githubusercontent.com/abdok30303-coder/apl-plus-musalla/main/docs/screenshots/01-home.jpg">
+<link rel="icon" href="icon.png">
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Tajawal,"Segoe UI",system-ui,sans-serif;background:#0b1020;color:#e9ecf5;line-height:1.7}
+a{color:#e0b457}
+.wrap{max-width:980px;margin:0 auto;padding:0 20px}
+header{padding:18px 0;display:flex;justify-content:space-between;align-items:center}
+header b{font-size:1.2rem;color:#e0b457}
+button.lang{background:#1b2347;color:#e9ecf5;border:1px solid #33407a;border-radius:8px;padding:6px 14px;cursor:pointer;font:inherit}
+.hero{text-align:center;padding:30px 0 20px}
+.hero img.icon{width:96px;height:96px;border-radius:22px}
+h1{font-size:2.2rem;margin:.4em 0 .2em}
+.sub{color:#b9c0dc;max-width:640px;margin:0 auto 22px}
+.btn{display:inline-block;background:#e0b457;color:#14172b;font-weight:700;padding:13px 26px;border-radius:12px;text-decoration:none;margin:6px}
+.btn.alt{background:transparent;color:#e0b457;border:1px solid #e0b457}
+.shot{width:100%;border-radius:14px;border:1px solid #28315c;margin:24px 0}
+section{padding:22px 0}
+h2{color:#e0b457;margin:0 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.card{background:#131a35;border:1px solid #28315c;border-radius:14px;padding:16px}
+.card img{width:100%;border-radius:10px}
+ol li{margin:8px 0}
+code{background:#1b2347;padding:2px 7px;border-radius:6px}
+footer{border-top:1px solid #28315c;color:#9aa3c7;padding:22px 0 40px;font-size:.92rem}
+[data-l]{display:none}
+html[lang=ar] [data-l=ar],html[lang=en] [data-l=en]{display:revert}
+html[lang=ar] [data-l=ar].blk,html[lang=en] [data-l=en].blk{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><b>Salah Launcher</b><button class="lang" onclick="tg()">English / عربي</button></header>
+
+<div class="hero">
+<img class="icon" src="icon.png" alt="Salah Launcher">
+<h1 data-l="ar">الصلاة والقرآن على شاشة التلفزيون</h1>
+<h1 data-l="en">Prayer times and the Quran on your TV</h1>
+<p class="sub" data-l="ar">مشغّل بشكل Apple TV لشاشات سامسونج: مواقيت الصلاة، مصحف كامل بالتشكيل بدون إنترنت، تفسير السعدي، إذاعة القرآن، وأذكار. مجاني ومفتوح المصدر.</p>
+<p class="sub" data-l="en">An Apple TV-style launcher for Samsung Tizen TVs: prayer times, a full offline Mushaf with tashkeel, Tafsir al-Sa'di, Quran radio and azkar. Free and open source.</p>
+<a class="btn" href="https://github.com/abdok30303-coder/apl-plus-musalla/releases/latest"><span data-l="ar">تحميل آخر نسخة</span><span data-l="en">Download latest version</span></a>
+<a class="btn alt" href="#install"><span data-l="ar">طريقة التثبيت</span><span data-l="en">How to install</span></a>
+<img class="shot" src="screenshots/01-home.jpg" alt="Home screen with prayer times">
+</div>
+
+<section>
+<h2 data-l="ar">المميزات</h2><h2 data-l="en">Features</h2>
+<div class="grid">
+<div class="card"><b data-l="ar">مواقيت الصلاة</b><b data-l="en">Prayer times</b><p data-l="ar">بتتحسب على التلفزيون نفسه فتشتغل بدون إنترنت، مع عدّاد للصلاة القادمة وتنبيهات صوتية.</p><p data-l="en">Calculated on the TV itself, so they work offline. Live countdown to the next prayer and spoken alerts.</p></div>
+<div class="card"><b data-l="ar">مصحف كامل</b><b data-l="en">Full Mushaf</b><p data-l="ar">رواية حفص بالتشكيل، فهرس السور والأجزاء، وبحث فوري بلوحة مفاتيح عربية للريموت.</p><p data-l="en">Hafs text with tashkeel, surah and juz' indexes, instant search with an on-screen Arabic keyboard.</p></div>
+<div class="card"><b data-l="ar">تفسير وإذاعة وأذكار</b><b data-l="en">Tafsir, radio, azkar</b><p data-l="ar">تفسير السعدي، إذاعة القرآن الكريم من القاهرة، سورة الكهف بضغطة، أذكار وختمة.</p><p data-l="en">Tafsir al-Sa'di, Quran radio from Cairo, Al-Kahf in one press, azkar and a khatma tracker.</p></div>
+<div class="card"><b data-l="ar">لانشر حقيقي</b><b data-l="en">A real launcher</b><p data-l="ar">تطبيقاتك، مركز تحكم، مصادر HDMI، ملفات شخصية بقفل أطفال، طقس ومهام. عربي من اليمين لليسار.</p><p data-l="en">Your apps, Control Center, HDMI sources, kid-lock profiles, weather and tasks. Arabic-first RTL interface.</p></div>
+</div>
+</section>
+
+<section>
+<h2 data-l="ar">لقطات</h2><h2 data-l="en">Screenshots</h2>
+<div class="grid">
+<div class="card"><img loading="lazy" src="screenshots/02-prayer-page.jpg" alt="Prayer page"></div>
+<div class="card"><img loading="lazy" src="screenshots/03-mushaf.jpg" alt="Mushaf"></div>
+<div class="card"><img loading="lazy" src="screenshots/05-instant-search.jpg" alt="Instant search"></div>
+<div class="card"><img loading="lazy" src="screenshots/06-tafsir.jpg" alt="Tafsir"></div>
+<div class="card"><img loading="lazy" src="screenshots/07-control-center.jpg" alt="Control Center"></div>
+<div class="card"><img loading="lazy" src="screenshots/14-english-ramadan-widget.jpg" alt="English mode"></div>
+</div>
+</section>
+
+<section id="install">
+<h2 data-l="ar">التثبيت (حوالي 10 دقايق)</h2><h2 data-l="en">Install (about 10 minutes)</h2>
+<p data-l="ar">يشتغل على شاشات سامسونج <b>موديل 2022 أو أحدث</b> (Tizen 6.5 فأحدث).</p>
+<p data-l="en">Works on Samsung Smart TVs from <b>2022 or newer</b> (Tizen 6.5+).</p>
+<ol data-l="ar">
+<li>على التلفزيون: افتح <b>Apps</b> واكتب <code>12345</code> وفعّل <b>Developer mode</b>، اكتب عنوان IP بتاع الكمبيوتر، وأعد تشغيل التلفزيون.</li>
+<li>نزّل ملف <code>.wgt</code> من <a href="https://github.com/abdok30303-coder/apl-plus-musalla/releases/latest">صفحة الإصدارات</a>.</li>
+<li>افتح <a href="https://github.com/Apps2Samsung/Apps2Samsung/releases">Apps2Samsung</a> على الكمبيوتر، اختار تلفزيونك، واختار الملف واضغط Install.</li>
+<li>افتح <b>Salah Launcher</b> من قائمة التطبيقات.</li>
+</ol>
+<ol data-l="en">
+<li>On the TV: open <b>Apps</b>, type <code>12345</code>, turn <b>Developer mode</b> on, enter your computer's IP address, then restart the TV.</li>
+<li>Download the <code>.wgt</code> file from the <a href="https://github.com/abdok30303-coder/apl-plus-musalla/releases/latest">Releases page</a>.</li>
+<li>Open <a href="https://github.com/Apps2Samsung/Apps2Samsung/releases">Apps2Samsung</a> on your computer, pick your TV, choose the custom <code>.wgt</code> and press Install.</li>
+<li>Open <b>Salah Launcher</b> from the TV's Apps list.</li>
+</ol>
+<p><a href="https://github.com/abdok30303-coder/apl-plus-musalla/blob/main/docs/INSTALL.md"><span data-l="ar">الدليل الكامل وحل المشاكل</span><span data-l="en">Full guide and troubleshooting</span></a></p>
+</section>
+
+<footer>
+<p data-l="ar">Salah Launcher مبني على <b>APL Launcher</b> من Knikt (Gero Corp.) بترخيص MIT، وكل الشكر لصاحب الأصل. مشروع مجاني ومفتوح المصدر، وهو غير تابع لسامسونج.</p>
+<p data-l="en">Salah Launcher is built on <b>APL Launcher</b> by Knikt (Gero Corp.), MIT licensed, with full credit to the original author. Free and open source, not affiliated with Samsung.</p>
+<p><a href="https://github.com/abdok30303-coder/apl-plus-musalla">GitHub</a> · <a href="https://github.com/abdok30303-coder/apl-plus-musalla/issues">Issues / Feedback</a></p>
+</footer>
+</div>
+<script>
+function tg(){var h=document.documentElement,en=h.lang==="ar";h.lang=en?"en":"ar";h.dir=en?"ltr":"rtl";try{localStorage.l=h.lang}catch(e){}}
+(function(){var l;try{l=localStorage.l}catch(e){}if(!l)l=(navigator.language||"ar").slice(0,2)==="ar"?"ar":"en";var h=document.documentElement;h.lang=l;h.dir=l==="ar"?"rtl":"ltr"})();
+</script>
+</body>
+</html>
