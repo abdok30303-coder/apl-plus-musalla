@@ -994,7 +994,7 @@ window.APL_LANG_AR_EXTRA = {
     "Announced dates checked": "تم فحص التواريخ المعلنة",
     "Could not reach the internet; the saved dates are used": "تعذّر الاتصال بالإنترنت؛ تُستخدم التواريخ المحفوظة",
     "Checks online now for Ramadan and Eid dates announced by the chosen country.": "يبحث الآن في الإنترنت عن مواعيد رمضان والعيد التي أعلنتها الدولة المختارة.",
-    "announced months": "شهر معلن",
+    "announced months": "شهور معلنة",
     "no announced dates yet (estimate)": "لا توجد تواريخ معلنة بعد (تقدير)",
     "checked": "آخر فحص",
     "not checked yet": "لم يُفحص بعد",

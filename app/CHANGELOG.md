@@ -1,3 +1,10 @@
+## 8.7.51
+
+- Hijri months: when a month start is fixed by hand (Correct Ramadan & Eid Dates) or announced online, the neighbouring months that are not fixed now move so every month keeps 29 or 30 days. Before, the month before could reach 31 or 32 days and the month after 25. Two fixes that contradict each other (more than the 29-30 days apart) are still shown as set.
+- The Arabic text of the online dates status is corrected.
+- Deeper check, no other change needed: 3 random-key runs on the Settings screens (1,500 to 3,000 key presses each) gave no script errors; 400 open/close cycles of Settings and 200 of the song player left no extra page elements or key listeners; a failing song link closes the player with a message, a link that does not start in 15 seconds opens YouTube when a YouTube id exists; the phases of the Ramadan widget run a, b, c with no overlap around the boundary days; prayer times match AlAdhan's Egyptian method for Cairo.
+- Not verified on the TV: the real remote, Wi-Fi streaming, and the real Back key (10009) behaviour.
+
 ## 8.7.50
 
 - Ramadan and Eid dates update online, per country. The launcher fetches feed/hijri-announced.json from the project repository (HTTPS), keeps the last copy in storage, checks at most every 12 hours (a failed check is retried after an hour), and uses the saved copy and then the estimate when offline. The text is read as data only: only month keys and dates are kept, and a date more than 3 days from the estimate is ignored.

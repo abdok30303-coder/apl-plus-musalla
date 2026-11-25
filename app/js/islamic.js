@@ -353,13 +353,23 @@
         if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
         var L = ruleList(w, j + (count + 3) * 31), eff = [];
         for (i = 0; i < L.length - 1; i++) {
-            var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10);
-            if (cc === "EG" && ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; }
-            if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; }
-            if (fm[key] !== undefined && Math.abs(fm[key] - r.start) <= 3) { s = fm[key]; ex = true; }      // announced by the country, online (a date far from the estimate is ignored)
-            if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; }
-            eff.push({ y: r.y, m: r.m, start: s, exact: ex });
+            var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10), pin = false;
+            if (cc === "EG" && ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; pin = true; }
+            if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; pin = true; }
+            if (fm[key] !== undefined && Math.abs(fm[key] - r.start) <= 3) { s = fm[key]; ex = true; pin = true; }      // announced by the country, online (a date far from the estimate is ignored)
+            if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; pin = true; }
+            eff.push({ y: r.y, m: r.m, start: s, exact: ex, pin: pin });
         }
+        /* v8.7.50: a month fixed by hand or announced must not leave its neighbours with 25 or 32 days: the months next to it
+           that are not fixed themselves move so every month keeps 29 or 30 days (fixed months stay where they are). */
+        function within(k, lo, hi) {                                  // keep month k's start in [lo, hi], also 29-30 days from a fixed neighbour
+            var a = k > 0 && eff[k - 1].pin ? eff[k - 1].start : null, b = k + 1 < eff.length && eff[k + 1].pin ? eff[k + 1].start : null;
+            if (a !== null) { lo = Math.max(lo, a + 29); hi = Math.min(hi, a + 30); }
+            if (b !== null) { lo = Math.max(lo, b - 30); hi = Math.min(hi, b - 29); }
+            if (lo <= hi) eff[k].start = Math.max(lo, Math.min(hi, eff[k].start));
+        }
+        for (i = 1; i < eff.length; i++) if (!eff[i].pin) within(i, eff[i - 1].start + 29, eff[i - 1].start + 30);
+        for (i = eff.length - 2; i >= 0; i--) if (!eff[i].pin) within(i, eff[i + 1].start - 30, eff[i + 1].start - 29);
         for (i = 0; i < eff.length - 1; i++) eff[i].len = eff[i + 1].start - eff[i].start;
         eff.pop();
         for (i = 0; i < eff.length; i++) if (eff[i].start <= j && j < eff[i].start + eff[i].len) break;
