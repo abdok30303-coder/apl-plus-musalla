@@ -1,3 +1,12 @@
+## 8.7.54
+
+- Control Center: the panel is frosted glass now. The Home Screen behind it is blurred and dimmed (like a phone notification shade), the panel has rounded corners and no hard border.
+- It is drawn at 86% so every tile fits on screen; the last row (Search) is no longer cut off. It still scrolls to the focused tile when needed.
+- Low-power mode and browsers without blur get a plain translucent panel instead of the blur.
+- The wisdom widget is hidden while the panel is open so it does not overlap it.
+- Back on the first row of the Home Screen opens the Control Center in one press. Back still closes panels, the player and settings first; on a lower row it still goes to the first row.
+- Untested on the TV: how the blur looks and performs there.
+
 ## 8.7.53
 
 - A Ramadan or Eid date corrected by hand (Correct Ramadan & Eid Dates) now wins over the announcements, online or built in. The correction is saved as an exact day: the automatic start of the month when you corrected it, plus your days. A later online update does not move it. Choosing "automatic" removes the correction, and the month follows the online date again. Corrections made before this version keep working as before (relative to the automatic date).

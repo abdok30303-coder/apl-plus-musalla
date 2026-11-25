@@ -1209,6 +1209,8 @@
             },
             onBack: function () {
                 // Already on the resting tile (middle of the first row): stay there. Exiting left a black screen.
+                // v8.7.54: already on the first row (the shelf): Back opens the Control Center straight away, in one press.
+                if (mode === "shelf" && !editing && APL.controlCenter && APL.controlCenter.open && !APL.controlCenter.isOpen()) { APL.controlCenter.open(); return; }
                 var h = homeIndex();
                 if (nav.index !== h) { nav.focus(h); }
             }

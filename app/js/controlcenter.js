@@ -552,7 +552,7 @@
     }
 
     function ensureVisible(t) {
-        var view = 900, top = t.offsetTop, h = t.offsetHeight;
+        var view = (viewport && viewport.clientHeight ? viewport.clientHeight - 24 : 800), top = t.offsetTop, h = t.offsetHeight;
         if (top + scrollY < 0) scrollY = -top + 10;
         else if (top + h + scrollY > view) scrollY = view - top - h;
         body.style.transform = "translateY(" + scrollY + "px)";

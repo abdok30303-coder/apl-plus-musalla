@@ -3762,3 +3762,38 @@ html[dir="rtl"] .rw { right: auto; left: 440px; }
 
 /* v8.7.40: wisdom widget keeps a TV-safe margin from the screen edge and never clips long words */
 .hekam-widget{overflow-wrap:anywhere;word-wrap:break-word;overflow:visible;max-width:calc(100vw - 132px)}
+
+/* v8.7.54: Control Center. The panel is frosted glass (the wallpaper shows through, like a phone notification shade), has rounded corners
+   and no hard border, and always fits the 1920x1080 stage: the grid scrolls inside it instead of being cut off at the bottom. */
+.cc__panel,
+.cc.is-open .cc__panel {
+    top: 40px;
+    box-sizing: border-box;
+    padding: 18px 0 22px;
+    border-radius: 48px;
+    border: 0 !important;
+    background: rgba(22, 26, 38, 0.42) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 1.5px rgba(255, 255, 255, 0.08), 0 24px 60px rgba(0, 0, 0, 0.35) !important;
+}
+.cc__head { padding: 0 30px; }
+.cc__viewport { max-height: 820px; }
+body:not(.perf):not(.auto-perf) .cc__panel,
+body:not(.perf):not(.auto-perf) .rich-fx .cc__panel {
+    -webkit-backdrop-filter: blur(36px) saturate(1.5);
+    backdrop-filter: blur(36px) saturate(1.5);
+}
+/* no backdrop-filter (older TV browsers) or low-power mode: a little more opaque so the text stays readable, still see-through */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .cc__panel, .cc.is-open .cc__panel { background: rgba(22, 26, 38, 0.66) !important; }
+}
+body.perf .cc__panel, body.auto-perf .cc__panel,
+body.perf .cc.is-open .cc__panel, body.auto-perf .cc.is-open .cc__panel { background: rgba(22, 26, 38, 0.62) !important; }
+/* The Home Screen behind the panel is blurred and dimmed as a whole (like a phone shade) so widgets and the dock never show through as sharp text. */
+.cc__dim { background: rgba(0, 0, 0, 0.46); }
+body:not(.perf):not(.auto-perf) .cc__dim { -webkit-backdrop-filter: blur(26px); backdrop-filter: blur(26px); }
+body.perf .cc__dim, body.auto-perf .cc__dim { background: rgba(0, 0, 0, 0.62); }
+.has-cc .hekam-widget { opacity: 0 !important; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .cc__dim { background: rgba(0, 0, 0, 0.62); } }
+/* The full grid is about 1130 px tall on the 1080 px stage, so the panel is drawn at 86% (everything then fits, nothing cut off). */
+.cc__panel, .cc.is-open .cc__panel { top: 30px; right: 48px; transform: scale(0.86) !important; transform-origin: 100% 0; }
+.cc__viewport { max-height: 1020px; }

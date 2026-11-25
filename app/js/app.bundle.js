@@ -19320,7 +19320,7 @@ window.APL_KEYS = {
     }
 
     function ensureVisible(t) {
-        var view = 900, top = t.offsetTop, h = t.offsetHeight;
+        var view = (viewport && viewport.clientHeight ? viewport.clientHeight - 24 : 800), top = t.offsetTop, h = t.offsetHeight;
         if (top + scrollY < 0) scrollY = -top + 10;
         else if (top + h + scrollY > view) scrollY = view - top - h;
         body.style.transform = "translateY(" + scrollY + "px)";
@@ -22852,6 +22852,8 @@ window.APL_DEVICES = [
             },
             onBack: function () {
                 // Already on the resting tile (middle of the first row): stay there. Exiting left a black screen.
+                // v8.7.54: already on the first row (the shelf): Back opens the Control Center straight away, in one press.
+                if (mode === "shelf" && !editing && APL.controlCenter && APL.controlCenter.open && !APL.controlCenter.isOpen()) { APL.controlCenter.open(); return; }
                 var h = homeIndex();
                 if (nav.index !== h) { nav.focus(h); }
             }
@@ -25381,6 +25383,8 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.54: لما تكون على أول صف في الرئيسية، زر الرجوع مرة واحدة يفتح مركز التحكم.",
+        "✔ 8.7.54: لوحة مركز التحكم بقت زجاج شفاف (الخلفية بتتغبّش ورا اللوحة زي ستارة الموبايل)، بحواف مدوّرة، وكل الأزرار بتظهر كاملة من غير ما الصف الأخير يتقطع.",
         "✔ 8.7.53: تصحيح رمضان أو العيد بالإيد بقى أقوى من التواريخ اللي بتيجي أونلاين، وتحديث أونلاين جاي مبيحركوش.",
         "✔ 8.7.52: نصين في الإعدادات كانوا بالإنجليزي في الوضع العربي واتترجموا.",
         "✔ 8.7.51: تصحيح التاريخ الهجري بالإيد (أو من الإنترنت) مبقاش يسيب الشهر اللي قبله 31 أو 32 يوم. اتظبطت صياغة حالة التواريخ.",
@@ -25424,6 +25428,8 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.54: on the first row of the Home Screen, Back opens the Control Center in one press.",
+        "✔ 8.7.54: Control Center is now frosted glass over a blurred Home Screen, with rounded corners, and every tile fits on screen (the last row is no longer cut off).",
         "✔ 8.7.53: a Ramadan or Eid date you correct by hand now wins over the online dates; a later online update does not move it.",
         "✔ 8.7.52: two settings texts that were in English in Arabic mode are now translated.",
         "✔ 8.7.51: correcting a Hijri date by hand (or online) no longer leaves the neighbouring month with 25, 31 or 32 days; the Arabic wording of the online status is fixed.",
