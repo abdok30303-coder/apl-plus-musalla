@@ -565,7 +565,7 @@
                         if (typeof APL.prayerPage.openOccasions === "function") APL.prayerPage.openOccasions();
                     }
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
-                menu(APL.t("Nasheeds & Songs"), "speaker", [
+                menu(APL.t("Nasheeds"), "speaker", [
                     action(SONG_FILES["n1"].title, function () { playSong("n1"); }, APL.t("Streams the song from the internet."), "speaker"),
                     action(SONG_FILES["n2"].title, function () { playSong("n2"); }, APL.t("Streams the song from the internet."), "speaker"),
                     action(SONG_FILES["n3"].title, function () { playSong("n3"); }, APL.t("Streams the song from the internet."), "speaker"),
@@ -578,7 +578,7 @@
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
                         APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
                 
-                ], APL.t("Nasheeds, Ramadan and Eid songs that play from the internet. Back closes the player.")),
+                ], APL.t("Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();

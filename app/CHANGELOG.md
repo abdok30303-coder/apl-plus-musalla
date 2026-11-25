@@ -1,3 +1,10 @@
+## 8.7.48
+
+- The songs menu is renamed "Nasheeds" (الأناشيد).
+- Back from the song player: closes the player, stops the sound, closes Settings if it is somehow open, and removes the player's key listeners (they are now added only while a song player is open). Esc, Backspace and Stop do the same.
+- Checked in headless Chrome with a flow test using the real menu code: open menu, press OK on a song, player opens and Settings closes; Back, Esc, and Back right after opening each leave no overlay, no player and no listener of the player behind, and the launcher's own key handler no longer sees the Back press.
+- Not verified on the TV: that the TV's remote delivers Back as key 10009 to the page while the player is open (the launcher uses the same key everywhere else), and the 27 MB file over Wi-Fi.
+
 ## 8.7.47
 
 - Seven more audio files stream from the user's archive.org item 20261125_20261125_1248 (direct WAV links, 10 to 27 MB, range requests supported): Humood - Kun Anta; Maher Zain & Harris J - Qalbi Fil Madinah; Maher Zain - A'marona A'malona (Acapella); Maher Zain - Ya Nabi Salam Alayka; and three poems (الأرجوزة السنية، لامية ابن الوردي، مثلث قطرب). They are listed first. They have no YouTube fallback: if one cannot start in 15 seconds, a toast says so.

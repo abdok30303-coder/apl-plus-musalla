@@ -708,9 +708,9 @@ window.APL_LANG_AR = {
     "From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.": "من اليوم اللي قبل رمضان لحد تالت يوم العيد: هلال (وفانوس في الأيام الأولى) مع أدعية ونصايح، وأدعية ليلة القدر في العشر الأواخر، ونصايح العيد، فوق صف التطبيقات. مقفول: مش بيظهر خالص.",
     "Ramadan Widget Preview": "معاينة ويدجت رمضان",
     "Couldn't play the song": "مقدرتش أشغّل الأغنية",
-    "Nasheeds, Ramadan and Eid songs that play from the internet. Back closes the player.": "أناشيد وأغاني رمضان والعيد بتشتغل من الإنترنت. رجوع بيقفل المشغل.",
+    "Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.": "أناشيد بتشتغل من الإنترنت. رجوع بيقفل المشغل ويرجّعك للشاشة الرئيسية.",
     "Streams the song from the internet.": "بيشغّل من الإنترنت.",
-    "Nasheeds & Songs": "الأناشيد والأغاني",
+    "Nasheeds": "الأناشيد",
     "OK: pause / play   Left / Right: 10 s   Back: close": "OK: إيقاف / تشغيل   يمين / شمال: ١٠ ثواني   رجوع: إغلاق",
     "Paused": "واقف مؤقتًا",
     "Couldn't stream the song, opening YouTube": "مقدرتش أشغّل الأغنية، بفتحها على يوتيوب",
@@ -12223,6 +12223,8 @@ window.APL_KEYS = {
     var SONG_PLAYER = null;
     function closeSongPlayer() {
         var p = SONG_PLAYER; if (!p) return; SONG_PLAYER = null;
+        songListeners(false);
+        try { if (global.APL && global.APL.settings && global.APL.settings.isOpen && global.APL.settings.isOpen()) global.APL.settings.close(); } catch (e) {}
         try { clearInterval(p.tick); clearTimeout(p.guard); p.audio.pause(); p.audio.removeAttribute("src"); p.audio.load(); } catch (e) {}
         try { if (p.box && p.box.parentNode) p.box.parentNode.removeChild(p.box); } catch (e) {}
     }
@@ -12248,6 +12250,7 @@ window.APL_KEYS = {
         doc.body.appendChild(box);
         var au = new global.Audio(); au.preload = "auto";
         var p = SONG_PLAYER = { box: box, audio: au, tick: 0, guard: 0 };
+        songListeners(true);
         function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
         au.addEventListener("playing", function () { clearTimeout(p.guard); st.textContent = A.t("Playing"); });
         au.addEventListener("waiting", function () { if (SONG_PLAYER === p) st.textContent = A.t("Loading…"); });
@@ -12276,16 +12279,24 @@ window.APL_KEYS = {
         if (code === 39 || code === 417) { try { au.currentTime = au.currentTime + 10; } catch (e) {} return true; }
         return false;
     }
-    if (global.addEventListener) {
-        global.addEventListener("keydown", function (e) {
-            if (SONG_PLAYER && songKey(e.keyCode, e.key)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); else if (e.stopPropagation) e.stopPropagation(); }
-        }, true);
-        global.addEventListener("keyup", function (e) {
-            if (SONG_PLAYER && (e.keyCode === 10009 || e.keyCode === 27 || e.keyCode === 13)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
-        }, true);
-        global.addEventListener("tizenhwkey", function (e) { if (SONG_PLAYER && e && e.keyName === "back") closeSongPlayer(); }, true);
-        if (global.document && global.document.addEventListener) global.document.addEventListener("visibilitychange", function () { if (SONG_PLAYER && global.document.hidden) closeSongPlayer(); });
+    function songDown(e) {
+        if (SONG_PLAYER && songKey(e.keyCode, e.key)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); else if (e.stopPropagation) e.stopPropagation(); }
     }
+    function songUp(e) {
+        if (SONG_PLAYER && (e.keyCode === 10009 || e.keyCode === 27 || e.keyCode === 13 || e.keyCode === 8)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
+    }
+    function songHw(e) { if (SONG_PLAYER && e && e.keyName === "back") closeSongPlayer(); }
+    function songVis() { if (SONG_PLAYER && global.document.hidden) closeSongPlayer(); }
+    /* the key listeners exist only while the player is open: they are added when it opens and removed when it closes */
+    function songListeners(on) {
+        var m = on ? "addEventListener" : "removeEventListener";
+        try {
+            global[m]("keydown", songDown, true); global[m]("keyup", songUp, true); global[m]("tizenhwkey", songHw, true);
+            global.document[m]("visibilitychange", songVis);
+        } catch (e) {}
+    }
+    global.APL = global.APL || {};
+    global.APL.songPlayerOpen = function () { return !!SONG_PLAYER; };
 
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {
@@ -17255,7 +17266,7 @@ window.APL_KEYS = {
                         if (typeof APL.prayerPage.openOccasions === "function") APL.prayerPage.openOccasions();
                     }
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
-                menu(APL.t("Nasheeds & Songs"), "speaker", [
+                menu(APL.t("Nasheeds"), "speaker", [
                     action(SONG_FILES["n1"].title, function () { playSong("n1"); }, APL.t("Streams the song from the internet."), "speaker"),
                     action(SONG_FILES["n2"].title, function () { playSong("n2"); }, APL.t("Streams the song from the internet."), "speaker"),
                     action(SONG_FILES["n3"].title, function () { playSong("n3"); }, APL.t("Streams the song from the internet."), "speaker"),
@@ -17268,7 +17279,7 @@ window.APL_KEYS = {
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
                         APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
                 
-                ], APL.t("Nasheeds, Ramadan and Eid songs that play from the internet. Back closes the player.")),
+                ], APL.t("Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
@@ -25198,6 +25209,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.48: القائمة اسمها «الأناشيد». رجوع من مشغل النشيد بيقفله ويوقف الصوت ومبيسيبش حاجة على الشاشة.",
         "✔ 8.7.47: ٧ أناشيد وقصائد زيادة بتشتغل من رابط archive.org بتاعك وفي أول القائمة؛ والقائمة اسمها «الأناشيد والأغاني». زر رجوع دلوقتي بيقفل المشغل ويوقف الصوت دايمًا.",
         "✔ 8.7.46: أغنيتين رمضان والعيد بتشتغل دلوقتي مباشرة من الروابط اللي حطيتها (مشغّل صغير: OK إيقاف/تشغيل، يمين/شمال ١٠ ثواني، رجوع إغلاق). لو الملف ماشتغلش في ١٥ ثانية بتفتح على يوتيوب.",
         "✔ 8.7.45: في شاشة المحراب الحي، أول ضغطة OK بتشغّل الراديو (كانت محتاجة ضغطتين).",
@@ -25235,6 +25247,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.48: the songs menu is now just “Nasheeds”. Back from the player closes it, stops the sound and leaves nothing on screen.",
         "✔ 8.7.47: seven more nasheeds and recitations stream from your archive.org item and are listed first; the menu is now “Nasheeds & Songs”. Back always closes the player and stops the sound.",
         "✔ 8.7.46: the two Ramadan & Eid songs now play straight from the links you gave (small player: OK pause/play, Left/Right 10 s, Back closes). If a file cannot start in 15 seconds, the song opens on YouTube.",
         "✔ 8.7.45: on the Living Mihrab screen saver, the first OK now starts the radio (it needed two presses).",

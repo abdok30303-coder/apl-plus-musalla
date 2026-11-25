@@ -439,6 +439,8 @@
     var SONG_PLAYER = null;
     function closeSongPlayer() {
         var p = SONG_PLAYER; if (!p) return; SONG_PLAYER = null;
+        songListeners(false);
+        try { if (global.APL && global.APL.settings && global.APL.settings.isOpen && global.APL.settings.isOpen()) global.APL.settings.close(); } catch (e) {}
         try { clearInterval(p.tick); clearTimeout(p.guard); p.audio.pause(); p.audio.removeAttribute("src"); p.audio.load(); } catch (e) {}
         try { if (p.box && p.box.parentNode) p.box.parentNode.removeChild(p.box); } catch (e) {}
     }
@@ -464,6 +466,7 @@
         doc.body.appendChild(box);
         var au = new global.Audio(); au.preload = "auto";
         var p = SONG_PLAYER = { box: box, audio: au, tick: 0, guard: 0 };
+        songListeners(true);
         function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
         au.addEventListener("playing", function () { clearTimeout(p.guard); st.textContent = A.t("Playing"); });
         au.addEventListener("waiting", function () { if (SONG_PLAYER === p) st.textContent = A.t("Loading…"); });
@@ -492,16 +495,24 @@
         if (code === 39 || code === 417) { try { au.currentTime = au.currentTime + 10; } catch (e) {} return true; }
         return false;
     }
-    if (global.addEventListener) {
-        global.addEventListener("keydown", function (e) {
-            if (SONG_PLAYER && songKey(e.keyCode, e.key)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); else if (e.stopPropagation) e.stopPropagation(); }
-        }, true);
-        global.addEventListener("keyup", function (e) {
-            if (SONG_PLAYER && (e.keyCode === 10009 || e.keyCode === 27 || e.keyCode === 13)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
-        }, true);
-        global.addEventListener("tizenhwkey", function (e) { if (SONG_PLAYER && e && e.keyName === "back") closeSongPlayer(); }, true);
-        if (global.document && global.document.addEventListener) global.document.addEventListener("visibilitychange", function () { if (SONG_PLAYER && global.document.hidden) closeSongPlayer(); });
+    function songDown(e) {
+        if (SONG_PLAYER && songKey(e.keyCode, e.key)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); else if (e.stopPropagation) e.stopPropagation(); }
     }
+    function songUp(e) {
+        if (SONG_PLAYER && (e.keyCode === 10009 || e.keyCode === 27 || e.keyCode === 13 || e.keyCode === 8)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
+    }
+    function songHw(e) { if (SONG_PLAYER && e && e.keyName === "back") closeSongPlayer(); }
+    function songVis() { if (SONG_PLAYER && global.document.hidden) closeSongPlayer(); }
+    /* the key listeners exist only while the player is open: they are added when it opens and removed when it closes */
+    function songListeners(on) {
+        var m = on ? "addEventListener" : "removeEventListener";
+        try {
+            global[m]("keydown", songDown, true); global[m]("keyup", songUp, true); global[m]("tizenhwkey", songHw, true);
+            global.document[m]("visibilitychange", songVis);
+        } catch (e) {}
+    }
+    global.APL = global.APL || {};
+    global.APL.songPlayerOpen = function () { return !!SONG_PLAYER; };
 
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {
