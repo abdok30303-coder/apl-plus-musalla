@@ -1,3 +1,8 @@
+## 8.7.58
+
+- Safer in-launcher update: before the new files are copied over the installed ones, the update keeps a copy of the current files. If the copy fails (for example no space) or the installed files do not match the new version afterwards, the old files are put back and the failure is reported, so the launcher is never left half-updated. The checks before that are unchanged (download, sha256 against the published file, unpack, package contents and version). The update still needs Vetro with root, and it already replaced every file of the package (index.html, css, js), not only the bundle.
+- Tested here only with a local simulation of the update script (success, wrong checksum, copy failing half-way, wrong version). Untested on the TV.
+
 ## 8.7.57
 
 - Faster start: the launcher keeps the last list of apps the screen gave. At the next start the Home Screen is drawn at once from it, then the screen's real answer replaces it (the list is rebuilt only if an app was installed or removed, and the focus stays where it was). Before, the Home Screen waited for the screen's answer, which can take several seconds after a power-on. With no saved list (first start), or if it cannot be read, nothing changes from before.

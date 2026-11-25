@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.58: التحديث من جوه اللانشر بقى بياخد نسخة من الملفات الحالية قبل ما ينسخ الجديدة، ولو النسخ فشل بيرجّعها.",
         "✔ 8.7.57: البداية أسرع: الرئيسية بتظهر فوراً من آخر قايمة تطبيقات وبعدين بتتحدّث، وشاشة بدء بالاسم بدل الشاشة السودا، ونسخة تانية من الإعدادات بترجع لوحدها لو الكهربا اتقطعت وضاعت الإعدادات.",
         "✔ 8.7.56: زر الرجوع في مشغل الأناشيد بيقفل المشغل ويرجّعك لقائمة الأناشيد على نفس الأنشودة بدل الشاشة الرئيسية.",
         "✔ 8.7.55: واجهة إنجليزي: ودجت رمضان بالإنجليزي بالكامل، وودجت الحكمة بيسحب من مجموعة إنجليزي جديدة (٤٥٤ حكمة). العربي زي ما هو.",
@@ -87,6 +88,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.58: The in-launcher update keeps a copy of the current files before copying the new ones, and puts them back if the copy fails.",
         "✔ 8.7.57: Faster start: Home appears at once from the last list of apps, then updates; a start-up screen with the name instead of black; and a second copy of the settings that comes back by itself if a power cut empties them.",
         "✔ 8.7.56: Back in the nasheed player closes it and returns to the Nasheeds list, on the same song, instead of the Home Screen.",
         "✔ 8.7.55: English UI: the Ramadan widget is fully English and the wisdom widget uses a new English pool (454 items). Arabic is unchanged.",

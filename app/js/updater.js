@@ -143,12 +143,15 @@
             "rm -f $W/.apl-w",
             "echo COPY > $S",
             "rm -f $T/x/config.xml $T/x/author-signature.xml $T/x/signature1.xml",
-            "cp -a $T/x/. $W/ >>$L 2>&1 || f copy $(df -k $W | tail -n 1)",
+            "rm -rf $T/prev; PV=0; mkdir -p $T/prev && cp -a $W/. $T/prev/ >>$L 2>&1 && [ -s $T/prev/js/app.bundle.js ] && [ -s $T/prev/index.html ] && PV=1",
+            "rb() { [ $PV = 1 ] && cp -a $T/prev/. $W/ >>$L 2>&1; sync; }",
+            "cp -a $T/x/. $W/ >>$L 2>&1 || { rb; f copy rolled-back-$PV-$(df -k $W | tail -n 1); }",
             "chmod -R a+rX $W 2>/dev/null",
             "sync",
-            "grep -q $V $W/js/build.js || f copy installed-files-do-not-show-new-version",
+            "grep -q $V $W/js/build.js || { rb; f copy installed-files-do-not-show-new-version-rolled-back-$PV; }",
+            "[ -s $W/index.html ] && [ -s $W/js/boot.js ] && [ -s $W/js/app.bundle.js ] || { rb; f copy installed-files-incomplete-rolled-back-$PV; }",
             "echo OK > $S",
-            "rm -rf $T/x"
+            "rm -rf $T/x $T/prev"
         ];
         return s.join("; ");
     }
