@@ -985,6 +985,8 @@ window.APL_LANG_AR_EXTRA = {
     "Updating prayer times & calendar…": "جارٍ تحديث مواقيت الصلاة والتقويم الهجري…",
     "Prayer times and Islamic calendar updated successfully": "تم تحديث مواقيت الصلاة والتقويم الهجري بنجاح",
     "Hijri Date Adjustment": "تعديل التاريخ الهجري (تعديل الأيام)",
+    "Opens duck.ai in the TV browser.": "يفتح duck.ai في متصفح التلفزيون.",
+    "OK on Refresh to update live weather": "اضغط OK على «تحديث» لتحديث الطقس مباشرة",
     "Announcements Country": "دولة إعلان الأهلّة",
     "Whose fatwa authority announces Ramadan and the Eids. Each country announces its own dates, so the dates shown follow this country.": "جهة الإفتاء التي تعلن رمضان والأعياد. لكل دولة إعلانها، فالتواريخ المعروضة تتبع هذه الدولة.",
     "Online Dates Status": "حالة التواريخ من الإنترنت",

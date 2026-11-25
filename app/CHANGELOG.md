@@ -1,3 +1,8 @@
+## 8.7.52
+
+- Two settings texts that showed in English in Arabic mode now have Arabic: the duck.ai description and the Refresh hint on the prayer page.
+- Checked and left as they are: two fixes that contradict each other on neighbouring Hijri months can still show a 25- or 31-day month (they are the user's own input); the seven newer nasheeds have no YouTube fallback (needs his links); the radio does not resume after a song (his choice).
+
 ## 8.7.51
 
 - Hijri months: when a month start is fixed by hand (Correct Ramadan & Eid Dates) or announced online, the neighbouring months that are not fixed now move so every month keeps 29 or 30 days. Before, the month before could reach 31 or 32 days and the month after 25. Two fixes that contradict each other (more than the 29-30 days apart) are still shown as set.

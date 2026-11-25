@@ -1540,6 +1540,8 @@ window.APL_LANG_AR_EXTRA = {
     "Updating prayer times & calendar…": "جارٍ تحديث مواقيت الصلاة والتقويم الهجري…",
     "Prayer times and Islamic calendar updated successfully": "تم تحديث مواقيت الصلاة والتقويم الهجري بنجاح",
     "Hijri Date Adjustment": "تعديل التاريخ الهجري (تعديل الأيام)",
+    "Opens duck.ai in the TV browser.": "يفتح duck.ai في متصفح التلفزيون.",
+    "OK on Refresh to update live weather": "اضغط OK على «تحديث» لتحديث الطقس مباشرة",
     "Announcements Country": "دولة إعلان الأهلّة",
     "Whose fatwa authority announces Ramadan and the Eids. Each country announces its own dates, so the dates shown follow this country.": "جهة الإفتاء التي تعلن رمضان والأعياد. لكل دولة إعلانها، فالتواريخ المعروضة تتبع هذه الدولة.",
     "Online Dates Status": "حالة التواريخ من الإنترنت",
@@ -25363,6 +25365,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.52: نصين في الإعدادات كانوا بالإنجليزي في الوضع العربي واتترجموا.",
         "✔ 8.7.51: تصحيح التاريخ الهجري بالإيد (أو من الإنترنت) مبقاش يسيب الشهر اللي قبله 31 أو 32 يوم. اتظبطت صياغة حالة التواريخ.",
         "✔ 8.7.50: بداية رمضان والأعياد بتتحدث أونلاين حسب دولتك (الإعدادات ← دولة إعلان الأهلّة). مصر بس اللي فيها تواريخ معلنة دلوقتي، والباقي تقدير.",
         "✔ 8.7.49: شلت دعاء ليلة القدر المكرر من العشر الأواخر (١٥٠ عنصر دلوقتي).",
@@ -25404,6 +25407,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.52: two settings texts that were in English in Arabic mode are now translated.",
         "✔ 8.7.51: correcting a Hijri date by hand (or online) no longer leaves the neighbouring month with 25, 31 or 32 days; the Arabic wording of the online status is fixed.",
         "✔ 8.7.50: Ramadan and Eid dates now update online for your country (Settings > Announcements Country). Only Egypt has announced dates filled in so far; the rest use the estimate.",
         "✔ 8.7.49: removed a repeated Laylat al-Qadr dua from the last-ten items (150 items now).",
