@@ -226,6 +226,40 @@
         return apps.filter(function (a) { return !STORE_ID.test(a.id) || a === keep; });
     }
 
+    /* v8.7.57: the last list of apps the screen gave (id, name, icon only), kept so the next start can draw the
+       Home Screen at once instead of waiting 8 to 9 s for the screen's answer. loadApps() still runs and its answer replaces
+       it. Any problem here returns null: the launcher then waits for the screen exactly as before. */
+    var APPS_CACHE = "apl.appsCache.v1";
+    function saveAppCache(raw, rawSystems) {
+        try { global.localStorage.setItem(APPS_CACHE, JSON.stringify({ t: Date.now(), apps: raw, sys: rawSystems })); } catch (e) {}
+    }
+    function cachedApps() {
+        try {
+            if (!hasTizen()) return null;
+            var c = JSON.parse(global.localStorage.getItem(APPS_CACHE) || "null");
+            if (!c || !c.apps || !c.apps.length || c.apps.length > 1500) return null;
+            var apps = [], systems = [], i, a;
+            for (i = 0; i < c.apps.length; i++) {
+                a = c.apps[i];
+                if (!a || typeof a.id !== "string" || !a.id) continue;
+                apps.push(decorate({ id: a.id, name: a.name, icon: a.icon }));
+            }
+            if (!apps.length) return null;
+            var sy = c.sys || [];
+            for (i = 0; i < sy.length; i++) {
+                a = sy[i];
+                if (!a || typeof a.id !== "string" || !a.id) continue;
+                var d = decorate({ id: a.id, name: a.name, icon: a.icon });
+                d.system = true;
+                systems.push(d);
+            }
+            systemApps = systems;
+            overscanInstalled = apps.some(function (x) { return x.id === OVERSCAN; });
+            if (overscanInstalled) apps = apps.filter(function (x) { return !/^org\.tizen\.browser/.test(x.id); });
+            return order(dedupe(apps));
+        } catch (e) { return null; }
+    }
+
     function loadApps() {
         return new Promise(function (resolve) {
             if (!hasTizen()) {
@@ -234,7 +268,7 @@
             }
             try {
                 global.tizen.application.getAppsInfo(function (list) {
-                    var apps = [], systems = [];
+                    var apps = [], systems = [], rawApps = [], rawSys = [];
                     for (var i = 0; i < list.length; i++) {
                         var a = list[i];
                         // `show:true` == meant to appear in the real Samsung menu.
@@ -247,10 +281,12 @@
                                 var sy = decorate({ id: a.id, name: a.name, icon: a.iconPath });
                                 sy.system = true;
                                 systems.push(sy);
+                                rawSys.push({ id: a.id, name: a.name, icon: a.iconPath });
                             }
                             continue;
                         }
                         apps.push(decorate({ id: a.id, name: a.name, icon: a.iconPath }));
+                        rawApps.push({ id: a.id, name: a.name, icon: a.iconPath });
                     }
                     systemApps = systems;
                     // A screen that answers with nothing gets nothing: the demo apps are for the PC
@@ -260,6 +296,7 @@
                     // Overscan takes the place of Samsung Internet
                     overscanInstalled = apps.some(function (a) { return a.id === OVERSCAN; });
                     if (overscanInstalled) apps = apps.filter(function (a) { return !/^org\.tizen\.browser/.test(a.id); });
+                    saveAppCache(rawApps, rawSys);        // v8.7.57: the last list, to draw the Home Screen at once at the next start
                     resolve(order(dedupe(apps)));
                 }, function () {
                     resolve([]);            // enumeration refused: no apps, and no pretend ones
@@ -530,6 +567,7 @@
 
     global.APL = global.APL || {};
     global.APL.loadApps = loadApps;
+    global.APL.cachedApps = cachedApps;
     /* The Samsung services and plugins kept aside (system:true), for Settings › Apps */
     global.APL.systemApps = function () { return systemApps.slice(); };
     global.APL.isInstalled = isInstalled;

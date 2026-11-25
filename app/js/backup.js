@@ -34,7 +34,7 @@
         try {
             for (var i = 0; i < global.localStorage.length; i++) {
                 var k = global.localStorage.key(i);
-                if (!k || k.indexOf("apl.") !== 0 || k === STORE) continue;
+                if (!k || k.indexOf("apl.") !== 0 || k === STORE || k === "apl.appsCache.v1") continue;
                 data[k] = global.localStorage.getItem(k);
             }
         } catch (e) {}

@@ -75,7 +75,7 @@
     </main>
 
     <div id="toast" class="toast" aria-live="polite"></div>
-    <div id="boot" class="boot"></div>
+    <div id="boot" class="boot"><div class="boot__name">Salah Launcher</div><div class="boot__bar"></div></div>
 
     <!-- v1.2.46: visual only. Marks the page while the launcher is not in front (see css/custom.css). -->
     <script>
@@ -89,6 +89,8 @@
     <script src="$WEBAPIS/webapis/webapis.js"></script>
     <!-- What this version contains, then start-up: boot.js loads the rest,
          or the newer version downloaded by the automatic update. -->
+    <!-- v8.7.57: a second copy of the settings in IndexedDB; does nothing if it is not available -->
+    <script src="js/idb-mirror.js"></script>
     <script src="js/build.js"></script>
     <script src="js/boot.js"></script>
 </body>

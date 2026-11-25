@@ -1362,7 +1362,12 @@
         APL.sys.profiles.onChange(applyTheme);
         APL.timers.every("theme", 60000, applyTheme);   // v1.2.100: shared timer; skipped while hidden
         document.addEventListener("visibilitychange", function () { if (!document.hidden) applyTheme(); });
-        APL.loadApps().then(function (list) {
+        /* v8.7.57: with a saved list of apps, the Home Screen is drawn at once from it, then the screen's real answer
+           replaces it (rebuilt only when an app was installed or removed). With no saved list: as before. */
+        var cachedList = APL.cachedApps ? APL.cachedApps() : null;
+        var fromCache = !!(cachedList && cachedList.length);
+        var realList = APL.loadApps();
+        (fromCache ? Promise.resolve(cachedList) : realList).then(function (list) {
             buildList(list);
             watchPackages();
             setTimeout(preloadDock, 400);
@@ -1384,8 +1389,21 @@
                 while (bl.length > 5) bl.shift();
                 global.localStorage.setItem("apl.bootlog", JSON.stringify(bl));
             } catch (eBl) {}
-            if (requestedAction()) runAction(requestedAction());   // opened for a specific reason: TizenTube, App Switcher…
+            if (!fromCache && requestedAction()) runAction(requestedAction());   // opened for a specific reason: TizenTube, App Switcher…
             setTimeout(function () { dom.boot.classList.add("is-hidden"); }, 120);
+        });
+        if (fromCache) realList.then(function (fresh) {
+            try {
+                var ids = function (l) { return l.map(function (a) { return a.id; }).sort().join("|"); };
+                if (ids(fresh) !== ids(cachedList)) {
+                    var focused = apps[nav.index] && apps[nav.index].id;
+                    buildList(fresh);
+                    render();
+                    for (var i = 0; i < apps.length; i++) if (apps[i].id === focused) { nav.focus(i); break; }
+                    if (APL.autoArt && (!APL.lightMode || APL.lightMode.autoArt())) setTimeout(function () { APL.autoArt.run(allApps, render); }, 1500);
+                }
+            } catch (eFresh) {}
+            if (requestedAction()) runAction(requestedAction());
         });
     }
 

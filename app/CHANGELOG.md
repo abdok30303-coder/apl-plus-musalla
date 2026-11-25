@@ -1,3 +1,11 @@
+## 8.7.57
+
+- Faster start: the launcher keeps the last list of apps the screen gave. At the next start the Home Screen is drawn at once from it, then the screen's real answer replaces it (the list is rebuilt only if an app was installed or removed, and the focus stays where it was). Before, the Home Screen waited for the screen's answer, which can take several seconds after a power-on. With no saved list (first start), or if it cannot be read, nothing changes from before.
+- A start-up screen (the name and a thin moving line) replaces the plain black frame. It needs the new package to be installed (index.html and css).
+- Settings copy: the launcher's settings are also copied into IndexedDB every 20 seconds when they change. Only if the screen starts with no preferences at all while the copy has them, the copy is put back once and the launcher reloads. Nothing is overwritten on a screen whose settings are there. This needs the new package to be installed. The backups are not included in the copy.
+- Backups no longer include the saved app list.
+- Untested on the TV: the real power-cut behaviour (it is not known that IndexedDB survives where localStorage does not), the real timing of the app list, and the start-up screen on the real screen.
+
 ## 8.7.56
 
 - Nasheed player: Back (or the end of the song) closes the player, stops the sound and returns to the Nasheeds list with the song you played still selected. Back from the list works as before. If a song cannot be streamed and YouTube opens instead, Settings still closes.

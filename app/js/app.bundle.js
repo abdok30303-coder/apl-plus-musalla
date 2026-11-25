@@ -12181,6 +12181,40 @@ window.APL_KEYS = {
         return apps.filter(function (a) { return !STORE_ID.test(a.id) || a === keep; });
     }
 
+    /* v8.7.57: the last list of apps the screen gave (id, name, icon only), kept so the next start can draw the
+       Home Screen at once instead of waiting 8 to 9 s for the screen's answer. loadApps() still runs and its answer replaces
+       it. Any problem here returns null: the launcher then waits for the screen exactly as before. */
+    var APPS_CACHE = "apl.appsCache.v1";
+    function saveAppCache(raw, rawSystems) {
+        try { global.localStorage.setItem(APPS_CACHE, JSON.stringify({ t: Date.now(), apps: raw, sys: rawSystems })); } catch (e) {}
+    }
+    function cachedApps() {
+        try {
+            if (!hasTizen()) return null;
+            var c = JSON.parse(global.localStorage.getItem(APPS_CACHE) || "null");
+            if (!c || !c.apps || !c.apps.length || c.apps.length > 1500) return null;
+            var apps = [], systems = [], i, a;
+            for (i = 0; i < c.apps.length; i++) {
+                a = c.apps[i];
+                if (!a || typeof a.id !== "string" || !a.id) continue;
+                apps.push(decorate({ id: a.id, name: a.name, icon: a.icon }));
+            }
+            if (!apps.length) return null;
+            var sy = c.sys || [];
+            for (i = 0; i < sy.length; i++) {
+                a = sy[i];
+                if (!a || typeof a.id !== "string" || !a.id) continue;
+                var d = decorate({ id: a.id, name: a.name, icon: a.icon });
+                d.system = true;
+                systems.push(d);
+            }
+            systemApps = systems;
+            overscanInstalled = apps.some(function (x) { return x.id === OVERSCAN; });
+            if (overscanInstalled) apps = apps.filter(function (x) { return !/^org\.tizen\.browser/.test(x.id); });
+            return order(dedupe(apps));
+        } catch (e) { return null; }
+    }
+
     function loadApps() {
         return new Promise(function (resolve) {
             if (!hasTizen()) {
@@ -12189,7 +12223,7 @@ window.APL_KEYS = {
             }
             try {
                 global.tizen.application.getAppsInfo(function (list) {
-                    var apps = [], systems = [];
+                    var apps = [], systems = [], rawApps = [], rawSys = [];
                     for (var i = 0; i < list.length; i++) {
                         var a = list[i];
                         // `show:true` == meant to appear in the real Samsung menu.
@@ -12202,10 +12236,12 @@ window.APL_KEYS = {
                                 var sy = decorate({ id: a.id, name: a.name, icon: a.iconPath });
                                 sy.system = true;
                                 systems.push(sy);
+                                rawSys.push({ id: a.id, name: a.name, icon: a.iconPath });
                             }
                             continue;
                         }
                         apps.push(decorate({ id: a.id, name: a.name, icon: a.iconPath }));
+                        rawApps.push({ id: a.id, name: a.name, icon: a.iconPath });
                     }
                     systemApps = systems;
                     // A screen that answers with nothing gets nothing: the demo apps are for the PC
@@ -12215,6 +12251,7 @@ window.APL_KEYS = {
                     // Overscan takes the place of Samsung Internet
                     overscanInstalled = apps.some(function (a) { return a.id === OVERSCAN; });
                     if (overscanInstalled) apps = apps.filter(function (a) { return !/^org\.tizen\.browser/.test(a.id); });
+                    saveAppCache(rawApps, rawSys);        // v8.7.57: the last list, to draw the Home Screen at once at the next start
                     resolve(order(dedupe(apps)));
                 }, function () {
                     resolve([]);            // enumeration refused: no apps, and no pretend ones
@@ -12485,6 +12522,7 @@ window.APL_KEYS = {
 
     global.APL = global.APL || {};
     global.APL.loadApps = loadApps;
+    global.APL.cachedApps = cachedApps;
     /* The Samsung services and plugins kept aside (system:true), for Settings › Apps */
     global.APL.systemApps = function () { return systemApps.slice(); };
     global.APL.isInstalled = isInstalled;
@@ -16220,7 +16258,7 @@ window.APL_KEYS = {
         try {
             for (var i = 0; i < global.localStorage.length; i++) {
                 var k = global.localStorage.key(i);
-                if (!k || k.indexOf("apl.") !== 0 || k === STORE) continue;
+                if (!k || k.indexOf("apl.") !== 0 || k === STORE || k === "apl.appsCache.v1") continue;
                 data[k] = global.localStorage.getItem(k);
             }
         } catch (e) {}
@@ -23031,7 +23069,12 @@ window.APL_DEVICES = [
         APL.sys.profiles.onChange(applyTheme);
         APL.timers.every("theme", 60000, applyTheme);   // v1.2.100: shared timer; skipped while hidden
         document.addEventListener("visibilitychange", function () { if (!document.hidden) applyTheme(); });
-        APL.loadApps().then(function (list) {
+        /* v8.7.57: with a saved list of apps, the Home Screen is drawn at once from it, then the screen's real answer
+           replaces it (rebuilt only when an app was installed or removed). With no saved list: as before. */
+        var cachedList = APL.cachedApps ? APL.cachedApps() : null;
+        var fromCache = !!(cachedList && cachedList.length);
+        var realList = APL.loadApps();
+        (fromCache ? Promise.resolve(cachedList) : realList).then(function (list) {
             buildList(list);
             watchPackages();
             setTimeout(preloadDock, 400);
@@ -23053,8 +23096,21 @@ window.APL_DEVICES = [
                 while (bl.length > 5) bl.shift();
                 global.localStorage.setItem("apl.bootlog", JSON.stringify(bl));
             } catch (eBl) {}
-            if (requestedAction()) runAction(requestedAction());   // opened for a specific reason: TizenTube, App Switcher…
+            if (!fromCache && requestedAction()) runAction(requestedAction());   // opened for a specific reason: TizenTube, App Switcher…
             setTimeout(function () { dom.boot.classList.add("is-hidden"); }, 120);
+        });
+        if (fromCache) realList.then(function (fresh) {
+            try {
+                var ids = function (l) { return l.map(function (a) { return a.id; }).sort().join("|"); };
+                if (ids(fresh) !== ids(cachedList)) {
+                    var focused = apps[nav.index] && apps[nav.index].id;
+                    buildList(fresh);
+                    render();
+                    for (var i = 0; i < apps.length; i++) if (apps[i].id === focused) { nav.focus(i); break; }
+                    if (APL.autoArt && (!APL.lightMode || APL.lightMode.autoArt())) setTimeout(function () { APL.autoArt.run(allApps, render); }, 1500);
+                }
+            } catch (eFresh) {}
+            if (requestedAction()) runAction(requestedAction());
         });
     }
 
@@ -25409,6 +25465,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.57: البداية أسرع: الرئيسية بتظهر فوراً من آخر قايمة تطبيقات وبعدين بتتحدّث، وشاشة بدء بالاسم بدل الشاشة السودا، ونسخة تانية من الإعدادات بترجع لوحدها لو الكهربا اتقطعت وضاعت الإعدادات.",
         "✔ 8.7.56: زر الرجوع في مشغل الأناشيد بيقفل المشغل ويرجّعك لقائمة الأناشيد على نفس الأنشودة بدل الشاشة الرئيسية.",
         "✔ 8.7.55: واجهة إنجليزي: ودجت رمضان بالإنجليزي بالكامل، وودجت الحكمة بيسحب من مجموعة إنجليزي جديدة (٤٥٤ حكمة). العربي زي ما هو.",
         "✔ 8.7.54: لما تكون على أول صف في الرئيسية، زر الرجوع مرة واحدة يفتح مركز التحكم.",
@@ -25456,6 +25513,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.57: Faster start: Home appears at once from the last list of apps, then updates; a start-up screen with the name instead of black; and a second copy of the settings that comes back by itself if a power cut empties them.",
         "✔ 8.7.56: Back in the nasheed player closes it and returns to the Nasheeds list, on the same song, instead of the Home Screen.",
         "✔ 8.7.55: English UI: the Ramadan widget is fully English and the wisdom widget uses a new English pool (454 items). Arabic is unchanged.",
         "✔ 8.7.54: on the first row of the Home Screen, Back opens the Control Center in one press.",
