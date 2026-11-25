@@ -1,3 +1,9 @@
+## 8.7.42
+
+- Ramadan & Eid Songs: a new entry in Settings > Prayer and Quran, placed in the middle of the Ramadan items, with "أهلا بالعيد · صفاء أبو السعود". A second song ("رمضان جانا · الأصلية القديمة") is a hidden row in Settings > Support, not in the visible list.
+- Both open the YouTube video online (with picture). No audio file is stored in the launcher or the release; nothing is downloaded or converted. The target order is: 1) the "YouTube Dummy" app already on the TV (the one the launcher shows with the YouTube icon), 2) TizenTube, 3) the installed YouTube app, 4) the TV browser if none of them is installed or starts. The video id is passed in the link and in PAYLOAD ("v=ID").
+- Checked in Node with simulated apps for every fallback order (all present, dummy fails, dummy and TizenTube fail, only YouTube, none). Not verified on the TV: whether each app plays the given video on launch or only opens its home screen. TizenTube is started the usual way through TizenBrew and may not take a video link.
+
 ## 8.7.41
 
 - Ramadan widget position: centred horizontally and sitting just above the apps row. Its top edge is measured against the status column (prayer card, tasks) on every refresh and it keeps a clear gap of at least 16 px, shortening itself if needed (smaller text and spacing, never overlapping). When the focused app's name and description are showing, the card slides to the free side so it never covers them. In v8.7.40 it sat 90 px in from the edge, and on a TV with a taller prayer card its top touched the card.

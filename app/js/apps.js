@@ -386,6 +386,42 @@
         });
     }
 
+    /* v8.7.42: open a YouTube video the way the user wants: 1) the "YouTube Dummy" app on this TV, 2) TizenTube, 3) the installed YouTube app,
+       4) last resort the TV browser. The video id goes both in the link and in PAYLOAD ("v=ID"), the form YouTube apps read at start-up.
+       Whether each app then plays the video itself depends on the app: untested on the TV. */
+    function openYouTube(videoId) {
+        var url = "https://www.youtube.com/watch?v=" + videoId;
+        return new Promise(function (resolve, reject) {
+            var T = global.tizen;
+            function browser() { openUrl(url).then(function () { resolve("browser"); }, reject); }
+            if (!hasTizen() || !T.application || typeof T.application.getAppsInfo !== "function" || !T.ApplicationControl) { browser(); return; }
+            T.application.getAppsInfo(function (list) {
+                var dummy = null, tube = null, yt = null, i, a;
+                for (i = 0; i < list.length; i++) {
+                    a = list[i];
+                    if (isDummyYouTube(a.id, a.name)) dummy = dummy || a.id;
+                    else if (a.id === BREW || isTizenTube(a.id, a.name)) tube = tube || a.id;
+                    else if (/^(9Ur5IzDKqV\.TizenYouTube|9uQXbeqlCA\.YouTube)$/.test(a.id)) yt = yt || a.id;
+                }
+                var order = [];
+                if (dummy) order.push(["dummy", dummy]);
+                if (tube) order.push(["tube", tube]);
+                if (yt) order.push(["youtube", yt]);
+                function next(k) {
+                    if (k >= order.length) { browser(); return; }
+                    var kind = order[k][0], id = order[k][1];
+                    try {
+                        if (kind === "tube") { launchTizenTube().then(function () { resolve(kind); }, function () { next(k + 1); }); return; }
+                        var data = [new T.ApplicationControlData("PAYLOAD", [JSON.stringify({ values: "v=" + videoId })])];
+                        var ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, null, null, data);
+                        T.application.launchAppControl(ctl, id, function () { resolve(kind); }, function () { next(k + 1); });
+                    } catch (e) { next(k + 1); }
+                }
+                next(0);
+            }, browser);
+        });
+    }
+
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {
         return new Promise(function (resolve) {
@@ -409,6 +445,7 @@
     global.APL.launchApp = launchApp;
     global.APL.launchDeepLink = launchDeepLink;
     global.APL.launchTizenTube = launchTizenTube;
+    global.APL.openYouTube = openYouTube;
     global.APL.TIZENTUBE_ART = { tile: asset(TIZENTUBE.tile) };
     global.APL.FAVORITES = FAVORITES;
 

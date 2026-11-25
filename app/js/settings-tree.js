@@ -259,6 +259,12 @@
         items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
         APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
     }
+    /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
+    function playSong(id) {
+        APL.settings.close();
+        if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
+        if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
+    }
     function openDuck() { APL.settings.close(); if (APL.openUrl) APL.openUrl("https://duck.ai/").catch(function (e) { if (APL.toast) APL.toast(e.message); }); }
     function openPrayer() { APL.settings.close(); if (APL.prayerPage) APL.prayerPage.open(); }
     /* Tint: 15 is neutral, below it more green, above it more red. */
@@ -545,6 +551,11 @@
                         if (typeof APL.prayerPage.openOccasions === "function") APL.prayerPage.openOccasions();
                     }
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
+                menu(APL.t("Ramadan & Eid Songs"), "speaker", [
+                    action("\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", function () { playSong("3EYDurKhcDs"); },
+                        APL.t("Opens the song on YouTube (online, with picture)."), "speaker")
+                ], APL.t("Songs that open on YouTube: first in YouTube Dummy, then TizenTube, then the YouTube app.")),
+
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
                     if (APL.prayerPage) {
@@ -1283,6 +1294,8 @@
 
             /* -------- Support -------- */
             menu(APL.t("Support"), "info", [
+                action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
+                    APL.t("Opens the old Ramadan song on YouTube (online, with picture)."), "speaker"),
                 menu(APL.t("Launcher Update"), "update", [
                     info(APL.t("Version"), function () {
                         var u = APL.updater;

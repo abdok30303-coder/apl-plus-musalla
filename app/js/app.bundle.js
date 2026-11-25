@@ -707,6 +707,12 @@ window.APL_LANG_AR = {
     "Ramadan Widget": "ويدجت رمضان",
     "In Ramadan only: a crescent (a lantern in the first days) with Ramadan duas, tips and Laylat al-Qadr duas above the apps row. Off: it never shows.": "في رمضان فقط: هلال (وفانوس في الأيام الأولى) مع أدعية رمضان ونصائح وأدعية ليلة القدر فوق صف التطبيقات. لو مقفول: عمره ما بيظهر.",
     "Ramadan Widget Preview": "معاينة ويدجت رمضان",
+    "Ramadan & Eid Songs": "أغاني رمضان والعيد",
+    "Opens the song on YouTube (online, with picture).": "بيفتح الأغنية على يوتيوب (أونلاين، بالصورة).",
+    "Opens the old Ramadan song on YouTube (online, with picture).": "بيفتح أغنية رمضان القديمة على يوتيوب (أونلاين، بالصورة).",
+    "Songs that open on YouTube: first in YouTube Dummy, then TizenTube, then the YouTube app.": "أغاني بتفتح على يوتيوب: أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب.",
+    "Opening the song on YouTube…": "بنفتح الأغنية على يوتيوب…",
+    "Can't open YouTube": "مش قادر أفتح يوتيوب",
     "Day 1 (lantern)": "اليوم ١ (فانوس)",
     "Day 12 (crescent)": "اليوم ١٢ (هلال)",
     "Night 27 (Laylat al-Qadr)": "ليلة ٢٧ (ليلة القدر)",
@@ -12154,6 +12160,42 @@ window.APL_KEYS = {
         });
     }
 
+    /* v8.7.42: open a YouTube video the way the user wants: 1) the "YouTube Dummy" app on this TV, 2) TizenTube, 3) the installed YouTube app,
+       4) last resort the TV browser. The video id goes both in the link and in PAYLOAD ("v=ID"), the form YouTube apps read at start-up.
+       Whether each app then plays the video itself depends on the app: untested on the TV. */
+    function openYouTube(videoId) {
+        var url = "https://www.youtube.com/watch?v=" + videoId;
+        return new Promise(function (resolve, reject) {
+            var T = global.tizen;
+            function browser() { openUrl(url).then(function () { resolve("browser"); }, reject); }
+            if (!hasTizen() || !T.application || typeof T.application.getAppsInfo !== "function" || !T.ApplicationControl) { browser(); return; }
+            T.application.getAppsInfo(function (list) {
+                var dummy = null, tube = null, yt = null, i, a;
+                for (i = 0; i < list.length; i++) {
+                    a = list[i];
+                    if (isDummyYouTube(a.id, a.name)) dummy = dummy || a.id;
+                    else if (a.id === BREW || isTizenTube(a.id, a.name)) tube = tube || a.id;
+                    else if (/^(9Ur5IzDKqV\.TizenYouTube|9uQXbeqlCA\.YouTube)$/.test(a.id)) yt = yt || a.id;
+                }
+                var order = [];
+                if (dummy) order.push(["dummy", dummy]);
+                if (tube) order.push(["tube", tube]);
+                if (yt) order.push(["youtube", yt]);
+                function next(k) {
+                    if (k >= order.length) { browser(); return; }
+                    var kind = order[k][0], id = order[k][1];
+                    try {
+                        if (kind === "tube") { launchTizenTube().then(function () { resolve(kind); }, function () { next(k + 1); }); return; }
+                        var data = [new T.ApplicationControlData("PAYLOAD", [JSON.stringify({ values: "v=" + videoId })])];
+                        var ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, null, null, data);
+                        T.application.launchAppControl(ctl, id, function () { resolve(kind); }, function () { next(k + 1); });
+                    } catch (e) { next(k + 1); }
+                }
+                next(0);
+            }, browser);
+        });
+    }
+
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {
         return new Promise(function (resolve) {
@@ -12177,6 +12219,7 @@ window.APL_KEYS = {
     global.APL.launchApp = launchApp;
     global.APL.launchDeepLink = launchDeepLink;
     global.APL.launchTizenTube = launchTizenTube;
+    global.APL.openYouTube = openYouTube;
     global.APL.TIZENTUBE_ART = { tile: asset(TIZENTUBE.tile) };
     global.APL.FAVORITES = FAVORITES;
 
@@ -16814,6 +16857,12 @@ window.APL_KEYS = {
         items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
         APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
     }
+    /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
+    function playSong(id) {
+        APL.settings.close();
+        if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
+        if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
+    }
     function openDuck() { APL.settings.close(); if (APL.openUrl) APL.openUrl("https://duck.ai/").catch(function (e) { if (APL.toast) APL.toast(e.message); }); }
     function openPrayer() { APL.settings.close(); if (APL.prayerPage) APL.prayerPage.open(); }
     /* Tint: 15 is neutral, below it more green, above it more red. */
@@ -17100,6 +17149,11 @@ window.APL_KEYS = {
                         if (typeof APL.prayerPage.openOccasions === "function") APL.prayerPage.openOccasions();
                     }
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
+                menu(APL.t("Ramadan & Eid Songs"), "speaker", [
+                    action("\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", function () { playSong("3EYDurKhcDs"); },
+                        APL.t("Opens the song on YouTube (online, with picture)."), "speaker")
+                ], APL.t("Songs that open on YouTube: first in YouTube Dummy, then TizenTube, then the YouTube app.")),
+
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
                     if (APL.prayerPage) {
@@ -17838,6 +17892,8 @@ window.APL_KEYS = {
 
             /* -------- Support -------- */
             menu(APL.t("Support"), "info", [
+                action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
+                    APL.t("Opens the old Ramadan song on YouTube (online, with picture)."), "speaker"),
                 menu(APL.t("Launcher Update"), "update", [
                     info(APL.t("Version"), function () {
                         var u = APL.updater;
@@ -25028,6 +25084,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.42: قسم جديد «أغاني رمضان والعيد» في الإعدادات (الصلاة والقرآن، وسط عناصر رمضان) بيفتح «أهلا بالعيد» على يوتيوب، وأغنية تانية مخفية في الإعدادات > الدعم. الأغنية بتفتح أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب، وآخر حاجة متصفح التلفزيون. بتشتغل أونلاين بالصورة ومفيش حاجة متخزنة في اللانشر.",
         "✔ 8.7.41: ويدجت رمضان بقى في نص الشاشة فوق صف التطبيقات مباشرة، بمسافة واضحة تحت كارت الصلاة وبعيد عن اسم التطبيق ووصفه. والمحتوى زاد من ٣٨ لـ ١٢٠ دعاء ونصيحة وأدعية ليلة القدر وفضائل رمضان (قرآن وأحاديث صحيحة فقط)، وكل مصدر حديث بقى مكتوب كامل زي «صحيح البخاري · حديث ٢٠١٧».",
         "✔ 8.7.40: ويدجت رمضان جديد في الشاشة الرئيسية (في رمضان بس): كارت زجاجي فوق صف التطبيقات فيه هلال كبير (وفانوس في الأيام الأولى) ومعاه دعاء أو نصيحة أو دعاء ليلة القدر بمصدره من القرآن أو الحديث، عربي وإنجليزي وبدون إنترنت؛ وأدعية ليلة القدر في العشر الأواخر. في الإعدادات إيقاف وتشغيل ومعاينة. درجة الحرارة بقت بحجم «منذ الظهر» ولونها أزرق زي المهام. صفحة تحديث اللانشر بتعرض آخر إصدار معروف فورًا. جملة «اضغط لتحت لقراءة الباقي» بتظهر بس لما النص فعلاً أطول من المربع، والمربع أطول. وويدجت الحكمة بعيد عن حافة الشاشة أكتر.",
         "✔ 8.7.39: شارة «OK · تشغيل الراديو» اللي على شاشة توقف المحراب الحي اتحذفت خالص — دلوقتي لما تضغط OK بيظهر تنبيه صغير إن الراديو اتشغّل أو اتوقف؛ وودجت الحكمة بقى بيختار من مكتبة الكلم الطيب كلها (أكتر من ٣٢ ألف حكمة) مش من عيّنة ألف بس",
@@ -25059,6 +25116,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.42: new “Ramadan & Eid Songs” entry in Settings (Prayer and Quran, among the Ramadan items) that opens “Ahlan bel Eid” on YouTube, and a second, hidden song entry in Settings > Support. A song opens first in YouTube Dummy, then TizenTube, then the YouTube app, and last in the TV browser. They play online with picture; nothing is stored in the launcher.",
         "✔ 8.7.41: the Ramadan widget is now centred just above the apps row, with a clear gap under the prayer card and clear of the focused app's name and description. The pool grows from 38 to 120 duas, tips, Laylat al-Qadr duas and virtues of Ramadan (Quran and hadith only), and every hadith source now reads “Sahih al-Bukhari · Hadith 2017” in full. The wisdom widget stays clear of the screen edge.",
         "✔ 8.7.40: new Ramadan widget on the Home screen (Ramadan only): a glass card above the apps row with a big crescent (a fanous lantern in the first days) and a rotating dua, tip or Laylat al-Qadr dua with its Quran / hadith source, Arabic and English, offline; the Qadr duas lead in the last ten nights. Settings > Ramadan has an on/off switch and a preview. The temperature on the Home screen now matches the “since prayer” text size and is blue like Tasks. The Launcher Update page shows the last known version at once. The “press Down to read more” hint now shows only when the text really overflows, and the text box is taller. The wisdom widget keeps a wider margin from the screen edge.",
         "✔ 8.7.39: the on-screen “OK · radio” chip on the Living Mihrab screen saver is gone for good - pressing OK now shows a short toast that the radio turned on or off; the wisdom widget draws from the whole Kalem Tayeb library (32,000+ wisdoms) instead of a 1,000-item sample",
