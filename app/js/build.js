@@ -1,6 +1,6 @@
-/* Build manifest for Salah Launcher v8.7.26 */
+/* Build manifest for Salah Launcher v8.7.27 */
 window.APL_BUILD = {
-  "version": "8.7.26",
+  "version": "8.7.27",
   "custom": true,
   "scripts": [
     "js/errlog.js",
@@ -25,6 +25,7 @@ window.APL_BUILD = {
     "js/prayer.js",
     "js/prayer-alert.js",
     "js/islamic.js",
+    "js/auto-location.js",
     "js/adhkar.js",
     "js/home-clock.js",
     "js/tasks.js",

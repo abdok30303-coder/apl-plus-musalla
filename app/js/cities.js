@@ -227,4 +227,53 @@
         return { id: m[0], en: m[1], ar: m[2], fajr: m[3], isha: m[4], ishaMin: m[5], mag: m[6] };
     });
     global.APL_METHOD_AUTO = function (cc) { return METHOD_BY_CC[cc] || 3; };
+
+    /* ---------- v8.7.27: what follows the country (location, Hijri calendar) ---------- */
+
+    /* The Hijri calendar a country follows. "egypt": Dar al-Ifta's astronomical rule, worked out on the screen (js/islamic.js).
+       The others are AlAdhan's calendarMethod: HJCoSA (Saudi announcements, adjusted after each sighting), UAQ, DIYANET.
+       Every other country: HJCoSA, the nearest regional announcement. Settings > Hijri Calendar Source can pick another one. */
+    var CAL_BY_CC = { EG: "egypt", TR: "DIYANET" };
+    global.APL_CAL_AUTO = function (cc) { return CAL_BY_CC[String(cc || "").toUpperCase()] || "HJCoSA"; };
+
+    /* The main city of a country, for when the screen only tells us the country (no internet, no position). */
+    var MAIN_CITY = {
+        EG: "cairo", SA: "riyadh", AE: "dubai", KW: "kuwait", QA: "doha", BH: "manama", OM: "muscat", YE: "sanaa",
+        JO: "amman", PS: "jerusalem", LB: "beirut", SY: "damascus", IQ: "baghdad", LY: "tripoli", TN: "tunis", DZ: "algiers",
+        MA: "rabat", SD: "khartoum", MR: "nouakchott", SO: "mogadishu", TR: "istanbul", IR: "tehran", PK: "karachi",
+        IN: "delhi", BD: "dhaka", AF: "kabul", LK: "colombo", ID: "jakarta", MY: "kualalumpur", SG: "singapore",
+        UZ: "tashkent", AZ: "baku", RU: "moscow", GB: "london", FR: "paris", DE: "berlin", ES: "madrid", IT: "rome",
+        NL: "amsterdam", BE: "brussels", SE: "stockholm", BA: "sarajevo", US: "newyork", CA: "toronto", BR: "saopaulo",
+        AU: "sydney", NZ: "auckland", ZA: "johannesburg", NG: "lagos", SN: "dakar", ET: "addisababa", KE: "nairobi", TZ: "daressalaam"
+    };
+    /* A city for a country and/or a time zone (either may be empty): the one that matches both, else the country's main city. */
+    global.APL_CITY_FOR = function (cc, tz) {
+        cc = String(cc || "").toUpperCase();
+        var main = MAIN_CITY[cc] && BY_KEY[MAIN_CITY[cc]], i, c;
+        if (cc && tz) {
+            if (main && main.tz === tz) return main;
+            for (i = 0; i < CITIES.length; i++) { c = CITIES[i]; if (c.cc === cc && c.tz === tz) return c; }
+        }
+        if (cc && main) return main;
+        if (tz) { for (i = 0; i < CITIES.length; i++) if (CITIES[i].tz === tz) return CITIES[i]; }
+        return null;
+    };
+
+    /* A country code from whatever the screen gives: "EG", "EGY", "ar_EG", "ar-EG". "" when it is not one we know. */
+    var ALPHA3 = {
+        EGY: "EG", SAU: "SA", ARE: "AE", KWT: "KW", QAT: "QA", BHR: "BH", OMN: "OM", YEM: "YE", JOR: "JO", PSE: "PS",
+        LBN: "LB", SYR: "SY", IRQ: "IQ", LBY: "LY", TUN: "TN", DZA: "DZ", MAR: "MA", SDN: "SD", MRT: "MR", SOM: "SO",
+        TUR: "TR", IRN: "IR", PAK: "PK", IND: "IN", BGD: "BD", AFG: "AF", LKA: "LK", IDN: "ID", MYS: "MY", SGP: "SG",
+        UZB: "UZ", AZE: "AZ", RUS: "RU", GBR: "GB", FRA: "FR", DEU: "DE", ESP: "ES", ITA: "IT", NLD: "NL", BEL: "BE",
+        SWE: "SE", BIH: "BA", USA: "US", CAN: "CA", BRA: "BR", AUS: "AU", NZL: "NZ", ZAF: "ZA", NGA: "NG", SEN: "SN",
+        ETH: "ET", KEN: "KE", TZA: "TZ"
+    };
+    global.APL_CC_FROM = function (v) {
+        var s = String(v || "").toUpperCase().replace(/[^A-Z_\-]/g, "");
+        if (!s) return "";
+        var m = /[_\-]([A-Z]{2,3})$/.exec(s);
+        if (m) s = m[1];
+        if (s.length === 3) s = ALPHA3[s] || "";
+        return (s.length === 2 && COUNTRY[s]) ? s : "";
+    };
 })(window);

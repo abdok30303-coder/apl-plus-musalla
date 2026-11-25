@@ -9,18 +9,28 @@
                                    Eid al-Adha and the other occasions, with the days left
                                    (v1.2.117: also the voluntary fasts: White Days, Monday/Thursday, six of Shawwal)
 
-   Where the dates come from, in this order:
-     1. The Hijri date that AlAdhan sends with the prayer times (already saved on the screen for
-        this month and the next one, see js/prayer.js). These days are exact: the page shows
-        the same Hijri date as the prayer page.
-     2. Beyond them, the months are worked out from the astronomical new moon (Meeus, chapter 49),
-        starting from the last exact month: a month begins the next day when the new moon is at
-        least 5 hours old at sunset in Cairo (the rule the Egyptian authorities use, in short).
-        These dates can be one day off from the announcement of the moon sighting: they are shown
-        with a "≈" in the launcher, and replaced by exact ones as the days come within the saved
-        prayer times.
-     3. With no saved prayer times at all (first start, no network ever): the plain tabular
-        Islamic calendar, also marked "≈".
+   v8.7.27: the calendar follows the PLACE of the prayer times (the city, found by js/auto-location.js
+   or chosen by hand), not Cairo only. "Today" is the date in that city, and the crescent is checked
+   at that city's sunset.
+
+   Where the dates come from (Settings > Hijri Calendar Source: Automatic by country, or one picked):
+     0. A month corrected by hand (Settings > Correct Ramadan & Eid dates): that start date, shifted
+        by the days given. Always exact.
+     1. Egypt (the Automatic choice for Egypt): the crescent rule below, from a firm anchor
+        (1 Ramadan 1447 = 19 February 2026, announced by Dar al-Ifta).
+        Other countries: the Hijri date AlAdhan sends with the prayer times (calendarMethod HJCoSA =
+        Saudi announcements, UAQ, or DIYANET for Turkey; saved on the screen for this month and the next
+        one, see js/prayer.js), renewed weekly and every 12 hours around a month change.
+     2. Every other month: worked out from the astronomical new moon (Meeus, chapter 49). A month ends
+        on the evening of its 29th day when the new moon is at least MIN_AGE hours old at sunset in
+        the city, otherwise it has 30 days. MIN_AGE is 4 hours (it was 5).
+        Checked against 15 Egyptian month starts (Ramadan, Eid al-Fitr, Dhul-Hijjah, 1443 to 1447), taken from the
+        announcements as remembered, not re-read from the bulletins: 4 hours fits all 15, 5 hours misses
+        Dhul-Hijjah 1445 (the moon was 4.3 hours old at sunset). The hours that fit all 15 are only 3.7 to
+        4.3, so this is an estimate, not the authority's real method (which also looks at moonset).
+        A date is "exact" once its month has begun and the moon was clearly on one side
+        of the limit (1.5 hours); otherwise it is shown with a "≈" until the announcement.
+     3. Before the anchor (a screen with a wrong date): the plain tabular Islamic calendar, "≈".
    Nothing here reads the network. All dates are plain day numbers (JDN), so the TV's time
    zone never moves a date.
    ============================================================ */
@@ -46,7 +56,12 @@
         var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
         return m ? jdn(+m[1], +m[2], +m[3]) : null;
     }
+    /* v8.7.27: today's date in the city of the prayer times (its own time zone), else the screen's date. */
     function todayJdn() {
+        try {
+            var j = jdnOfIso(APL.prayer && APL.prayer.todayKey ? APL.prayer.todayKey() : "");
+            if (j !== null) return j;
+        } catch (e) {}
         var d = new Date();
         return jdn(d.getFullYear(), d.getMonth() + 1, d.getDate());
     }
@@ -99,9 +114,15 @@
         return jde + c - DELTA_T / 86400;
     }
 
-    /* ---------- the sunset in Cairo (NOAA's short formula, good to a minute or two) ---------- */
-    var LAT = 30.0444, LON = 31.2357;
-    function sunsetJd(j) {
+    /* ---------- the sunset of the prayer city (NOAA's short formula, good to a minute or two) ---------- */
+    /* v8.7.27: the city of the prayer times (before: Cairo only). */
+    function where() {
+        var c = null;
+        try { c = APL.prayer && APL.prayer.city ? APL.prayer.city() : null; } catch (e) { c = null; }
+        return (c && typeof c.lat === "number" && typeof c.lon === "number") ? { lat: c.lat, lon: c.lon, cc: c.cc || "" } : { lat: 30.0444, lon: 31.2357, cc: "EG" };
+    }
+    function sunsetJd(j, lat, lon) {
+        var LAT = typeof lat === "number" ? lat : 30.0444, LON = typeof lon === "number" ? lon : 31.2357;
         var jd = j - LON / 360;                                       // about solar noon there
         var T = (jd - 2451545) / 36525;
         var L0 = (280.46646 + 36000.76983 * T) % 360;
@@ -133,14 +154,36 @@
 
     /* Is the new crescent counted on the evening of civil day j (the 29th of the month)?
        The new moon (conjunction) is behind us, by at least MIN_AGE hours at sunset. A new moon that
-       comes after sunset, or only a few hours before it, does not count: the month then has 30 days. */
-    var MIN_AGE = 5;
-    function crescentCounted(j) {
-        var ss = sunsetJd(j), nm = nearestNewMoon(ss);
-        return (ss - nm) * 24 >= MIN_AGE;
+       comes after sunset, or only a few hours before it, does not count: the month then has 30 days.
+       v8.7.27: MIN_AGE 4 (was 5), see the header for what it was checked against and how far it can be trusted. */
+    var MIN_AGE = 4;
+    function crescentAge(j, w) {
+        w = w || where();
+        var ss = sunsetJd(j, w.lat, w.lon);
+        return (ss - nearestNewMoon(ss)) * 24;
     }
+    function crescentCounted(j, w) { return crescentAge(j, w) >= MIN_AGE; }
 
     /* ---------- the Hijri months ---------- */
+    var version = 0;                                                  // bumped by clearCache()
+    function offset() {
+        var off = 0;
+        try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
+        return off;
+    }
+    /* Corrections made by hand: { "1448-9": 1 } = the month 9 of 1448 starts one day later than the automatic date. */
+    function fixes() {
+        var o = null;
+        try { o = APL.sys && APL.sys.pref("hijriFix"); } catch (e) { o = null; }
+        return (o && typeof o === "object") ? o : {};
+    }
+    /* The calendar followed here: "egypt" (the rule), "HJCoSA", "UAQ" or "DIYANET" (AlAdhan's Hijri dates). */
+    function source() {
+        var s = "";
+        try { s = APL.prayer && APL.prayer.calendarSource ? APL.prayer.calendarSource() : ""; } catch (e) { s = ""; }
+        return s || "egypt";
+    }
+
     /* What the saved prayer times know: { "y-m": first day (JDN) }, and the last saved day. */
     function savedMonths() {
         var known = {}, last = 0, list = [];
@@ -154,28 +197,61 @@
         return { known: known, last: last };
     }
 
-    function hijriFor(j) {
-        var h = null;
-        try { h = APL.prayer && APL.prayer.hijriOf ? APL.prayer.hijriOf(isoOf(j)) : null; } catch (e) { h = null; }
-        if (h) return { y: h.y, m: h.m, d: h.d, exact: true };
-        var t = tabular(j);
-        return { y: t.y, m: t.m, d: t.d, exact: false };
+    /* The months by the crescent rule, one after the other from the anchor: [{ y, m, start, len, firm, endFirm }].
+       firm = the start of this month was decided with the moon clearly on one side of the limit (the anchor is announced). */
+    var ANCHOR = { y: 1447, m: 9, start: jdn(2026, 2, 19) };
+    var rule = { sig: "", list: [] };
+    function ruleList(w, upto) {
+        var sig = w.lat.toFixed(2) + "," + w.lon.toFixed(2);
+        if (rule.sig !== sig) rule = { sig: sig, list: [] };
+        var L = rule.list, guard = 0;
+        if (!L.length) L.push({ y: ANCHOR.y, m: ANCHOR.m, start: ANCHOR.start, firm: true });
+        while (L[L.length - 1].start <= upto && guard++ < 1500) {
+            var a = L[L.length - 1], age = crescentAge(a.start + 28, w), counted = age >= MIN_AGE;
+            a.len = counted ? 29 : 30;
+            a.endFirm = counted ? age >= MIN_AGE + 1.5 : age <= MIN_AGE - 1.5;
+            var ny = a.y, nm = a.m + 1;
+            if (nm > 12) { nm = 1; ny++; }
+            L.push({ y: ny, m: nm, start: a.start + a.len, firm: a.endFirm });
+        }
+        return L;
     }
 
-    /* count months from the one that holds day j, each with its first day and its length */
-    function monthsFrom(j, h, saved, count) {
-        var out = [], y = h.y, m = h.m, start = j - (h.d - 1), i, key;
-        if (saved.known[y + "-" + m] !== undefined) start = saved.known[y + "-" + m];
-        for (i = 0; i < count; i++) {
-            var ny = y, nm = m + 1;
+    /* Before the anchor (a screen with a wrong date): the tabular calendar, months by the rule from there. */
+    function tabularMonths(j, count, w) {
+        var t = tabular(j), y = t.y, m = t.m, start = j - (t.d - 1), out = [];
+        for (var i = 0; i < count; i++) {
+            var len = crescentCounted(start + 28, w) ? 29 : 30, ny = y, nm = m + 1;
             if (nm > 12) { nm = 1; ny++; }
-            var nextKey = ny + "-" + nm, len, nextStart;
-            if (saved.known[nextKey] !== undefined) { nextStart = saved.known[nextKey]; len = nextStart - start; }
-            else { len = crescentCounted(start + 28) ? 29 : 30; nextStart = start + len; }
-            out.push({ y: y, m: m, start: start, len: len });
-            y = ny; m = nm; start = nextStart;
+            out.push({ y: y, m: m, start: start, len: len, exact: false });
+            y = ny; m = nm; start += len;
         }
         return out;
+    }
+
+    /* The months from the one that holds day j, `count` of them: { y, m, start, len, exact }, with the corrections applied:
+         1. a month corrected by hand: shifted by that many days, exact;
+         2. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
+         3. the crescent rule: exact once the month has begun and its start was firm. */
+    function monthsFrom(j, count) {
+        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i;
+        if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
+        var L = ruleList(w, j + (count + 3) * 31), eff = [];
+        for (i = 0; i < L.length - 1; i++) {
+            var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10);
+            if (saved.known[key] !== undefined && Math.abs(saved.known[key] - r.start) <= 3) { s = saved.known[key]; ex = true; }
+            if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; }
+            eff.push({ y: r.y, m: r.m, start: s, exact: ex });
+        }
+        for (i = 0; i < eff.length - 1; i++) eff[i].len = eff[i + 1].start - eff[i].start;
+        eff.pop();
+        for (i = 0; i < eff.length; i++) if (eff[i].start <= j && j < eff[i].start + eff[i].len) break;
+        if (i >= eff.length) return tabularMonths(j, count, w);
+        return eff.slice(i, i + count);
+    }
+    function hijriOnDay(j) {
+        var mo = monthsFrom(j, 1)[0];
+        return { y: mo.y, m: mo.m, d: j - mo.start + 1, exact: mo.exact };
     }
 
     /* ---------- names, in the launcher's language ---------- */
@@ -215,11 +291,7 @@
         var s = (opts && opts.night ? opts.night : h.d) + " " + HIJRI_MONTHS[lang][h.m - 1] + (h.y ? " " + h.y + " " + AH[lang] : "");
         return (opts && opts.night ? (lang === 0 ? "ليلة " : lang === 2 ? "nuit du " : "night of ") : "") + s;
     }
-    function hijriToday() {
-        var off = 0;
-        try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
-        return hijriFor(todayJdn() + off);
-    }
+    function hijriToday() { return hijriOnDay(todayJdn() + offset()); }
 
     /* ---------- the occasions ---------- */
     /* m = Hijri month, d = day it begins on. evening: it begins at Maghrib of that day (the night
@@ -261,7 +333,7 @@
     var cache = { sig: "", data: null };
 
     /* One occasion, from the first month that still has it ahead (or under way). */
-    function place(ev, months, today, lastExact) {
+    function place(ev, months, today) {
         for (var i = 0; i < months.length; i++) {
             var mo = months[i];
             if (mo.m !== ev.m) continue;
@@ -269,7 +341,7 @@
             if (ev.span === "month") end = mo.start + mo.len - 1;
             else if (typeof ev.span === "number") end = start + ev.span - 1;
             if (end < today) continue;
-            var st = { ev: ev, start: start, end: end, hy: mo.y, exact: lastExact >= start };
+            var st = { ev: ev, start: start, end: end, hy: mo.y, exact: mo.exact };
             if (start > today) { st.kind = "soon"; st.days = start - today; }
             else if (start === today) { st.kind = ev.evening ? "tonight" : (end > start ? "now" : "today"); st.days = 0; }
             else { st.kind = "now"; st.days = 0; }
@@ -303,19 +375,19 @@
         for (var i = 0; i < months.length; i++) {
             if (months[i].m === 9 || months[i].m === 12) continue;
             var ev = { key: "white", m: months[i].m, d: 13, span: 3, names: WHITE_NAMES };
-            var st = place(ev, [months[i]], today, 0);
+            var st = place(ev, [months[i]], today);
             if (st && (!best || st.start < best.start)) best = st;
             if (best) break;                                  // months are in order: the first one that is still ahead
         }
         return best;
     }
-    function mondayThursday(months, today, lastExact) {
+    function mondayThursday(months, today) {
         for (var j = today, n = 0; n < 21; j++, n++) {
             var wd = weekday(j);
             if (wd !== 1 && wd !== 4) continue;
             if (fastClosed(months, j)) continue;
             var mo = monthAt(months, j), g = gregorian(j);
-            var st = { ev: { key: "monthu", names: MONTHU_NAMES[wd === 1 ? 0 : 1] }, start: j, end: j, hy: mo.y, exact: lastExact >= j };
+            var st = { ev: { key: "monthu", names: MONTHU_NAMES[wd === 1 ? 0 : 1] }, start: j, end: j, hy: mo.y, exact: mo.exact };
             st.kind = j === today ? "today" : "soon"; st.days = j - today;
             st.name = pick(st.ev.names);
             st.hijri = hijriText({ d: j - mo.start + 1, m: mo.m, y: mo.y });
@@ -326,19 +398,17 @@
     }
 
     function occasions() {
-        var off = 0;
-        try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
-        var today = todayJdn() + off, h = hijriFor(today), saved = savedMonths();
-        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, APL.lang].join("|");
+        var off = offset(), today = todayJdn() + off, h = hijriOnDay(today), saved = source() === "egypt" ? { last: 0 } : savedMonths(), w = where();
+        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, APL.lang].join("|");
         if (cache.sig === sig && cache.data) return cache.data;
-        var months = monthsFrom(today, h, saved, 26), all = [], i;
+        var months = monthsFrom(today, 26), all = [], i;
         for (i = 0; i < EVENTS.length; i++) {
-            var st = place(EVENTS[i], months, today, saved.last);
+            var st = place(EVENTS[i], months, today);
             if (st) { st.order = i; all.push(st); }
         }
         function rank(a) { return a.kind === "now" || a.kind === "today" || a.kind === "tonight" ? -1 : a.days; }
         function byStart(a, b) { return (rank(a) - rank(b)) || (a.start - b.start) || (a.order - b.order); }
-        var wd = whiteDays(months, today), mt = mondayThursday(months, today, saved.last);
+        var wd = whiteDays(months, today), mt = mondayThursday(months, today);
         if (wd) { wd.order = EVENTS.length; all.push(wd); }
         if (mt) { mt.order = EVENTS.length + 1; all.push(mt); }
         all.sort(byStart);
@@ -354,19 +424,43 @@
         return out;
     }
 
+    /* v8.7.27: Ramadan and the two Eids the way Settings > Correct Ramadan & Eid dates lists them: the next one of each,
+       with the Hijri month it belongs to, its date, and the correction made by hand (days). */
+    function keyDates() {
+        var o = occasions(), fx = fixes(), out = [];
+        ["ramadan", "fitr", "adha"].forEach(function (k) {
+            for (var i = 0; i < o.all.length; i++) {
+                var st = o.all[i];
+                if (st.ev.key !== k) continue;
+                var d = parseInt(fx[st.hy + "-" + st.ev.m], 10) || 0;
+                out.push({ key: k, name: st.name, hy: st.hy, m: st.ev.m, start: st.start, auto: st.start - d, fix: d, exact: st.exact, dateText: st.dateText });
+                break;
+            }
+        });
+        return out;
+    }
+    function setFix(y, m, delta) {
+        var cur = fixes(), o = {}, d = Math.max(-2, Math.min(2, parseInt(delta, 10) || 0)), hy = 0;
+        try { hy = hijriToday().y; } catch (e) { hy = 0; }
+        Object.keys(cur).forEach(function (q) { if (!hy || parseInt(q, 10) >= hy - 1) o[q] = cur[q]; });   // corrections of past years are dropped
+        if (d) o[y + "-" + m] = d; else delete o[y + "-" + m];
+        APL.sys.setPref("hijriFix", o);
+    }
+    function clearCache() { cache = { sig: "", data: null }; rule = { sig: "", list: [] }; version++; }
+
     APL.islamic = {
         jdn: jdn, ymd: ymd, isoOf: isoOf, weekday: weekday, today: todayJdn,
         hijriToday: hijriToday, hijriText: hijriText, gregorian: gregorian,
         /* v8.7.22: Hijri date of any Gregorian day (y, m, d), same offset and rules as hijriToday. prayer.js needs it to mark Ramadan Maghrib in the background schedule. */
-        toHijri: function (y, m, d) {
-            var off = 0;
-            try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
-            return hijriFor(jdn(y, m, d) + off);
-        },
+        toHijri: function (y, m, d) { return hijriOnDay(jdn(y, m, d) + offset()); },
         occasions: occasions,
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
+        /* v8.7.27 */
+        clearCache: clearCache,
+        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version].join(":"); },
+        source: source, keyDates: keyDates, setFix: setFix,
         /* for the tests: the pieces that can be checked on their own */
-        _newMoon: newMoon, _sunsetJd: sunsetJd, _tabular: tabular, _crescentCounted: crescentCounted,
-        _monthsFrom: function (j, h, saved, count) { return monthsFrom(j, h, saved, count); }
+        _newMoon: newMoon, _sunsetJd: sunsetJd, _tabular: tabular, _crescentCounted: crescentCounted, _crescentAge: crescentAge,
+        _monthsFrom: monthsFrom, _ruleList: ruleList
     };
 })(window);
