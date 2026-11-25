@@ -1,3 +1,12 @@
+## 8.7.40
+
+- Ramadan widget: a glass card above the apps row, shown automatically only in Ramadan (it follows the v8.7.38 Hijri calendar). A big crescent, or a fanous lantern, mostly in days 1-5. Beside it a rotating dua, tip or Laylat al-Qadr dua, with the Quran or hadith source and grading under it. Qadr duas lead in the last ten nights. Arabic and English, all offline (data/ramadan/ramadan.json, 38 items: 13 duas, 16 tips, 9 Qadr). Settings > Ramadan: "Ramadan Widget" switch (on by default) and "Ramadan Widget Preview" (Off / Day 1 lantern / Day 12 crescent / Night 27) to see it outside Ramadan. It hides over pages and when the shelf is not showing, and the wisdom widget moves up out of its way.
+- Home temperature: same size as the "since prayer" text, blue (#60a5fa) like Tasks.
+- Launcher Update: the last known "Latest on GitHub" version is saved and shown at once; the check refreshes it in the background.
+- "Press Down to read more" hint: shown only when the text really runs past the box. The message box is taller (720 px instead of 540), so fewer pages need scrolling. Applies to every message box that uses the hint, including What's New.
+- Wisdom widget: edge margin raised (about 50 to 66 px) with long-word wrapping, so nothing touches the screen edge on TVs with overscan.
+- Checked in Node and headless Chrome (layout render and a fit test of all 38 items in both languages). The Ramadan texts were written from memory of the sources and are not checked against a printed copy. Untested on a physical TV.
+
 ## 8.7.39
 
 - Living Mihrab screen saver: the on-screen "OK · تشغيل/إيقاف الراديو" chip is removed (it looked and sat badly). OK still starts / stops the radio (Settings > Screen Saver > Radio Button in the Screen Saver), and a short toast now says what happened: "Radio turned on" / "Radio turned off" (Arabic and English, the two languages the launcher ships). A failed start keeps the existing "The radio needs the internet." wording.

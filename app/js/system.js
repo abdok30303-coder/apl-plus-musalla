@@ -121,6 +121,8 @@
         prayerAlerts: true,         // a short spoken alert at each prayer time
         prayerAlertVolume: 0.92,
         prayerWidgetShow: "occ",    // v7.2.1/v8.5.0: "occ" | "ayah" | "tafsir" | "hekam" | "pers"
+        ramadanWidget: true,        // v8.7.40: the Ramadan widget (crescent / lantern, duas, tips) on the Home Screen, shown by itself in Ramadan only
+        ramadanWidgetPreview: 0,    // v8.7.40: 0 = off | 1 | 12 | 27: shows the widget as if it were that day of Ramadan, to look at it outside Ramadan
         hekamWidget: true,          // v8.7.28: ON by default (was off). v8.5.0: separate Home Screen widget for Hekam, rotating every 5 min
         hekamPos: "top-right",      // v8.5.0: "top-right" | "top-center" | "top-left" | "bottom-right" | "bottom-center" | "bottom-left" | "inline"
         hekamScale: 150,            // v8.5.0: 100 | 125 | 150 | 175 | 200

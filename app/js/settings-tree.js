@@ -556,6 +556,13 @@
                     "افتح المصحف، سجّل اللي قرأته، هدف يومي، أيام متتالية، وسورة الكهف يوم الجمعة.", "book"),
                 action("وضع رمضان", function () { if (APL.ramadan) APL.ramadan.panel(); },
                     "تلقائي في رمضان: عدّاد السحور والإفطار، مدفع، تنبيه التراويح، وختمة ٣٠ يوم.", "moon"),
+                toggle(APL.t("Ramadan Widget"), "ramadanWidget",
+                    APL.t("In Ramadan only: a crescent (a lantern in the first days) with Ramadan duas, tips and Laylat al-Qadr duas above the apps row. Off: it never shows.")),
+                choice(APL.t("Ramadan Widget Preview"), "ramadanWidgetPreview",
+                    [[0, APL.t("Off")], [1, APL.t("Day 1 (lantern)")], [12, APL.t("Day 12 (crescent)")], [27, APL.t("Night 27 (Laylat al-Qadr)")]],
+                    APL.t("Shows the Ramadan widget now, as on that day, so you can see it outside Ramadan. Set it back to Off afterwards."), function () {
+                        if (APL.ramadanWidget) APL.ramadanWidget.sync();
+                    }),
                 action("تدفق الصلاة", function () { if (APL.prayerFlow) APL.prayerFlow.panel(); },
                     "عدّاد الإقامة بعد الأذان، وبعدها الشاشة بتهدى وترجع لوحدها (مقفول افتراضيًا).", "moon"),
                 info(APL.t("Next Prayer"), function () {

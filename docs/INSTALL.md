@@ -7,7 +7,7 @@ Apps2Samsung is a free tool that installs apps on Samsung TVs from your computer
 ## What you need
 - A Samsung Smart TV from **2022 or newer** (Tizen 6.5+).
 - A computer (Windows, macOS or Linux) or a phone, connected to the **same Wi-Fi / network as the TV**.
-- The file **`salah-launcher-v8.7.39.wgt`** from the [Releases page](../../../releases).
+- The file **`salah-launcher-v8.7.40.wgt`** from the [Releases page](../../../releases).
 - The **Apps2Samsung** tool: <https://github.com/Apps2Samsung/Apps2Samsung/releases> (homepage: apps2samsung.madebypatrick.nl).
 
 ## Step 1 — Open Apps2Samsung and get your computer's IP
@@ -29,7 +29,7 @@ Apps2Samsung is a free tool that installs apps on Samsung TVs from your computer
 ## Step 3 — Install with Apps2Samsung
 1. Open the Apps2Samsung tool on your computer.
 2. Select your TV from the list.
-3. Choose to install a **custom `.wgt`** file and pick `salah-launcher-v8.7.39.wgt`.
+3. Choose to install a **custom `.wgt`** file and pick `salah-launcher-v8.7.40.wgt`.
 4. Press **Install** and wait for the success message.
 5. If the tool asks you to sign in with a free **Samsung developer account** (it can on Tizen 7 and newer TVs), follow its on-screen steps.
 
@@ -56,7 +56,7 @@ Sideloading is done at your own risk, and enabling Developer Mode can affect sup
 ## المطلوب
 - شاشة سامسونج ذكية موديل **2022 أو أحدث** (Tizen 6.5 فما فوق).
 - كمبيوتر (ويندوز أو ماك أو لينكس) أو موبايل، على **نفس شبكة الواي فاي بتاعة الشاشة**.
-- ملف **`salah-launcher-v8.7.39.wgt`** من صفحة [Releases](../../../releases).
+- ملف **`salah-launcher-v8.7.40.wgt`** من صفحة [Releases](../../../releases).
 - أداة **Apps2Samsung**: <https://github.com/Apps2Samsung/Apps2Samsung/releases>
 
 ## الخطوة 1: افتح Apps2Samsung واعرف رقم IP بتاع الكمبيوتر
@@ -78,7 +78,7 @@ Sideloading is done at your own risk, and enabling Developer Mode can affect sup
 ## الخطوة 3: التثبيت بـ Apps2Samsung
 1. افتح أداة Apps2Samsung على الكمبيوتر.
 2. اختار شاشتك من القايمة.
-3. اختار تثبيت ملف **`.wgt` مخصص** وحدد `salah-launcher-v8.7.39.wgt`.
+3. اختار تثبيت ملف **`.wgt` مخصص** وحدد `salah-launcher-v8.7.40.wgt`.
 4. اضغط **Install** واستنى رسالة النجاح.
 5. لو طلبت منك الأداة تسجيل الدخول بحساب **مطوّر سامسونج** (مجاني)، وده ممكن يحصل على شاشات Tizen 7 وأحدث، كمّل بالخطوات اللي بتظهر.
 

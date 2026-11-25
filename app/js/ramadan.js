@@ -205,5 +205,132 @@
 
     global.document.addEventListener("visibilitychange", function () { if (!global.document.hidden) tick(); });
     global.setTimeout(tick, 4000);
+    /* ============================================================
+       v8.7.40 - THE RAMADAN WIDGET (Home Screen, above the apps row).
+       A glass card: a big crescent (or, mostly in the first 5 days, a fanous lantern) and beside it a Ramadan dua, a tip, or
+       - in the last ten nights - a dua / virtue of Laylat al-Qadr. Content: data/ramadan/ramadan.json (offline; Quran and
+       hadith only, each with its source). On by itself while the Hijri month is Ramadan (APL.islamic, the same date as
+       everywhere else), off with Settings > Prayer and Quran > Ramadan Widget; Ramadan Widget Preview shows it outside Ramadan.
+       It sits in the shelf state only (hidden while the grid / full screen / a page / the screen saver is up), on the side of the
+       screen opposite the focused app's description, and moves the wisdom widget up while it is shown (body.rw-on).
+       ============================================================ */
+    var RW = { el: null, data: null, loading: false, cur: null, recent: [], lantern: false, on: false, key: "" };
+    function rwPref(k) { try { return APL.sys.pref(k); } catch (e) { return undefined; } }
+    function rwAr() { return APL.lang === "ar"; }
+    function rwState() {
+        if (rwPref("ramadanWidget") === false) return null;
+        var pv = parseInt(rwPref("ramadanWidgetPreview"), 10) || 0;
+        if (pv > 0) return { day: Math.min(30, pv), preview: true };
+        var h = hijri();
+        return (h && h.m === 9) ? { day: Math.max(1, Math.min(30, h.d)), preview: false } : null;
+    }
+    var RW_CRESCENT = '<svg viewBox="0 0 120 120" aria-hidden="true"><defs>' +
+        '<linearGradient id="rwcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".55" stop-color="#f3c969"/><stop offset="1" stop-color="#c8902a"/></linearGradient>' +
+        '<radialGradient id="rwcgl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd978" stop-opacity=".55"/><stop offset="1" stop-color="#ffd978" stop-opacity="0"/></radialGradient></defs>' +
+        '<circle cx="60" cy="60" r="58" fill="url(#rwcgl)"/>' +
+        '<path d="M78 14A47 47 0 1 0 106 80A38 38 0 1 1 78 14Z" fill="url(#rwcg)"/>' +
+        '<path d="M92 34l3.2 7.4 8 .8-6 5.4 1.8 7.9-7-4.1-7 4.1 1.8-7.9-6-5.4 8-.8z" fill="#fff3c4"/></svg>';
+    var RW_LANTERN = '<svg viewBox="0 0 120 120" aria-hidden="true"><defs>' +
+        '<linearGradient id="rwlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".55" stop-color="#f3c969"/><stop offset="1" stop-color="#b9821f"/></linearGradient>' +
+        '<linearGradient id="rwlb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a8" stop-opacity=".95"/><stop offset="1" stop-color="#ff9d3c" stop-opacity=".75"/></linearGradient>' +
+        '<radialGradient id="rwlgl" cx=".5" cy=".55" r=".5"><stop offset="0" stop-color="#ffd978" stop-opacity=".5"/><stop offset="1" stop-color="#ffd978" stop-opacity="0"/></radialGradient></defs>' +
+        '<circle cx="60" cy="62" r="58" fill="url(#rwlgl)"/>' +
+        '<circle cx="60" cy="9" r="4.5" fill="none" stroke="url(#rwlg)" stroke-width="2.5"/><path d="M60 13.5V20" stroke="url(#rwlg)" stroke-width="2.5"/>' +
+        '<path d="M40 31Q60 12 80 31Z" fill="url(#rwlg)"/><rect x="38" y="31" width="44" height="6" rx="3" fill="url(#rwlg)"/>' +
+        '<path d="M41 37H79L86 80H34Z" fill="url(#rwlb)" stroke="url(#rwlg)" stroke-width="2.5" stroke-linejoin="round"/>' +
+        '<path d="M52 37L49 80M68 37L71 80M60 37V80" stroke="#b9821f" stroke-width="1.6" opacity=".8"/>' +
+        '<rect x="32" y="80" width="56" height="7" rx="3" fill="url(#rwlg)"/><path d="M42 87H78L60 106Z" fill="url(#rwlg)"/>' +
+        '<path d="M60 106V112" stroke="url(#rwlg)" stroke-width="2.5"/><circle cx="60" cy="114" r="3" fill="url(#rwlg)"/></svg>';
+    function rwBuild() {
+        if (RW.el) return RW.el;
+        var d = global.document.createElement("div");
+        d.className = "rw";
+        d.innerHTML = '<div class="rw__art"></div><div class="rw__body"><div class="rw__top"><span class="rw__kind"></span><span class="rw__day"></span></div>' +
+            '<div class="rw__text"></div><div class="rw__tr"></div><div class="rw__src"></div></div>';
+        global.document.body.appendChild(d);
+        RW.el = d;
+        return d;
+    }
+    function rwLoad() {
+        if (RW.data || RW.loading) return;
+        RW.loading = true;
+        var r = new XMLHttpRequest();
+        r.open("GET", global.APL_ASSET ? global.APL_ASSET("data/ramadan/ramadan.json") : "data/ramadan/ramadan.json", true);
+        r.timeout = 15000;
+        r.onload = function () {
+            RW.loading = false;
+            try { var j = JSON.parse(r.responseText); if (j && j.items && j.items.length) { RW.data = j.items; rwSync(true); } } catch (e) {}
+        };
+        r.onerror = r.ontimeout = function () { RW.loading = false; };
+        r.send();
+    }
+    function rwPick(st) {
+        var items = RW.data, last10 = st.day >= 21, r = Math.random(), kind, pool, i;
+        if (last10) kind = r < 0.55 ? "qadr" : (r < 0.8 ? "dua" : "tip");
+        else kind = r < 0.1 ? "qadr" : (r < 0.5 ? "dua" : "tip");
+        pool = items.filter(function (x) { return x.k === kind && (kind !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
+        if (!pool.length) pool = items.filter(function (x) { return (x.k !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
+        if (!pool.length) { RW.recent = []; pool = items.filter(function (x) { return x.k !== "qadr" || last10 || x.any; }); }
+        i = pool[Math.floor(Math.random() * pool.length)];
+        RW.recent.push(i);
+        if (RW.recent.length > 8) RW.recent.shift();
+        return i;
+    }
+    function rwFit() {
+        var t = RW.el && RW.el.querySelector(".rw__text"), b = RW.el && RW.el.querySelector(".rw__body");
+        if (!t || !b) return;
+        var fs = 28, tr = RW.el.querySelector(".rw__tr");
+        t.style.fontSize = fs + "px"; if (tr) tr.style.fontSize = Math.round(fs * 0.68) + "px";
+        while (fs > 15 && b.scrollHeight > b.clientHeight + 1) {
+            fs -= 1;
+            t.style.fontSize = fs + "px"; if (tr) tr.style.fontSize = Math.max(14, Math.round(fs * 0.68)) + "px";
+        }
+    }
+    function rwPaint(st, fresh) {
+        var el = rwBuild(), ar = rwAr(), it = RW.cur, kindTxt, dayTxt;
+        if (!it) return;
+        el.className = "rw rw--" + (RW.lantern ? "lantern" : "crescent") + (it.k === "qadr" ? " rw--qadr" : "") + " is-on";
+        el.querySelector(".rw__art").innerHTML = RW.lantern ? RW_LANTERN : RW_CRESCENT;
+        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
+        dayTxt = (ar ? "رمضان · اليوم " : "Ramadan · Day ") + dg(st.day) + (st.day >= 21 ? (ar ? " · العشر الأواخر" : " · last ten nights") : "") + (st.preview ? (ar ? " · معاينة" : " · preview") : "");
+        el.querySelector(".rw__kind").textContent = kindTxt;
+        el.querySelector(".rw__day").textContent = dayTxt;
+        var tx = el.querySelector(".rw__text"), tr = el.querySelector(".rw__tr");
+        tx.textContent = it.ar; tx.setAttribute("dir", "rtl");
+        if (ar) { tr.textContent = ""; tr.style.display = "none"; }
+        else { tr.textContent = it.en; tr.style.display = "block"; tr.setAttribute("dir", "ltr"); }
+        el.querySelector(".rw__src").textContent = ar ? it.sar : it.sen;
+        rwFit();
+    }
+    function rwSync(rotate) {
+        var st = rwState(), body = global.document.body;
+        if (!st) {
+            if (RW.el) { RW.el.className = "rw"; }
+            if (RW.on) { RW.on = false; body.classList.remove("rw-on"); try { if (APL.hekamRefit) APL.hekamRefit(); } catch (e) {} }
+            return;
+        }
+        if (!RW.data) { rwLoad(); return; }
+        var key = st.day + (st.preview ? "p" : "") + (rwAr() ? "a" : "e");
+        if (rotate || !RW.cur || key !== RW.key) {
+            if (rotate || !RW.cur) {
+                RW.cur = rwPick(st);
+                /* the lantern: sometimes in the first 5 days (most of the time then), never after them */
+                RW.lantern = st.day <= 5 && (!RW.el || RW.el.className.indexOf("is-on") < 0 || Math.random() < 0.7);
+            }
+            RW.key = key;
+        }
+        rwPaint(st);
+        if (!RW.on) { RW.on = true; body.classList.add("rw-on"); try { if (APL.hekamRefit) APL.hekamRefit(); } catch (e) {} }
+    }
+    function rwRotate() { if (!global.document.hidden) rwSync(true); }
+    if (APL.timers && APL.timers.every) APL.timers.every("ramadanWidget", 25000, rwRotate);
+    else global.setInterval(rwRotate, 25000);
+    ["ramadanWidget", "ramadanWidgetPreview"].forEach(function (k) { try { APL.sys.onPref(k, function () { RW.cur = null; rwSync(true); }); } catch (e) {} });
+    global.document.addEventListener("visibilitychange", function () { if (!global.document.hidden) rwSync(false); });
+    global.setTimeout(function () { rwSync(false); }, 5000);
+    APL.ramadanWidget = { sync: function () { rwSync(true); }, state: rwState,
+        /* for the tests: show item i and say whether its text fits the card at the smallest font */
+        _show: function (i) { RW.cur = RW.data[i]; rwPaint(rwState()); var t = RW.el.querySelector(".rw__text"), bd = RW.el.querySelector(".rw__body"); return { fs: parseInt(t.style.fontSize, 10), over: bd.scrollHeight > bd.clientHeight + 1, n: RW.data.length }; } };
+
     APL.ramadan = { panel: panel, active: active, day: dayNo, state: function () { return S; }, cannon: cannon, cannonStatus: cannonStatus, cannonOn: function () { return S.cannon !== false; } };
 })(window);

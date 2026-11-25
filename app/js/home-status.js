@@ -400,7 +400,7 @@
             var wNorm = Math.round(vw * (centered ? 0.6 : 0.42));
             var wWide = Math.round(vw * (centered ? 0.92 : 0.8));
             var free = !ssActive && !mihrab;
-            var margin = Math.round(vw * 0.026), gap = Math.round(vw * 0.0125), minW = Math.round(vw * 0.22);
+            var margin = Math.round(vw * 0.034), gap = Math.round(vw * 0.0125), minW = Math.round(vw * 0.22);
             hb.style.left = ""; hb.style.right = ""; hb.style.transform = ""; hb.style.maxHeight = "";
             var cap = wNorm, wide = false, rect, i, segs, anchor, pick, k, len;
             txt.style.fontSize = fs + "px";
@@ -505,6 +505,7 @@
     APL.updateHekam = updateHekamWidget;
     APL.hekamOnHome = hekamOnHome;
     APL.armHekam = armHekamWidget;
+    APL.hekamRefit = function () { try { if (lastFit && lastFit[0] && lastFit[0].parentNode) fitHekam(lastFit[0], lastFit[1], lastFit[2], lastFit[3]); } catch (e) {} };   /* v8.7.40: the Ramadan widget moved the wisdom widget */
     /* v8.7.14: the full-screen prayer widget (the same prayer / weather / tasks row and the occasions strip as the Home Screen
        "full view"), built as a loose element for the Quran listening page. Independent of the Home option; null if the prayer times are not ready. */
     function wideNode() {

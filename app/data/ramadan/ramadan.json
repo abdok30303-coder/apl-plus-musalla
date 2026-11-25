@@ -1,0 +1,293 @@
+{
+ "v": 1,
+ "note": "Ramadan widget content (v8.7.40). k: dua | tip | qadr. any: may show before the last ten nights. All items are Quran verses or hadith with their source in sar (Arabic) and sen (English).",
+ "items": [
+  {
+   "k": "dua",
+   "ar": "ذَهَبَ الظَّمَأُ وَابْتَلَّتِ الْعُرُوقُ وَثَبَتَ الْأَجْرُ إِنْ شَاءَ اللَّهُ",
+   "en": "The thirst is gone, the veins are moist, and the reward is confirmed, God willing.",
+   "sar": "دعاء الإفطار · رواه أبو داود (حسّنه الألباني)",
+   "sen": "Dua at iftar · Abu Dawud (graded hasan by al-Albani)",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ",
+   "en": "O Allah, help me to remember You, to thank You, and to worship You well.",
+   "sar": "رواه أبو داود (صححه الألباني)",
+   "sen": "Abu Dawud (graded sahih by al-Albani)",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "يَا مُقَلِّبَ الْقُلُوبِ ثَبِّتْ قَلْبِي عَلَى دِينِكَ",
+   "en": "O Turner of hearts, keep my heart firm on Your religion.",
+   "sar": "رواه الترمذي (صححه الألباني)",
+   "sen": "Tirmidhi (graded sahih by al-Albani)",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "اللَّهُمَّ إِنِّي ظَلَمْتُ نَفْسِي ظُلْمًا كَثِيرًا وَلَا يَغْفِرُ الذُّنُوبَ إِلَّا أَنْتَ فَاغْفِرْ لِي مَغْفِرَةً مِنْ عِنْدِكَ وَارْحَمْنِي إِنَّكَ أَنْتَ الْغَفُورُ الرَّحِيمُ",
+   "en": "O Allah, I have wronged myself greatly and none forgives sins but You. Grant me forgiveness from Yourself and have mercy on me; You are the Forgiving, the Merciful.",
+   "sar": "متفق عليه · البخاري ومسلم",
+   "sen": "Agreed upon · al-Bukhari and Muslim",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ",
+   "en": "O Allah, I ask You for pardon and well-being in this world and the next.",
+   "sar": "رواه أبو داود وابن ماجه (صححه الألباني)",
+   "sen": "Abu Dawud and Ibn Majah (graded sahih by al-Albani)",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+   "en": "Our Lord, give us good in this world and good in the next, and protect us from the punishment of the Fire.",
+   "sar": "القرآن الكريم · البقرة ٢٠١",
+   "sen": "Quran · Al-Baqarah 2:201",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبَّنَا تَقَبَّلْ مِنَّا إِنَّكَ أَنْتَ السَّمِيعُ الْعَلِيمُ",
+   "en": "Our Lord, accept this from us. You are the All-Hearing, the All-Knowing.",
+   "sar": "القرآن الكريم · البقرة ١٢٧",
+   "sen": "Quran · Al-Baqarah 2:127",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبَّنَا لَا تُؤَاخِذْنَا إِنْ نَسِينَا أَوْ أَخْطَأْنَا",
+   "en": "Our Lord, do not hold us accountable if we forget or make a mistake.",
+   "sar": "القرآن الكريم · البقرة ٢٨٦",
+   "sen": "Quran · Al-Baqarah 2:286",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبَّنَا ظَلَمْنَا أَنْفُسَنَا وَإِنْ لَمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ",
+   "en": "Our Lord, we have wronged ourselves; if You do not forgive us and have mercy on us, we will surely be among the losers.",
+   "sar": "القرآن الكريم · الأعراف ٢٣",
+   "sen": "Quran · Al-A'raf 7:23",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبَّنَا لَا تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِنْ لَدُنْكَ رَحْمَةً إِنَّكَ أَنْتَ الْوَهَّابُ",
+   "en": "Our Lord, do not let our hearts deviate after You have guided us, and grant us mercy from Yourself. You are the Giver.",
+   "sar": "القرآن الكريم · آل عمران ٨",
+   "sen": "Quran · Al-Imran 3:8",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي",
+   "en": "My Lord, expand my chest for me and ease my task for me.",
+   "sar": "القرآن الكريم · طه ٢٥ و٢٦",
+   "sen": "Quran · Ta-Ha 20:25-26",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبِّ زِدْنِي عِلْمًا",
+   "en": "My Lord, increase me in knowledge.",
+   "sar": "القرآن الكريم · طه ١١٤",
+   "sen": "Quran · Ta-Ha 20:114",
+   "dua": true
+  },
+  {
+   "k": "dua",
+   "ar": "رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ وَاجْعَلْنَا لِلْمُتَّقِينَ إِمَامًا",
+   "en": "Our Lord, grant us from our spouses and offspring comfort to our eyes, and make us leaders for the righteous.",
+   "sar": "القرآن الكريم · الفرقان ٧٤",
+   "sen": "Quran · Al-Furqan 25:74",
+   "dua": true
+  },
+  {
+   "k": "tip",
+   "ar": "صُمْ إِيمَانًا وَاحْتِسَابًا: «مَنْ صَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ»",
+   "en": "Fast with faith and hoping for reward: \"Whoever fasts Ramadan with faith and seeking reward, his past sins are forgiven.\"",
+   "sar": "متفق عليه · البخاري ٣٨ ومسلم ٧٦٠",
+   "sen": "Agreed upon · al-Bukhari 38, Muslim 760"
+  },
+  {
+   "k": "tip",
+   "ar": "قُمْ لَيَالِيَ رَمَضَانَ: «مَنْ قَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ»",
+   "en": "Pray at night in Ramadan: \"Whoever stands in prayer in Ramadan with faith and seeking reward, his past sins are forgiven.\"",
+   "sar": "متفق عليه · البخاري ٣٧ ومسلم ٧٥٩",
+   "sen": "Agreed upon · al-Bukhari 37, Muslim 759"
+  },
+  {
+   "k": "tip",
+   "ar": "لَا تَتْرُكِ السُّحُورَ: «تَسَحَّرُوا فَإِنَّ فِي السُّحُورِ بَرَكَةً»",
+   "en": "Do not skip suhoor: \"Take suhoor, for in suhoor there is blessing.\"",
+   "sar": "متفق عليه · البخاري ١٩٢٣ ومسلم ١٠٩٥",
+   "sen": "Agreed upon · al-Bukhari 1923, Muslim 1095"
+  },
+  {
+   "k": "tip",
+   "ar": "عَجِّلِ الْفِطْرَ: «لَا يَزَالُ النَّاسُ بِخَيْرٍ مَا عَجَّلُوا الْفِطْرَ»",
+   "en": "Break your fast without delay: \"People remain in good as long as they hasten to break the fast.\"",
+   "sar": "متفق عليه · البخاري ١٩٥٧ ومسلم ١٠٩٨",
+   "sen": "Agreed upon · al-Bukhari 1957, Muslim 1098"
+  },
+  {
+   "k": "tip",
+   "ar": "أَطْعِمْ صَائِمًا: «مَنْ فَطَّرَ صَائِمًا كَانَ لَهُ مِثْلُ أَجْرِهِ»",
+   "en": "Feed a fasting person: \"Whoever gives a fasting person food to break his fast has a reward like his.\"",
+   "sar": "رواه الترمذي (صححه الألباني)",
+   "sen": "Tirmidhi (graded sahih by al-Albani)"
+  },
+  {
+   "k": "tip",
+   "ar": "صَلِّ التَّرَاوِيحَ مَعَ الْإِمَامِ حَتَّى يَنْصَرِفَ: يُكْتَبْ لَكَ قِيَامُ لَيْلَةٍ",
+   "en": "Stay with the imam in Taraweeh until he finishes, and a full night of prayer is written for you.",
+   "sar": "رواه الترمذي (صححه الألباني)",
+   "sen": "Tirmidhi (graded sahih by al-Albani)"
+  },
+  {
+   "k": "tip",
+   "ar": "احْفَظْ صِيَامَكَ: «فَإِنْ سَابَّهُ أَحَدٌ أَوْ قَاتَلَهُ فَلْيَقُلْ إِنِّي صَائِمٌ»",
+   "en": "Guard your fast: \"If someone insults or fights him, let him say: I am fasting.\"",
+   "sar": "متفق عليه · البخاري ١٨٩٤ ومسلم ١١٥١",
+   "sen": "Agreed upon · al-Bukhari 1894, Muslim 1151"
+  },
+  {
+   "k": "tip",
+   "ar": "اتْرُكْ قَوْلَ الزُّورِ وَالْعَمَلَ بِهِ: فَالصِّيَامُ لَيْسَ عَنِ الطَّعَامِ وَالشَّرَابِ فَقَطْ",
+   "en": "Leave false speech and acting on it: fasting is not only from food and drink.",
+   "sar": "رواه البخاري ١٩٠٣",
+   "sen": "al-Bukhari 1903"
+  },
+  {
+   "k": "tip",
+   "ar": "أَكْثِرْ مِنَ الْجُودِ: كَانَ النَّبِيُّ ﷺ أَجْوَدَ مَا يَكُونُ فِي رَمَضَانَ",
+   "en": "Be generous: the Prophet ﷺ was most generous in Ramadan.",
+   "sar": "متفق عليه · البخاري ٦ ومسلم ٢٣٠٨",
+   "sen": "Agreed upon · al-Bukhari 6, Muslim 2308"
+  },
+  {
+   "k": "tip",
+   "ar": "اقْرَأِ الْقُرْآنَ: «الصِّيَامُ وَالْقُرْآنُ يَشْفَعَانِ لِلْعَبْدِ يَوْمَ الْقِيَامَةِ»",
+   "en": "Read the Quran: \"Fasting and the Quran will intercede for the servant on the Day of Resurrection.\"",
+   "sar": "رواه أحمد (صححه الألباني)",
+   "sen": "Ahmad (graded sahih by al-Albani)"
+  },
+  {
+   "k": "tip",
+   "ar": "أَبْوَابُ الْجَنَّةِ مَفْتُوحَةٌ: «إِذَا دَخَلَ رَمَضَانُ فُتِّحَتْ أَبْوَابُ الْجَنَّةِ وَغُلِّقَتْ أَبْوَابُ النَّارِ وَصُفِّدَتِ الشَّيَاطِينُ»",
+   "en": "The gates of Paradise are open: \"When Ramadan begins, the gates of Paradise are opened, the gates of Hell are closed, and the devils are chained.\"",
+   "sar": "متفق عليه · البخاري ١٨٩٩ ومسلم ١٠٧٩",
+   "sen": "Agreed upon · al-Bukhari 1899, Muslim 1079"
+  },
+  {
+   "k": "tip",
+   "ar": "ادْعُ كَثِيرًا فَإِنَّ اللَّهَ قَرِيبٌ: «وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ»",
+   "en": "Make plenty of dua, for God is near: \"When My servants ask you about Me, I am near; I answer the call of the caller when he calls on Me.\"",
+   "sar": "القرآن الكريم · البقرة ١٨٦",
+   "sen": "Quran · Al-Baqarah 2:186"
+  },
+  {
+   "k": "tip",
+   "ar": "الصِّيَامُ لِلتَّقْوَى: «كُتِبَ عَلَيْكُمُ الصِّيَامُ كَمَا كُتِبَ عَلَى الَّذِينَ مِنْ قَبْلِكُمْ لَعَلَّكُمْ تَتَّقُونَ»",
+   "en": "Fasting is for God-consciousness: \"Fasting is prescribed for you as it was for those before you, so that you may become mindful of God.\"",
+   "sar": "القرآن الكريم · البقرة ١٨٣",
+   "sen": "Quran · Al-Baqarah 2:183"
+  },
+  {
+   "k": "tip",
+   "ar": "الْقُرْآنُ شَهْرُ رَمَضَانَ: «شَهْرُ رَمَضَانَ الَّذِي أُنْزِلَ فِيهِ الْقُرْآنُ هُدًى لِلنَّاسِ»",
+   "en": "The month of the Quran: \"The month of Ramadan in which the Quran was revealed as guidance for mankind.\"",
+   "sar": "القرآن الكريم · البقرة ١٨٥",
+   "sen": "Quran · Al-Baqarah 2:185"
+  },
+  {
+   "k": "tip",
+   "ar": "لِلصَّائِمِ فَرْحَتَانِ: فَرْحَةٌ عِنْدَ فِطْرِهِ وَفَرْحَةٌ عِنْدَ لِقَاءِ رَبِّهِ",
+   "en": "The fasting person has two joys: one when he breaks his fast, and one when he meets his Lord.",
+   "sar": "متفق عليه · البخاري ١٩٠٤ ومسلم ١١٥١",
+   "sen": "Agreed upon · al-Bukhari 1904, Muslim 1151"
+  },
+  {
+   "k": "tip",
+   "ar": "كَانَ جِبْرِيلُ يَلْقَاهُ كُلَّ لَيْلَةٍ فِي رَمَضَانَ فَيُدَارِسُهُ الْقُرْآنَ: فَاجْعَلْ لَكَ وِرْدًا كُلَّ يَوْمٍ",
+   "en": "Jibril would meet the Prophet ﷺ every night in Ramadan and review the Quran with him: set yourself a daily portion.",
+   "sar": "رواه البخاري ٦",
+   "sen": "al-Bukhari 6"
+  },
+  {
+   "k": "qadr",
+   "ar": "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
+   "en": "O Allah, You are Forgiving and love forgiveness, so forgive me.",
+   "sar": "دعاء ليلة القدر · رواه الترمذي (صححه الألباني)",
+   "sen": "Dua for Laylat al-Qadr · Tirmidhi (graded sahih by al-Albani)",
+   "any": true,
+   "dua": true
+  },
+  {
+   "k": "qadr",
+   "ar": "«لَيْلَةُ الْقَدْرِ خَيْرٌ مِنْ أَلْفِ شَهْرٍ»",
+   "en": "\"The Night of Power is better than a thousand months.\"",
+   "sar": "القرآن الكريم · القدر ٣",
+   "sen": "Quran · Al-Qadr 97:3",
+   "any": true
+  },
+  {
+   "k": "qadr",
+   "ar": "«مَنْ قَامَ لَيْلَةَ الْقَدْرِ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ»",
+   "en": "\"Whoever stands in prayer on the Night of Power with faith and seeking reward, his past sins are forgiven.\"",
+   "sar": "متفق عليه · البخاري ١٩٠١ ومسلم ٧٦٠",
+   "sen": "Agreed upon · al-Bukhari 1901, Muslim 760",
+   "any": true
+  },
+  {
+   "k": "qadr",
+   "ar": "«تَحَرَّوْا لَيْلَةَ الْقَدْرِ فِي الْوِتْرِ مِنَ الْعَشْرِ الْأَوَاخِرِ مِنْ رَمَضَانَ»",
+   "en": "\"Seek the Night of Power in the odd nights of the last ten of Ramadan.\"",
+   "sar": "رواه البخاري ٢٠١٧",
+   "sen": "al-Bukhari 2017"
+  },
+  {
+   "k": "qadr",
+   "ar": "كَانَ النَّبِيُّ ﷺ إِذَا دَخَلَ الْعَشْرُ أَحْيَا اللَّيْلَ وَأَيْقَظَ أَهْلَهُ وَشَدَّ الْمِئْزَرَ",
+   "en": "When the last ten nights began, the Prophet ﷺ would spend the night in worship, wake his family, and exert himself.",
+   "sar": "متفق عليه · البخاري ٢٠٢٤ ومسلم ١١٧٤",
+   "sen": "Agreed upon · al-Bukhari 2024, Muslim 1174"
+  },
+  {
+   "k": "qadr",
+   "ar": "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
+   "en": "O Allah, You are Forgiving and love forgiveness, so forgive me. Repeat it tonight.",
+   "sar": "علّمها النبي ﷺ عائشة إن وافقت ليلة القدر · الترمذي",
+   "sen": "The Prophet ﷺ taught it to Aisha for the Night of Power · Tirmidhi",
+   "dua": true
+  },
+  {
+   "k": "qadr",
+   "ar": "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+   "en": "Our Lord, give us good in this world and good in the next, and protect us from the punishment of the Fire. A comprehensive dua for these nights.",
+   "sar": "القرآن الكريم · البقرة ٢٠١",
+   "sen": "Quran · Al-Baqarah 2:201",
+   "dua": true
+  },
+  {
+   "k": "qadr",
+   "ar": "اللَّهُمَّ إِنِّي ظَلَمْتُ نَفْسِي ظُلْمًا كَثِيرًا فَاغْفِرْ لِي مَغْفِرَةً مِنْ عِنْدِكَ وَارْحَمْنِي إِنَّكَ أَنْتَ الْغَفُورُ الرَّحِيمُ",
+   "en": "O Allah, I have wronged myself greatly. Forgive me with forgiveness from You and have mercy on me; You are the Forgiving, the Merciful.",
+   "sar": "متفق عليه · البخاري ومسلم",
+   "sen": "Agreed upon · al-Bukhari and Muslim",
+   "dua": true
+  },
+  {
+   "k": "qadr",
+   "ar": "اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ",
+   "en": "O Allah, I ask You for pardon and well-being in this world and the next.",
+   "sar": "رواه أبو داود وابن ماجه (صححه الألباني)",
+   "sen": "Abu Dawud and Ibn Majah (graded sahih by al-Albani)",
+   "dua": true
+  }
+ ]
+}

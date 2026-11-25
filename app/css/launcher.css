@@ -1020,7 +1020,7 @@ body.is-editing .rows {
 
 .aplalert__box {
     width: 760px;
-    max-height: 920px;
+    max-height: 1000px;
     display: flex;
     flex-direction: column;
     text-align: center;
@@ -1032,7 +1032,7 @@ body.is-editing .rows {
 
 .aplalert__title { margin: 0 0 18px; font-size: 46px; font-weight: 700; color: #fff; flex: none; }
 
-.aplalert__msg { margin: 0 0 28px; font-size: 26px; line-height: 1.35; color: rgba(255, 255, 255, 0.62); white-space: pre-line; flex: 0 1 auto; min-height: 0; max-height: 540px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+.aplalert__msg { margin: 0 0 28px; font-size: 26px; line-height: 1.35; color: rgba(255, 255, 255, 0.62); white-space: pre-line; flex: 0 1 auto; min-height: 0; max-height: 720px; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; -ms-overflow-style: none; }
 .aplalert__msg::-webkit-scrollbar { display: none; }
 .aplalert__more { margin: -14px 0 16px; font-size: 24px; font-weight: 600; color: rgba(255, 255, 255, 0.85); flex: none; display: none; }
 
@@ -1041,7 +1041,8 @@ body.is-editing .rows {
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    max-height: 600px;
+    max-height: 420px;
+    flex: none;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 10px 20px 24px;

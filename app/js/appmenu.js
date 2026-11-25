@@ -110,7 +110,7 @@
             onKey: function (code) {
                 if (!alertMsg || (code !== 38 && code !== 40)) return false;
                 var room = alertMsg.scrollHeight - alertMsg.clientHeight;
-                if (room <= 4) return false;
+                if (room <= 12) return false;
                 var top = alertMsg.scrollTop, step = Math.max(120, Math.round(alertMsg.clientHeight * 0.7));
                 if (code === 40 && top < room - 2) { alertMsg.scrollTop = Math.min(room, top + step); updateMore(); return true; }
                 if (code === 38 && top > 2) { alertMsg.scrollTop = Math.max(0, top - step); updateMore(); return true; }
@@ -122,7 +122,9 @@
     function updateMore() {
         if (!alertMore || !alertMsg) return;
         var room = alertMsg.scrollHeight - alertMsg.clientHeight, top = alertMsg.scrollTop;
-        var down = room > 4 && top < room - 2, up = room > 4 && top > 2;
+        /* v8.7.40: only when the text really runs past the box (more than a few pixels), never for rounding */
+        var real = alertMsg.style.display !== "none" && room > 12;
+        var down = real && top < room - 6, up = real && top > 6;
         alertMore.textContent = down ? (up ? "\u25B2 \u25BC  " : "\u25BC  ") + APL.t("Press Down to read more") : (up ? "\u25B2  " + APL.t("Press Up to go back") : "");
         alertMore.style.display = (down || up) ? "block" : "none";
     }
@@ -131,7 +133,7 @@
         if (!alertRoot) buildAlert();
         alertSpec = spec;
         alertTitle.textContent = APL.enx ? APL.enx(spec.title || "") : (spec.title || "");
-        alertMsg.textContent = APL.enx ? APL.enx(spec.message || "") : (spec.message || "");
+        alertMsg.textContent = (APL.enx ? APL.enx(spec.message || "") : (spec.message || "")).replace(/\s+$/, "");
         alertMsg.style.display = spec.message ? "" : "none";
         alertMsg.scrollTop = 0;
         alertExtra.innerHTML = "";

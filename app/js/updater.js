@@ -23,7 +23,8 @@
     var REPO = "abdok30303-coder/apl-plus-musalla";
     var RAW = "https://raw.githubusercontent.com/" + REPO + "/main/";
     var DIR = "/tmp/apl-upd";
-    var latest = null, busy = false, lastCheck = 0;
+    var latest = null, busy = false, lastCheck = 0, lastPeek = 0;
+    var LATEST_KEY = "apl.upd.latest";   /* v8.7.40: the last version GitHub reported, shown at once on the update page */
 
     function ar() { return APL.lang === "ar"; }
     function tr(a, e) { return ar() ? a : e; }
@@ -62,6 +63,7 @@
             var v = String((j && j.version) || "");
             if (!/^\d+(\.\d+){1,3}$/.test(v)) throw new Error("version");
             latest = { version: v, notes: String((j && j.notes) || "") };
+            try { global.localStorage.setItem(LATEST_KEY, v); } catch (eL) {}
             var newer = cmp(v, U.running) > 0;
             if (loud) toast(newer ? tr("فيه نسخة جديدة: " + v + " (الحالية " + U.running + ")", "New version available: " + v + " (running " + U.running + ")")
                                   : tr("اللانشر محدّث (" + U.running + ")", "Up to date (" + U.running + ")"), !newer);
@@ -315,6 +317,7 @@
             if (r.ok && r.newer) toast(tr("فيه نسخة جديدة من اللانشر: " + r.version + ". الإعدادات ثم الدعم ثم تحديث اللانشر.", "New launcher version " + r.version + ". Settings > Support > Launcher Update."), true);
         });
     }
+    global.setTimeout(function () { lastPeek = Date.now(); check(false); }, 8000);   /* v8.7.40: fills the saved "latest" copy early, no toast */
     global.setTimeout(auto, 60000);
     global.setInterval(auto, 3600000);   /* an hourly look; the 24-hour stamp above decides */
 
@@ -323,7 +326,15 @@
         check: check, install: install, reset: reset,
         running: function () { return U.running; },
         installed: function () { return U.installed; },
-        latest: function () { return latest ? latest.version : ""; },
+        latest: function () {
+            /* v8.7.40: the newest version known so far (this run, else the saved copy) comes back at once; a quiet refresh runs
+               in the background (at most one per 5 minutes) so the next look shows the current one. Never a bare dash after the first check. */
+            var v = latest ? latest.version : "", saved = "";
+            try { saved = global.localStorage.getItem(LATEST_KEY) || ""; } catch (eS) {}
+            if (!v || (saved && cmp(saved, v) > 0)) v = saved || v;
+            if (Date.now() - lastPeek > 300000 && !busy) { lastPeek = Date.now(); check(false); }
+            return v;
+        },
         fromBundle: function () { return false; },
         repo: REPO,
         report: lastReport,
