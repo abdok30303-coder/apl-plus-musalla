@@ -4768,7 +4768,11 @@ window.APL_CATALOG = [
                 var p = pref("vetroRemapRules") || [];
                 h.rules = Array.isArray(p) ? p.slice() : [];
             }).then(function () {
-                if (!PREVIEW) return vetroPost("/remap", { rules: [] }).catch(function () {});
+                if (PREVIEW) return;
+                /* v8.7.36: the list is written to disk BEFORE Vetro is emptied. If the launcher is left (or closed) while a
+                   button is being bound, its 90 s timer never runs on the TV; the saved list is put back when it returns. */
+                if (h.rules.length) setPref("remapHeld", h.rules);
+                return vetroPost("/remap", { rules: [] }).catch(function () {});
             });
         }
         remapHold.timer = setTimeout(function () { resumeRemap(); }, 90000);
@@ -4785,9 +4789,36 @@ window.APL_CATALOG = [
         return h.ready.then(function () {
             return vetroPost("/remap", { rules: h.rules });
         }).then(function () {
+            setPref("remapHeld", null);
             return vetroPost("/input", { mode: h.rules.length ? "filter" : "off", device: "auto" }).catch(function () {});
         }).catch(function () {});
     }
+
+    /* v8.7.36: a binding that was interrupted (launcher closed or left while "press the button" was open) left Vetro with an
+       empty list. When the launcher is back and no binding is in progress, the saved list is restored, but only if Vetro's
+       list is still empty, so nothing changed meanwhile in Vetro is overwritten. */
+    function recoverRemapHold() {
+        if (PREVIEW || remapHold || isCapturingKey) return Promise.resolve(false);
+        var kept = pref("remapHeld");
+        if (!Array.isArray(kept) || !kept.length) return Promise.resolve(false);
+        return vetroGet("/remap").then(function (d) {
+            var now = (d && Array.isArray(d.rules)) ? d.rules : null;
+            if (now === null) return false;                       // Vetro did not answer: try again next time
+            if (now.length) { setPref("remapHeld", null); return false; }
+            return vetroPost("/remap", { rules: kept }).then(function () {
+                setPref("remapHeld", null);
+                setPref("vetroRemapRules", kept);
+                tvExec(REMAP_RESUME_SH + REMAP_ENSURE_SH).catch(function () {});
+                return vetroPost("/input", { mode: "filter", device: "auto" }).catch(function () {});
+            }).then(function () { return true; });
+        }).catch(function () { return false; });
+    }
+    setTimeout(recoverRemapHold, 3500);
+    try {
+        global.document.addEventListener("visibilitychange", function () {
+            if (!global.document.hidden) setTimeout(recoverRemapHold, 1500);
+        });
+    } catch (eVis) {}
 
     /* v1.2.103: a remote button bound to an HDMI input. The binding lives in the pref hdmiRemap ({ "226": 2, ... }) and is handled
        here, by the launcher, when it has the key: it opens the input the same way the Sources screen does (sources.js openHdmi).
@@ -4971,7 +5002,8 @@ window.APL_CATALOG = [
                 return Promise.resolve({ ok: true, rules: next });
             }
 
-            return vetroPost("/remap", { rules: next }).then(function () {
+            return vetroPost("/remap", { rules: next }).then(function (rr) {
+                setPref("remapHeld", null);   // v8.7.36: the held list is replaced by the new one, nothing to restore
                 return vetroGet("/input").then(function (inp) {
                     var list = (inp && inp.devices) || [];
                     if (next.length > 0) {
@@ -4997,6 +5029,7 @@ window.APL_CATALOG = [
             return Promise.resolve({ ok: true });
         }
         setPref("vetroRemapRules", []);
+        setPref("remapHeld", null);
         return vetroPost("/remap", { rules: [] }).then(function () {
             return vetroPost("/input", { mode: "off" }).catch(function () {});
         });
@@ -5315,7 +5348,7 @@ window.APL_CATALOG = [
         vetroGet: vetroGet, vetroPost: vetroPost, exec: tvExec, game: game, runningApps: runningApps,
         rebootTV: rebootTV, restartSystemUI: restartSystemUI, clearSystemCache: clearSystemCache,
         restartAlertDaemon: restartAlertDaemon, syncAlertSounds: syncAlertSounds, restoreHomeSmartHub: restoreHomeSmartHub,
-        getRemapRules: getRemapRules, setRemapRule: setRemapRule, resumeRemap: resumeRemap, clearAllRemapRules: clearAllRemapRules, captureRemoteKey: captureRemoteKey,
+        getRemapRules: getRemapRules, setRemapRule: setRemapRule, resumeRemap: resumeRemap, recoverRemapHold: recoverRemapHold, clearAllRemapRules: clearAllRemapRules, captureRemoteKey: captureRemoteKey,
         blockFirmwareUpdates: blockFirmwareUpdates, setKeepRemovedApps: setKeepRemovedApps, disableAmbientMode: disableAmbientMode,
         disableAirPlay: disableAirPlay, disableHbbTV: disableHbbTV, disableVoiceAll: disableVoiceAll, applyDnsAdblock: applyDnsAdblock,
         clearLeftovers: clearLeftovers, getTelemetryMonitor: getTelemetryMonitor,
@@ -24864,6 +24897,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.36: أزرار الريموت المربوطة بتطبيقات ما بتضيعش لو خرجت من اللانشر وانت بتربط زر؛ القائمة بتتحفظ قبل ما Vetro تتفضى وبترجع لما اللانشر يرجع",
         "✔ 8.7.35: تنبيه الأذان والتجربة بالخلفية اتصلحوا (المشغّل الخلفي كان ما بيتثبتش)؛ وزر تجربة 8 ثواني بقى بيشتغل والتطبيق التاني قدامك؛ وفحص الجاهزية بقى بيقول الحقيقة",
         "✔ 8.7.34: تثبيت التحديث بقى يقول بالظبط أنهي خطوة فشلت وليه؛ وبيفحص التلفزيون الأول (Vetro والمجلد والأدوات) وبيتأكد من الملف المحمّل",
         "✔ قائمة «إيه الجديد» بتتحرك بالأسهم فوق وتحت؛ وويدجت الحكمة بقى بعيد عن الساعة وويدجت الصلاة",
@@ -24889,6 +24923,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.36: remote buttons bound to apps are no longer lost if you leave the launcher while binding a button; the list is saved before Vetro is emptied and put back when the launcher returns",
         "✔ 8.7.35: the prayer alert and the background test are fixed (the background player could not install); the 8-second test now plays with another app in front; the readiness check tells the truth",
         "✔ 8.7.34: Install Update now says exactly which step failed and why; it checks the TV first (Vetro, folder, tools) and checks the downloaded file",
         "✔ What's New scrolls with Up and Down; the wisdom widget stays clear of the clock and the prayer widget",

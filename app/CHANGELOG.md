@@ -1,3 +1,9 @@
+## 8.7.36
+
+- Remote buttons bound to apps: while a button is being bound, the launcher empties Vetro's button list and puts it back with a 90 s timer. That timer stops when another app comes in front, so leaving the launcher at that moment left Vetro with no bindings. The list is now saved to disk before Vetro is emptied, and put back when the launcher starts or comes back to the front (only if Vetro's list is still empty). Saving a new binding or clearing all bindings drops the saved copy.
+- The alert test and the Background Test do not touch Vetro's button list (checked in the code); no change there.
+- Untested on a physical TV.
+
 ## 8.7.35
 
 - Prayer alerts and the test alert behind other apps: in 8.7.33 and 8.7.34 the background player could not install on the TV (the copy inside the launcher was 4.11 while the launcher required 4.12), so the keeper and the supervisor never started and the alert only played from the launcher after a long wait. The embedded player is now 4.13, and tools/check-daemon-embed.py stops a release when the two differ.
