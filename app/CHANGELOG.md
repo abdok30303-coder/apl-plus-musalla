@@ -1,3 +1,8 @@
+## 8.7.45
+
+- Living Mihrab radio: the first OK press now starts the radio. Before, starting needed two presses while stopping worked at once. Cause (from the code, not seen on the TV): the OK handler called the radio's toggle, which treats the radio as "on" when the saved "radio wanted" flag is set or the player is left in a READY/PAUSED state, even if nothing is sounding. The first OK then "stopped" a silent radio and only the second one started it. The handler now checks whether the radio is really playing or connecting. The toast ("Radio turned on" / "Radio turned off") is unchanged.
+- Not verified on the TV: the exact leftover state on his set. The logic was checked by reading the code, and the file is syntax-checked.
+
 ## 8.7.44
 
 - Songs: pressing OK opened only the YouTube home screen. The launch data was wrapped in JSON, which the YouTube app does not read. It now sends the plain `v=ID` with the default operation. TizenTube gets the video as its module `args` (the way its own DIAL service starts it). YouTube Dummy gets the same plain data. Order: YouTube app, TizenTube, YouTube Dummy, then the TV browser, which opens the video for sure.

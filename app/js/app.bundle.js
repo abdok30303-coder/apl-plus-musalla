@@ -25098,6 +25098,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.45: في شاشة المحراب الحي، أول ضغطة OK بتشغّل الراديو (كانت محتاجة ضغطتين).",
         "✔ 8.7.44: أغاني رمضان والعيد بتفتح الفيديو نفسه بدل الشاشة الرئيسية ليوتيوب (تطبيق يوتيوب، وبعده TizenTube، وبعده YouTube Dummy، وآخر حاجة متصفح التلفزيون). الأغنيتين «أهلا بالعيد» و«رمضان جانا» بقوا الاتنين في الإعدادات > الصلاة والقرآن > أغاني رمضان والعيد.",
         "✔ 8.7.43: ودجت رمضان بقى على 3 مراحل مش بتتخلط: قبل رمضان بيوم لحد اليوم ٢٠ (أدعية ونصايح وفضائل)، من ٢١ لـ٣٠ (العشر الأواخر وليلة القدر وقيام الليل بس)، وأول ٣ أيام عيد الفطر (نصايح العيد بس). اليوم الإسلامي بيبدأ من المغرب. معاينات جديدة في الإعدادات، وإطار الشاشة الذهبي اتشال من المحراب الحي.",
         "✔ 8.7.42: قسم جديد «أغاني رمضان والعيد» في الإعدادات (الصلاة والقرآن، وسط عناصر رمضان) بيفتح «أهلا بالعيد» على يوتيوب، وأغنية تانية مخفية في الإعدادات > الدعم. الأغنية بتفتح أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب، وآخر حاجة متصفح التلفزيون. بتشتغل أونلاين بالصورة ومفيش حاجة متخزنة في اللانشر.",
@@ -25132,6 +25133,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.45: on the Living Mihrab screen saver, the first OK now starts the radio (it needed two presses).",
         "✔ 8.7.44: the Ramadan & Eid songs now open the video itself instead of the YouTube home screen (YouTube app, then TizenTube, then YouTube Dummy, then the TV browser). Both songs, “Ahlan bel Eid” and “Ramadan Gana”, are now in Settings > Prayer and Quran > Ramadan & Eid Songs.",
         "✔ 8.7.43: the Ramadan widget now has three phases that never mix: the day before Ramadan to day 20 (duas, tips, virtues), days 21-30 (last ten nights, Laylat al-Qadr and night prayer only) and the first 3 days of Eid (Eid tips only). The Islamic day starts at Maghrib. New previews in Settings, and the gold outline is gone from the Living Mihrab.",
         "✔ 8.7.42: new “Ramadan & Eid Songs” entry in Settings (Prayer and Quran, among the Ramadan items) that opens “Ahlan bel Eid” on YouTube, and a second, hidden song entry in Settings > Support. A song opens first in YouTube Dummy, then TizenTube, then the YouTube app, and last in the TV browser. They play online with picture; nothing is stored in the launcher.",
@@ -25587,11 +25589,16 @@ window.APL_DEVICES = [
     function toast(m, ok) { try { if (APL.toast) APL.toast(m, ok); } catch (e) {} }
     function toggleRadio() {
         try {
-            var wasOn = radioOn();
-            var r = APL.radio && APL.radio.toggle ? APL.radio.toggle() : null;
+            /* v8.7.44: decide by what the radio is really doing (sounding or connecting), not by its saved "wanted" flag or a leftover
+               player state. radio.toggle() read those, so after a stopped / failed radio the first OK "stopped" something silent and only the
+               second OK started it. */
+            var st = APL.radio && APL.radio.state ? APL.radio.state() : null;
+            var live = st ? !!(st.playing || st.starting) : radioOn();
+            var r = !APL.radio ? null : (live ? APL.radio.stop() : APL.radio.play());
             if (r && r.then) r.then(function () {
-                var on = radioOn();
-                if (on !== wasOn) toast(APL.t(on ? "Radio turned on" : "Radio turned off"), true);
+                var s2 = APL.radio.state ? APL.radio.state() : null;
+                var on = s2 ? !!(s2.playing || s2.starting) : radioOn();
+                if (on !== live) toast(APL.t(on ? "Radio turned on" : "Radio turned off"), true);
             }, function () { toast(APL.t("The radio needs the internet."), false); });
         } catch (e) {}
     }

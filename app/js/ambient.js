@@ -183,11 +183,16 @@
     function toast(m, ok) { try { if (APL.toast) APL.toast(m, ok); } catch (e) {} }
     function toggleRadio() {
         try {
-            var wasOn = radioOn();
-            var r = APL.radio && APL.radio.toggle ? APL.radio.toggle() : null;
+            /* v8.7.44: decide by what the radio is really doing (sounding or connecting), not by its saved "wanted" flag or a leftover
+               player state. radio.toggle() read those, so after a stopped / failed radio the first OK "stopped" something silent and only the
+               second OK started it. */
+            var st = APL.radio && APL.radio.state ? APL.radio.state() : null;
+            var live = st ? !!(st.playing || st.starting) : radioOn();
+            var r = !APL.radio ? null : (live ? APL.radio.stop() : APL.radio.play());
             if (r && r.then) r.then(function () {
-                var on = radioOn();
-                if (on !== wasOn) toast(APL.t(on ? "Radio turned on" : "Radio turned off"), true);
+                var s2 = APL.radio.state ? APL.radio.state() : null;
+                var on = s2 ? !!(s2.playing || s2.starting) : radioOn();
+                if (on !== live) toast(APL.t(on ? "Radio turned on" : "Radio turned off"), true);
             }, function () { toast(APL.t("The radio needs the internet."), false); });
         } catch (e) {}
     }
