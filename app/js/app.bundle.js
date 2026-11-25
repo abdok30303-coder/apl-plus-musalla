@@ -705,8 +705,11 @@ window.APL_LANG_AR = {
     "Radio stopped": "تم إيقاف الراديو",
     "Radio turned on": "تم تشغيل الراديو",
     "Ramadan Widget": "ويدجت رمضان",
-    "In Ramadan only: a crescent (a lantern in the first days) with Ramadan duas, tips and Laylat al-Qadr duas above the apps row. Off: it never shows.": "في رمضان فقط: هلال (وفانوس في الأيام الأولى) مع أدعية رمضان ونصائح وأدعية ليلة القدر فوق صف التطبيقات. لو مقفول: عمره ما بيظهر.",
+    "From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.": "من اليوم اللي قبل رمضان لحد تالت يوم العيد: هلال (وفانوس في الأيام الأولى) مع أدعية ونصايح، وأدعية ليلة القدر في العشر الأواخر، ونصايح العيد، فوق صف التطبيقات. مقفول: مش بيظهر خالص.",
     "Ramadan Widget Preview": "معاينة ويدجت رمضان",
+    "Day before Ramadan (lantern)": "قبل رمضان بيوم (فانوس)",
+    "Day 21 (last ten nights begin)": "اليوم ٢١ (بداية العشر الأواخر)",
+    "Eid al-Fitr (day 1)": "عيد الفطر (اليوم الأول)",
     "Ramadan & Eid Songs": "أغاني رمضان والعيد",
     "Opens the song on YouTube (online, with picture).": "بيفتح الأغنية على يوتيوب (أونلاين، بالصورة).",
     "Opens the old Ramadan song on YouTube (online, with picture).": "بيفتح أغنية رمضان القديمة على يوتيوب (أونلاين، بالصورة).",
@@ -17166,9 +17169,9 @@ window.APL_KEYS = {
                 action("وضع رمضان", function () { if (APL.ramadan) APL.ramadan.panel(); },
                     "تلقائي في رمضان: عدّاد السحور والإفطار، مدفع، تنبيه التراويح، وختمة ٣٠ يوم.", "moon"),
                 toggle(APL.t("Ramadan Widget"), "ramadanWidget",
-                    APL.t("In Ramadan only: a crescent (a lantern in the first days) with Ramadan duas, tips and Laylat al-Qadr duas above the apps row. Off: it never shows.")),
+                    APL.t("From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.")),
                 choice(APL.t("Ramadan Widget Preview"), "ramadanWidgetPreview",
-                    [[0, APL.t("Off")], [1, APL.t("Day 1 (lantern)")], [12, APL.t("Day 12 (crescent)")], [27, APL.t("Night 27 (Laylat al-Qadr)")]],
+                    [[0, APL.t("Off")], [40, APL.t("Day before Ramadan (lantern)")], [1, APL.t("Day 1 (lantern)")], [12, APL.t("Day 12 (crescent)")], [21, APL.t("Day 21 (last ten nights begin)")], [27, APL.t("Night 27 (Laylat al-Qadr)")], [31, APL.t("Eid al-Fitr (day 1)")]],
                     APL.t("Shows the Ramadan widget now, as on that day, so you can see it outside Ramadan. Set it back to Off afterwards."), function () {
                         if (APL.ramadanWidget) APL.ramadanWidget.sync();
                     }),
@@ -25084,6 +25087,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.43: ودجت رمضان بقى على 3 مراحل مش بتتخلط: قبل رمضان بيوم لحد اليوم ٢٠ (أدعية ونصايح وفضائل)، من ٢١ لـ٣٠ (العشر الأواخر وليلة القدر وقيام الليل بس)، وأول ٣ أيام عيد الفطر (نصايح العيد بس). اليوم الإسلامي بيبدأ من المغرب. معاينات جديدة في الإعدادات، وإطار الشاشة الذهبي اتشال من المحراب الحي.",
         "✔ 8.7.42: قسم جديد «أغاني رمضان والعيد» في الإعدادات (الصلاة والقرآن، وسط عناصر رمضان) بيفتح «أهلا بالعيد» على يوتيوب، وأغنية تانية مخفية في الإعدادات > الدعم. الأغنية بتفتح أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب، وآخر حاجة متصفح التلفزيون. بتشتغل أونلاين بالصورة ومفيش حاجة متخزنة في اللانشر.",
         "✔ 8.7.41: ويدجت رمضان بقى في نص الشاشة فوق صف التطبيقات مباشرة، بمسافة واضحة تحت كارت الصلاة وبعيد عن اسم التطبيق ووصفه. والمحتوى زاد من ٣٨ لـ ١٢٠ دعاء ونصيحة وأدعية ليلة القدر وفضائل رمضان (قرآن وأحاديث صحيحة فقط)، وكل مصدر حديث بقى مكتوب كامل زي «صحيح البخاري · حديث ٢٠١٧».",
         "✔ 8.7.40: ويدجت رمضان جديد في الشاشة الرئيسية (في رمضان بس): كارت زجاجي فوق صف التطبيقات فيه هلال كبير (وفانوس في الأيام الأولى) ومعاه دعاء أو نصيحة أو دعاء ليلة القدر بمصدره من القرآن أو الحديث، عربي وإنجليزي وبدون إنترنت؛ وأدعية ليلة القدر في العشر الأواخر. في الإعدادات إيقاف وتشغيل ومعاينة. درجة الحرارة بقت بحجم «منذ الظهر» ولونها أزرق زي المهام. صفحة تحديث اللانشر بتعرض آخر إصدار معروف فورًا. جملة «اضغط لتحت لقراءة الباقي» بتظهر بس لما النص فعلاً أطول من المربع، والمربع أطول. وويدجت الحكمة بعيد عن حافة الشاشة أكتر.",
@@ -25116,6 +25120,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.43: the Ramadan widget now has three phases that never mix: the day before Ramadan to day 20 (duas, tips, virtues), days 21-30 (last ten nights, Laylat al-Qadr and night prayer only) and the first 3 days of Eid (Eid tips only). The Islamic day starts at Maghrib. New previews in Settings, and the gold outline is gone from the Living Mihrab.",
         "✔ 8.7.42: new “Ramadan & Eid Songs” entry in Settings (Prayer and Quran, among the Ramadan items) that opens “Ahlan bel Eid” on YouTube, and a second, hidden song entry in Settings > Support. A song opens first in YouTube Dummy, then TizenTube, then the YouTube app, and last in the TV browser. They play online with picture; nothing is stored in the launcher.",
         "✔ 8.7.41: the Ramadan widget is now centred just above the apps row, with a clear gap under the prayer card and clear of the focused app's name and description. The pool grows from 38 to 120 duas, tips, Laylat al-Qadr duas and virtues of Ramadan (Quran and hadith only), and every hadith source now reads “Sahih al-Bukhari · Hadith 2017” in full. The wisdom widget stays clear of the screen edge.",
         "✔ 8.7.40: new Ramadan widget on the Home screen (Ramadan only): a glass card above the apps row with a big crescent (a fanous lantern in the first days) and a rotating dua, tip or Laylat al-Qadr dua with its Quran / hadith source, Arabic and English, offline; the Qadr duas lead in the last ten nights. Settings > Ramadan has an on/off switch and a preview. The temperature on the Home screen now matches the “since prayer” text size and is blue like Tasks. The Launcher Update page shows the last known version at once. The “press Down to read more” hint now shows only when the text really overflows, and the text box is taller. The wisdom widget keeps a wider margin from the screen edge.",
@@ -25446,11 +25451,7 @@ window.APL_DEVICES = [
         box.appendChild(div("amb__aura"));
         box.appendChild(div("amb__vig")); box.appendChild(elG);
         elInner = div("amb__in");
-        /* the gold frame lives inside the drifting layer, so its lines never stay on the same pixels (OLED) */
-        var frame = div("amb__frame");
-        frame.appendChild(div("amb__cn amb__cn--tl")); frame.appendChild(div("amb__cn amb__cn--tr"));
-        frame.appendChild(div("amb__cn amb__cn--bl")); frame.appendChild(div("amb__cn amb__cn--br"));
-        elInner.appendChild(frame);
+        /* v8.7.43: the gold outline with corner marks is gone (user request); the content is unchanged */
         var head = div("amb__head");
         elP = div("amb__place");
         head.appendChild(div("amb__ln amb__ln--a")); head.appendChild(elP); head.appendChild(div("amb__ln amb__ln--b"));
@@ -26113,12 +26114,31 @@ window.APL_DEVICES = [
     var RW = { el: null, data: null, loading: false, cur: null, recent: [], lantern: false, on: false, key: "" };
     function rwPref(k) { try { return APL.sys.pref(k); } catch (e) { return undefined; } }
     function rwAr() { return APL.lang === "ar"; }
+    /* v8.7.42: the widget runs in three phases that are never mixed (ph in the data):
+         "a"  the day before Ramadan and days 1-20: general duas, tips and virtues of Ramadan
+         "b"  days 21-30 (the last ten nights): Laylat al-Qadr and night-prayer content only
+         "c"  the first 3 days of Eid al-Fitr: Eid tips only
+       The Islamic day starts at Maghrib, so after today's Maghrib the "effective" Hijri date is tomorrow's: the night of the 21st
+       (the first of the last ten) starts at Maghrib on the 20th, the first night of Ramadan at Maghrib on the 29th/30th of Sha'ban,
+       and the Eid eve at Maghrib on the last day of Ramadan. The dates come from islamic.js (Egypt: the announced month starts first,
+       the crescent estimate for months not announced yet, then the Hijri Date Adjustment). Without prayer times it uses the civil date. */
+    function rwHijriAt(plus) {
+        try { var dt = new Date(); dt.setDate(dt.getDate() + plus); return APL.islamic.toHijri(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()); } catch (e) { return null; }
+    }
     function rwState() {
         if (rwPref("ramadanWidget") === false) return null;
         var pv = parseInt(rwPref("ramadanWidgetPreview"), 10) || 0;
-        if (pv > 0) return { day: Math.min(30, pv), preview: true };
-        var h = hijri();
-        return (h && h.m === 9) ? { day: Math.max(1, Math.min(30, h.d)), preview: false } : null;
+        if (pv === 40) return { ph: "pre", day: 0, preview: true };
+        if (pv === 31) return { ph: "c", day: 1, preview: true };
+        if (pv > 0) return { ph: pv >= 21 ? "b" : "a", day: Math.min(30, pv), preview: true };
+        var t = times(), shift = (t.maghrib && Date.now() >= t.maghrib) ? 1 : 0;
+        var e = rwHijriAt(shift);
+        if (!e) return null;
+        if (e.m === 9) return { ph: e.d >= 21 ? "b" : "a", day: Math.max(1, Math.min(30, e.d)), preview: false };
+        if (e.m === 10 && e.d <= 3) return { ph: "c", day: e.d, preview: false };
+        var n = rwHijriAt(shift + 1);
+        if (n && n.m === 9 && n.d === 1) return { ph: "pre", day: 0, preview: false };
+        return null;
     }
     var RW_CRESCENT = '<svg viewBox="0 0 120 120" aria-hidden="true"><defs>' +
         '<linearGradient id="rwcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".55" stop-color="#f3c969"/><stop offset="1" stop-color="#c8902a"/></linearGradient>' +
@@ -26161,15 +26181,16 @@ window.APL_DEVICES = [
         r.send();
     }
     function rwPick(st) {
-        var items = RW.data, last10 = st.day >= 21, r = Math.random(), kind, pool, i;
-        if (last10) kind = r < 0.4 ? "qadr" : (r < 0.6 ? "dua" : (r < 0.8 ? "fadl" : "tip"));
-        else kind = r < 0.06 ? "qadr" : (r < 0.36 ? "dua" : (r < 0.68 ? "fadl" : "tip"));
-        pool = items.filter(function (x) { return x.k === kind && (kind !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
-        if (!pool.length) pool = items.filter(function (x) { return (x.k !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
-        if (!pool.length) { RW.recent = []; pool = items.filter(function (x) { return x.k !== "qadr" || last10 || x.any; }); }
+        var items = RW.data, ph = st.ph === "pre" ? "a" : st.ph, r = Math.random(), kind = null, pool, i;
+        function inPh(x) { return x.ph === ph && RW.recent.indexOf(x) < 0; }
+        if (ph === "a") kind = r < 0.3 ? "dua" : (r < 0.64 ? "fadl" : "tip");
+        pool = items.filter(function (x) { return inPh(x) && (!kind || x.k === kind); });
+        if (!pool.length) pool = items.filter(inPh);
+        if (!pool.length) { RW.recent = RW.recent.filter(function (x) { return x.ph !== ph; }); pool = items.filter(function (x) { return x.ph === ph; }); }
+        if (!pool.length) return null;
         i = pool[Math.floor(Math.random() * pool.length)];
         RW.recent.push(i);
-        if (RW.recent.length > 30) RW.recent.shift();
+        if (RW.recent.length > 40) RW.recent.shift();
         return i;
     }
     /* v8.7.41: centred above the apps row. Measured live: never over the focused app's name / description (it slides to the free side),
@@ -26216,8 +26237,11 @@ window.APL_DEVICES = [
         if (!it) return;
         el.className = "rw rw--" + (RW.lantern ? "lantern" : "crescent") + (it.k === "qadr" ? " rw--qadr" : "") + " is-on";
         el.querySelector(".rw__art").innerHTML = RW.lantern ? RW_LANTERN : RW_CRESCENT;
-        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "fadl" ? (ar ? "فضل رمضان" : "Virtue of Ramadan") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
-        dayTxt = (ar ? "رمضان · اليوم " : "Ramadan · Day ") + dg(st.day) + (st.day >= 21 ? (ar ? " · العشر الأواخر" : " · last ten nights") : "") + (st.preview ? (ar ? " · معاينة" : " · preview") : "");
+        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "eid" ? (ar ? "العيد" : "Eid") : it.k === "qiyam" ? (ar ? "قيام الليل" : "Night prayer") : it.k === "fadl" ? (ar ? "فضل رمضان" : "Virtue of Ramadan") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
+        dayTxt = st.ph === "pre" ? (ar ? "رمضان غدًا إن شاء الله" : "Ramadan begins tomorrow, God willing") :
+            st.ph === "c" ? ((ar ? "عيد الفطر · اليوم " : "Eid al-Fitr · Day ") + dg(st.day)) :
+            (ar ? "رمضان · اليوم " : "Ramadan · Day ") + dg(st.day) + (st.ph === "b" ? (ar ? " · العشر الأواخر" : " · last ten nights") : "");
+        if (st.preview) dayTxt += ar ? " · معاينة" : " · preview";
         el.querySelector(".rw__kind").textContent = kindTxt;
         el.querySelector(".rw__day").textContent = dayTxt;
         var tx = el.querySelector(".rw__text"), tr = el.querySelector(".rw__tr");
@@ -26236,12 +26260,12 @@ window.APL_DEVICES = [
             return;
         }
         if (!RW.data) { rwLoad(); return; }
-        var key = st.day + (st.preview ? "p" : "") + (rwAr() ? "a" : "e");
+        var key = st.ph + st.day + (st.preview ? "p" : "") + (rwAr() ? "a" : "e");
         if (rotate || !RW.cur || key !== RW.key) {
-            if (rotate || !RW.cur) {
+            if (rotate || !RW.cur || RW.cur.ph !== (st.ph === "pre" ? "a" : st.ph)) {
                 RW.cur = rwPick(st);
                 /* the lantern: sometimes in the first 5 days (most of the time then), never after them */
-                RW.lantern = st.day <= 5 && (!RW.el || RW.el.className.indexOf("is-on") < 0 || Math.random() < 0.7);
+                RW.lantern = (st.ph === "pre" || (st.ph === "a" && st.day <= 5)) && (!RW.el || RW.el.className.indexOf("is-on") < 0 || Math.random() < 0.7);
             }
             RW.key = key;
         }

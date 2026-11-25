@@ -217,12 +217,31 @@
     var RW = { el: null, data: null, loading: false, cur: null, recent: [], lantern: false, on: false, key: "" };
     function rwPref(k) { try { return APL.sys.pref(k); } catch (e) { return undefined; } }
     function rwAr() { return APL.lang === "ar"; }
+    /* v8.7.42: the widget runs in three phases that are never mixed (ph in the data):
+         "a"  the day before Ramadan and days 1-20: general duas, tips and virtues of Ramadan
+         "b"  days 21-30 (the last ten nights): Laylat al-Qadr and night-prayer content only
+         "c"  the first 3 days of Eid al-Fitr: Eid tips only
+       The Islamic day starts at Maghrib, so after today's Maghrib the "effective" Hijri date is tomorrow's: the night of the 21st
+       (the first of the last ten) starts at Maghrib on the 20th, the first night of Ramadan at Maghrib on the 29th/30th of Sha'ban,
+       and the Eid eve at Maghrib on the last day of Ramadan. The dates come from islamic.js (Egypt: the announced month starts first,
+       the crescent estimate for months not announced yet, then the Hijri Date Adjustment). Without prayer times it uses the civil date. */
+    function rwHijriAt(plus) {
+        try { var dt = new Date(); dt.setDate(dt.getDate() + plus); return APL.islamic.toHijri(dt.getFullYear(), dt.getMonth() + 1, dt.getDate()); } catch (e) { return null; }
+    }
     function rwState() {
         if (rwPref("ramadanWidget") === false) return null;
         var pv = parseInt(rwPref("ramadanWidgetPreview"), 10) || 0;
-        if (pv > 0) return { day: Math.min(30, pv), preview: true };
-        var h = hijri();
-        return (h && h.m === 9) ? { day: Math.max(1, Math.min(30, h.d)), preview: false } : null;
+        if (pv === 40) return { ph: "pre", day: 0, preview: true };
+        if (pv === 31) return { ph: "c", day: 1, preview: true };
+        if (pv > 0) return { ph: pv >= 21 ? "b" : "a", day: Math.min(30, pv), preview: true };
+        var t = times(), shift = (t.maghrib && Date.now() >= t.maghrib) ? 1 : 0;
+        var e = rwHijriAt(shift);
+        if (!e) return null;
+        if (e.m === 9) return { ph: e.d >= 21 ? "b" : "a", day: Math.max(1, Math.min(30, e.d)), preview: false };
+        if (e.m === 10 && e.d <= 3) return { ph: "c", day: e.d, preview: false };
+        var n = rwHijriAt(shift + 1);
+        if (n && n.m === 9 && n.d === 1) return { ph: "pre", day: 0, preview: false };
+        return null;
     }
     var RW_CRESCENT = '<svg viewBox="0 0 120 120" aria-hidden="true"><defs>' +
         '<linearGradient id="rwcg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3c4"/><stop offset=".55" stop-color="#f3c969"/><stop offset="1" stop-color="#c8902a"/></linearGradient>' +
@@ -265,15 +284,16 @@
         r.send();
     }
     function rwPick(st) {
-        var items = RW.data, last10 = st.day >= 21, r = Math.random(), kind, pool, i;
-        if (last10) kind = r < 0.4 ? "qadr" : (r < 0.6 ? "dua" : (r < 0.8 ? "fadl" : "tip"));
-        else kind = r < 0.06 ? "qadr" : (r < 0.36 ? "dua" : (r < 0.68 ? "fadl" : "tip"));
-        pool = items.filter(function (x) { return x.k === kind && (kind !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
-        if (!pool.length) pool = items.filter(function (x) { return (x.k !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
-        if (!pool.length) { RW.recent = []; pool = items.filter(function (x) { return x.k !== "qadr" || last10 || x.any; }); }
+        var items = RW.data, ph = st.ph === "pre" ? "a" : st.ph, r = Math.random(), kind = null, pool, i;
+        function inPh(x) { return x.ph === ph && RW.recent.indexOf(x) < 0; }
+        if (ph === "a") kind = r < 0.3 ? "dua" : (r < 0.64 ? "fadl" : "tip");
+        pool = items.filter(function (x) { return inPh(x) && (!kind || x.k === kind); });
+        if (!pool.length) pool = items.filter(inPh);
+        if (!pool.length) { RW.recent = RW.recent.filter(function (x) { return x.ph !== ph; }); pool = items.filter(function (x) { return x.ph === ph; }); }
+        if (!pool.length) return null;
         i = pool[Math.floor(Math.random() * pool.length)];
         RW.recent.push(i);
-        if (RW.recent.length > 30) RW.recent.shift();
+        if (RW.recent.length > 40) RW.recent.shift();
         return i;
     }
     /* v8.7.41: centred above the apps row. Measured live: never over the focused app's name / description (it slides to the free side),
@@ -320,8 +340,11 @@
         if (!it) return;
         el.className = "rw rw--" + (RW.lantern ? "lantern" : "crescent") + (it.k === "qadr" ? " rw--qadr" : "") + " is-on";
         el.querySelector(".rw__art").innerHTML = RW.lantern ? RW_LANTERN : RW_CRESCENT;
-        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "fadl" ? (ar ? "فضل رمضان" : "Virtue of Ramadan") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
-        dayTxt = (ar ? "رمضان · اليوم " : "Ramadan · Day ") + dg(st.day) + (st.day >= 21 ? (ar ? " · العشر الأواخر" : " · last ten nights") : "") + (st.preview ? (ar ? " · معاينة" : " · preview") : "");
+        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "eid" ? (ar ? "العيد" : "Eid") : it.k === "qiyam" ? (ar ? "قيام الليل" : "Night prayer") : it.k === "fadl" ? (ar ? "فضل رمضان" : "Virtue of Ramadan") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
+        dayTxt = st.ph === "pre" ? (ar ? "رمضان غدًا إن شاء الله" : "Ramadan begins tomorrow, God willing") :
+            st.ph === "c" ? ((ar ? "عيد الفطر · اليوم " : "Eid al-Fitr · Day ") + dg(st.day)) :
+            (ar ? "رمضان · اليوم " : "Ramadan · Day ") + dg(st.day) + (st.ph === "b" ? (ar ? " · العشر الأواخر" : " · last ten nights") : "");
+        if (st.preview) dayTxt += ar ? " · معاينة" : " · preview";
         el.querySelector(".rw__kind").textContent = kindTxt;
         el.querySelector(".rw__day").textContent = dayTxt;
         var tx = el.querySelector(".rw__text"), tr = el.querySelector(".rw__tr");
@@ -340,12 +363,12 @@
             return;
         }
         if (!RW.data) { rwLoad(); return; }
-        var key = st.day + (st.preview ? "p" : "") + (rwAr() ? "a" : "e");
+        var key = st.ph + st.day + (st.preview ? "p" : "") + (rwAr() ? "a" : "e");
         if (rotate || !RW.cur || key !== RW.key) {
-            if (rotate || !RW.cur) {
+            if (rotate || !RW.cur || RW.cur.ph !== (st.ph === "pre" ? "a" : st.ph)) {
                 RW.cur = rwPick(st);
                 /* the lantern: sometimes in the first 5 days (most of the time then), never after them */
-                RW.lantern = st.day <= 5 && (!RW.el || RW.el.className.indexOf("is-on") < 0 || Math.random() < 0.7);
+                RW.lantern = (st.ph === "pre" || (st.ph === "a" && st.day <= 5)) && (!RW.el || RW.el.className.indexOf("is-on") < 0 || Math.random() < 0.7);
             }
             RW.key = key;
         }

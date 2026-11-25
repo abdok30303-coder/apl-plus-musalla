@@ -1,3 +1,11 @@
+## 8.7.43
+
+- Ramadan widget phases (never mixed): the day before Ramadan and days 1-20 show general duas, tips and virtues; days 21-30 show only last-ten and Laylat al-Qadr items (plus night-prayer items, new label "Night prayer"); the first 3 days of Eid al-Fitr show only Eid items (28, label "Eid"). 151 items, each tagged with its phase, and the picker never leaves the current phase.
+- Boundaries: the Islamic day starts at Maghrib, so after Maghrib the widget uses tomorrow's Hijri date. Day 21 starts at Maghrib on day 20; Eid starts at Maghrib on the last day of Ramadan and ends at Maghrib on Eid day 3. Dates come from the same Hijri rules as 8.7.38 (Egypt's announced starts first; the crescent estimate, marked approximate, for months not announced yet; the Hijri Date Adjustment on top). The "day before Ramadan" state may be a day off until Egypt announces the start.
+- Settings > Ramadan Widget Preview: new options Day before Ramadan, Day 21 (last ten begins), Eid al-Fitr (day 1). The off switch still hides everything.
+- Living Mihrab: the gold outline with corner marks is removed. Content unchanged.
+- Checked: boundary test with simulated dates (before and after Maghrib), picker phase test, text-fit test on all items. Not verified on a TV. Arabic wording and hadith numbers are from memory and should be reviewed by a scholar.
+
 ## 8.7.42
 
 - Ramadan & Eid Songs: a new entry in Settings > Prayer and Quran, placed in the middle of the Ramadan items, with "أهلا بالعيد · صفاء أبو السعود". A second song ("رمضان جانا · الأصلية القديمة") is a hidden row in Settings > Support, not in the visible list.

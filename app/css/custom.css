@@ -2247,12 +2247,6 @@ html[dir="rtl"] .aplpage--glass .aplpage__hint { text-align: center; }
 .amb.no-motion .amb__aura, .perf .amb__aura { animation: none; opacity: 0.5; }
 
 .amb__in { padding: 60px 120px 56px; }
-.amb__frame { position: absolute; top: 24px; right: 24px; bottom: 24px; left: 24px; border: 1px solid rgba(255,217,138,0.22); border-radius: 18px; pointer-events: none; }
-.amb__cn { position: absolute; width: 74px; height: 74px; border: 0 solid rgba(255,217,138,0.85); }
-.amb__cn--tl { top: -2px; left: -2px; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 18px; }
-.amb__cn--tr { top: -2px; right: -2px; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 18px; }
-.amb__cn--bl { bottom: -2px; left: -2px; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 18px; }
-.amb__cn--br { bottom: -2px; right: -2px; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 18px; }
 
 /* the mosque's name between two gold lines */
 .amb__head { display: flex; flex-direction: row; align-items: center; justify-content: center; }

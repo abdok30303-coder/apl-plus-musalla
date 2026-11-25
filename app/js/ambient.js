@@ -60,11 +60,7 @@
         box.appendChild(div("amb__aura"));
         box.appendChild(div("amb__vig")); box.appendChild(elG);
         elInner = div("amb__in");
-        /* the gold frame lives inside the drifting layer, so its lines never stay on the same pixels (OLED) */
-        var frame = div("amb__frame");
-        frame.appendChild(div("amb__cn amb__cn--tl")); frame.appendChild(div("amb__cn amb__cn--tr"));
-        frame.appendChild(div("amb__cn amb__cn--bl")); frame.appendChild(div("amb__cn amb__cn--br"));
-        elInner.appendChild(frame);
+        /* v8.7.43: the gold outline with corner marks is gone (user request); the content is unchanged */
         var head = div("amb__head");
         elP = div("amb__place");
         head.appendChild(div("amb__ln amb__ln--a")); head.appendChild(elP); head.appendChild(div("amb__ln amb__ln--b"));

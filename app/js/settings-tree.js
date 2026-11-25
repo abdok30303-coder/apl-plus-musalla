@@ -568,9 +568,9 @@
                 action("وضع رمضان", function () { if (APL.ramadan) APL.ramadan.panel(); },
                     "تلقائي في رمضان: عدّاد السحور والإفطار، مدفع، تنبيه التراويح، وختمة ٣٠ يوم.", "moon"),
                 toggle(APL.t("Ramadan Widget"), "ramadanWidget",
-                    APL.t("In Ramadan only: a crescent (a lantern in the first days) with Ramadan duas, tips and Laylat al-Qadr duas above the apps row. Off: it never shows.")),
+                    APL.t("From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.")),
                 choice(APL.t("Ramadan Widget Preview"), "ramadanWidgetPreview",
-                    [[0, APL.t("Off")], [1, APL.t("Day 1 (lantern)")], [12, APL.t("Day 12 (crescent)")], [27, APL.t("Night 27 (Laylat al-Qadr)")]],
+                    [[0, APL.t("Off")], [40, APL.t("Day before Ramadan (lantern)")], [1, APL.t("Day 1 (lantern)")], [12, APL.t("Day 12 (crescent)")], [21, APL.t("Day 21 (last ten nights begin)")], [27, APL.t("Night 27 (Laylat al-Qadr)")], [31, APL.t("Eid al-Fitr (day 1)")]],
                     APL.t("Shows the Ramadan widget now, as on that day, so you can see it outside Ramadan. Set it back to Off afterwards."), function () {
                         if (APL.ramadanWidget) APL.ramadanWidget.sync();
                     }),
