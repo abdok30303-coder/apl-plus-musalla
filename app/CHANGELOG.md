@@ -1,3 +1,9 @@
+## 8.7.34
+
+- Install Update: every failure now names the step (1 Vetro, 2 launcher folder, 3 tools on the TV, 4 download, 5 file check, 6 unpack, 7 copy) and the reason, with the technical detail under it, and keeps the last result in Settings > Support > Launcher Update. It checks the TV first, finds the launcher folder by itself, sends no multi-line command or backslash through Vetro, tries curl, wget and busybox, unpacks with unzip, busybox, bsdtar or python, works in the flash folder instead of RAM, and checks the file against its published SHA-256.
+- What's New scrolls with Up and Down, with a hint when there is more to read.
+- The wisdom widget stays clear of the clock and prayer widgets: it uses the free gap beside them, shrinks the font to a readable minimum, and only then grows taller inside that gap.
+
 ## 8.7.33
 
 - Wisdom widget: the whole wisdom always shows. The four-line cut with "..." is removed on the Home Screen and in the live mihrab; the window widens first, then the font shrinks to a readable minimum, and if a wisdom still needs room the window grows taller. Long wisdoms in the prayer-bar row take a smaller font instead of being cut.

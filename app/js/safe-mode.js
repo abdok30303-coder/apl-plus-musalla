@@ -39,6 +39,12 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.34: تثبيت التحديث بقى يقول بالظبط أنهي خطوة فشلت وليه؛ وبيفحص التلفزيون الأول (Vetro والمجلد والأدوات) وبيتأكد من الملف المحمّل",
+        "✔ قائمة «إيه الجديد» بتتحرك بالأسهم فوق وتحت؛ وويدجت الحكمة بقى بعيد عن الساعة وويدجت الصلاة",
+        "✔ 8.7.33: الحكمة بتظهر كاملة دايماً؛ فحص التحديث مرة كل 24 ساعة؛ وتجربة المدفع بتبدأ أسرع",
+        "✔ 8.7.32: صوت المدفع بيتدوّر عليه في أماكن أكتر؛ والموقع التلقائي بيسأل خدمات أكتر",
+        "✔ 8.7.31: تثبيت التحديث من جوه اللانشر؛ وكل منافذ HDMI الأربعة بتظهر",
+        "✔ 8.7.28: الموقع التلقائي اختياري (مقفول افتراضياً)؛ اختيار الدولة ثم المدينة؛ مفاتيح المصحف؛ والمحراب الحي شاشة التوقف الافتراضية",
         "\u2714 8.7.27: \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0628\u062a\u062a\u062d\u062f\u062f \u0644\u0648\u062d\u062f\u0647\u0627 \u0645\u0646 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0634\u0627\u0634\u0629 (\u0627\u0644\u062f\u0648\u0644\u0629 \u0648\u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629) \u0648\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a\u060c \u0648\u062a\u0642\u062f\u0631 \u062a\u062e\u062a\u0627\u0631\u0647\u0627 \u064a\u062f\u0648\u064a \u0641\u064a \u0623\u064a \u0648\u0642\u062a",
         "\u2714 \u0627\u0644\u062a\u0642\u0648\u064a\u0645 \u0627\u0644\u0647\u062c\u0631\u064a \u0628\u064a\u062a\u0628\u0639 \u062f\u0648\u0644\u0629 \u0627\u0644\u0645\u062f\u064a\u0646\u0629\u060c \u0648\u0645\u0648\u0639\u062f \u0631\u0645\u0636\u0627\u0646 \u0648\u0627\u0644\u0639\u064a\u062f \u0628\u064a\u062a\u062c\u062f\u062f \u0644\u0648\u062d\u062f\u0647 \u0648\u0645\u0639\u0627\u0647 \u0632\u0631 \u062a\u062d\u062f\u064a\u062b \u064a\u062f\u0648\u064a \u0648\u062a\u0635\u062d\u064a\u062d \u0628\u0627\u0644\u0623\u064a\u0627\u0645",
         "\u2714 \u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0647\u062c\u0631\u064a \u0648\u0627\u062d\u062f \u0641\u064a \u0643\u0644 \u0627\u0644\u0634\u0627\u0634\u0627\u062a\u060c \u0648\u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u2248 \u0645\u0639\u0646\u0627\u0647\u0627 \u0625\u0646 \u0627\u0644\u0645\u0648\u0639\u062f \u0644\u0633\u0647 \u0645\u0627 \u0627\u062a\u0639\u0644\u0646\u0634 \u0631\u0633\u0645\u064a\u064b\u0627",
@@ -57,6 +63,12 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.34: Install Update now says exactly which step failed and why; it checks the TV first (Vetro, folder, tools) and checks the downloaded file",
+        "✔ What's New scrolls with Up and Down; the wisdom widget stays clear of the clock and the prayer widget",
+        "✔ 8.7.33: the whole wisdom always shows; the update check runs once every 24 hours; the cannon test starts faster",
+        "✔ 8.7.32: the cannon sound is found in more places; automatic location asks more services",
+        "✔ 8.7.31: Install Update from inside the launcher; all four HDMI ports are listed",
+        "✔ 8.7.28: automatic location is optional (off by default); one country-then-city picker; Mushaf keys; Living Mihrab is the default screen saver",
         "✔ 8.7.27: The city is now found by itself from the screen (country, time zone) and the Internet address; you can still choose it by hand",
         "✔ The Hijri calendar follows the city's country; Ramadan and Eid renew themselves, with a manual update and a correction in days",
         "✔ One Hijri date everywhere; ≈ means the date is not announced yet",

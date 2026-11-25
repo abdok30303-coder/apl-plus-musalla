@@ -10,8 +10,9 @@
    Install: asks, then (through Vetro root exec, the same way safe-restore.js works) downloads the .wgt
             to /tmp, tests it, unpacks it, checks it holds this launcher's index.html and the new version,
             and only then copies the files over the installed ones and restarts the launcher.
-            If anything fails nothing is replaced. If the TV has no curl/wget/unzip, or the package folder
-            is read-only, it says so and shows the file to install from a USB drive / Apps2Samsung instead.
+            If anything fails nothing is replaced, and the message names the exact step that failed and why
+            (v8.7.34: 1 Vetro, 2 launcher folder, 3 tools on the TV, 4 download, 5 file check, 6 unpack, 7 copy),
+            then shows the file to install from a USB drive / Apps2Samsung.
    Never touches: the saved settings (localStorage), audio files, radio.
    ============================================================ */
 (function (global) {
@@ -71,77 +72,213 @@
         });
     }
 
-    function script(v) {
-        var W = www();
-        return [
-            "T=" + DIR + "; W='" + W + "'; V=" + v + "; U='" + wgtUrl(v) + "'; S=$T/status",
-            "echo RUN > $S",
-            "rm -rf $T/x $T/u.wgt; mkdir -p $T/x",
-            "echo DOWNLOAD > $S",
-            "{ curl -fsSL -m 900 -o $T/u.wgt \"$U\" || wget -q -O $T/u.wgt \"$U\" || busybox wget -q -O $T/u.wgt \"$U\"; } >/dev/null 2>&1",
-            "SZ=$(wc -c < $T/u.wgt 2>/dev/null || echo 0); [ \"${SZ:-0}\" -gt 1000000 ] || { echo FAIL_DOWNLOAD > $S; exit 0; }",
-            "echo UNPACK > $S",
-            "{ unzip -oq $T/u.wgt -d $T/x || busybox unzip -oq $T/u.wgt -d $T/x; } >/dev/null 2>&1",
-            "[ -s $T/x/index.html ] && [ -s $T/x/js/boot.js ] && grep -q \"\\\"version\\\": \\\"$V\\\"\" $T/x/js/build.js || { echo FAIL_PACKAGE > $S; exit 0; }",
-            "[ -w \"$W\" ] || { echo FAIL_READONLY > $S; exit 0; }",
-            "echo COPY > $S",
-            "rm -f $T/x/config.xml $T/x/author-signature.xml $T/x/signature1.xml",
-            "cp -a $T/x/. \"$W\"/ && sync && echo OK > $S || echo FAIL_COPY > $S",
-            "rm -rf $T/x $T/u.wgt"
-        ].join("\n");
+    /* ---------------- v8.7.34: every step reports its own name and reason ----------------
+       Steps: 1 Vetro (root command) | 2 the launcher folder | 3 tools on the TV (downloader, unzip) |
+              4 download | 5 check of the file | 6 unpack | 7 copy into the launcher folder.
+       Rules for the commands we send through Vetro: no backslashes (Vetro doubles them), no single quotes
+       inside the background script, and one single line (no heredoc). */
+    var STORE = "apl.upd.report";
+    var CANDIDATES = ["/opt/usr/apps/APLMusalla/res/wgt"];
+    var info = null;   /* what the TV told us before the install */
+
+    function saveReport(text) {
+        try { global.localStorage.setItem(STORE, new Date().toISOString().slice(0, 16).replace("T", " ") + "  " + text); } catch (e) {}
+    }
+    function lastReport() { try { return global.localStorage.getItem(STORE) || ""; } catch (e) { return ""; } }
+
+    function kv(out) {
+        var o = {}, m, re = /^([A-Za-z_0-9]+)=(.*)$/gm;
+        while ((m = re.exec(String(out || "")))) o[m[1]] = m[2].replace(/\s+$/, "");
+        return o;
+    }
+    function has(o, t) { return !!(o["T_" + t] && o["T_" + t] !== "-"); }
+
+    /* One short command: who we are, which tools exist, which folder is the launcher, can we write there, can curl reach GitHub. */
+    function preflightCmd() {
+        var c = ["echo UID=$(id -u)"];
+        c.push("for t in curl wget busybox unzip bsdtar python3 sha256sum nohup; do echo T_$t=$(command -v $t || echo -); done");
+        c.push("W=; for p in " + [www()].concat(CANDIDATES).join(" ") + "; do [ -s $p/js/app.bundle.js ] && W=$p && break; done; echo W=$W");
+        c.push("if [ -n \"$W\" ]; then touch $W/.apl-w 2>/dev/null && echo WRITABLE=1 || echo WRITABLE=0; rm -f $W/.apl-w 2>/dev/null; fi");
+        c.push("D=/opt/usr/home/owner/APL/upd; mkdir -p $D 2>/dev/null; touch $D/.t 2>/dev/null && echo DIR=$D || echo DIR=/tmp/apl-upd; rm -f $D/.t 2>/dev/null");
+        c.push("echo FREE_KB=$(df -k /opt/usr/home/owner 2>/dev/null | tail -n 1 | tr -s ' ' | cut -d ' ' -f4)");
+        c.push("echo CURLV=$(curl -V 2>/dev/null | head -n 1)");
+        c.push("command -v curl >/dev/null 2>&1 && { N=$(curl -s -m 15 -o /dev/null -w %{http_code} https://raw.githubusercontent.com/ 2>&1); echo NETCURL=$N/$?; }");
+        c.push("true");
+        return c.join("; ");
     }
 
-    function failText(code) {
-        var m = {
-            FAIL_DOWNLOAD: tr("التحميل فشل (النت أو التلفزيون مفيهوش curl/wget).", "Download failed (Internet, or the TV has no curl/wget)."),
-            FAIL_PACKAGE: tr("الملف اتحمّل بس مش نسخة صالحة (أو مفيش unzip على التلفزيون).", "The file downloaded but is not a valid package (or the TV has no unzip)."),
-            FAIL_READONLY: tr("مجلد اللانشر مقفول للكتابة.", "The launcher folder is read-only."),
-            FAIL_COPY: tr("نسخ الملفات فشل. اللانشر ممكن يحتاج إعادة تثبيت.", "Copying the files failed. The launcher may need a reinstall.")
-        };
-        return m[code] || tr("التثبيت فشل.", "Install failed.");
+    function script(v, o, hash) {
+        var T = o.DIR, W = o.W;
+        var s = [
+            "T=" + T, "W=" + W, "V=" + v, "U=" + wgtUrl(v), "H=" + (hash || "-"), "S=$T/status", "L=$T/log",
+            "f() { echo FAIL:$1:$2 > $S; exit 0; }",
+            "sz() { wc -c < $T/u.wgt 2>/dev/null || echo 0; }",
+            "big() { [ $(sz) -gt 1000000 ]; }",
+            "rm -rf $T/x $T/u.wgt $L; mkdir -p $T/x || f prepare cannot-create-$T",
+            "echo DOWNLOAD > $S",
+            "ok=0; INS=0; CE=none; WE=none; BE=none; KE=none",
+            "if command -v curl >/dev/null 2>&1; then curl -fsSL --connect-timeout 25 -m 900 -o $T/u.wgt $U >>$L 2>&1; CE=$?; [ $CE = 0 ] && big && ok=1; fi",
+            "if [ $ok = 0 ] && command -v wget >/dev/null 2>&1; then wget -q -O $T/u.wgt $U >>$L 2>&1; WE=$?; [ $WE = 0 ] && big && ok=1; fi",
+            "if [ $ok = 0 ] && command -v busybox >/dev/null 2>&1; then busybox wget -q -O $T/u.wgt $U >>$L 2>&1; BE=$?; [ $BE = 0 ] && big && ok=1; fi",
+            "if [ $ok = 0 ] && [ $H != - ] && command -v curl >/dev/null 2>&1; then curl -fsSLk --connect-timeout 25 -m 900 -o $T/u.wgt $U >>$L 2>&1; KE=$?; [ $KE = 0 ] && big && ok=1 && INS=1; fi",
+            "[ $ok = 1 ] || f download curl=$CE,wget=$WE,busybox=$BE,curl-k=$KE,bytes=$(sz)",
+            "echo CHECK > $S",
+            "if [ $H != - ]; then if command -v sha256sum >/dev/null 2>&1; then A=$(sha256sum $T/u.wgt); A=${A%% *}; [ $A = $H ] || f hash got-$A; else [ $INS = 0 ] || f hash no-sha256sum; fi; fi",
+            "echo UNPACK > $S",
+            "X=0",
+            "if command -v unzip >/dev/null 2>&1; then unzip -oq $T/u.wgt -d $T/x >>$L 2>&1 && X=1; fi",
+            "[ $X = 1 ] || { busybox unzip -oq $T/u.wgt -d $T/x >>$L 2>&1 && X=1; }",
+            "[ $X = 1 ] || { bsdtar -xf $T/u.wgt -C $T/x >>$L 2>&1 && X=1; }",
+            "[ $X = 1 ] || { python3 -c \"import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])\" $T/u.wgt $T/x >>$L 2>&1 && X=1; }",
+            "[ $X = 1 ] || f unpack all-unpackers-failed-or-file-damaged",
+            "rm -f $T/u.wgt",
+            "echo VERIFY > $S",
+            "[ -s $T/x/index.html ] && [ -s $T/x/js/boot.js ] && [ -s $T/x/js/app.bundle.js ] || f verify files-missing-in-package",
+            "grep -q $V $T/x/js/build.js || f verify wrong-version-in-package",
+            "echo WRITE > $S",
+            "touch $W/.apl-w 2>>$L || mount -o remount,rw $W >>$L 2>&1",
+            "touch $W/.apl-w 2>>$L || f writable uid-$(id -u)",
+            "rm -f $W/.apl-w",
+            "echo COPY > $S",
+            "rm -f $T/x/config.xml $T/x/author-signature.xml $T/x/signature1.xml",
+            "cp -a $T/x/. $W/ >>$L 2>&1 || f copy $(df -k $W | tail -n 1)",
+            "chmod -R a+rX $W 2>/dev/null",
+            "sync",
+            "grep -q $V $W/js/build.js || f copy installed-files-do-not-show-new-version",
+            "echo OK > $S",
+            "rm -rf $T/x"
+        ];
+        return s.join("; ");
     }
-    function manual(v) {
+
+    function curlWhy(n) {
+        var m = { 6: ["ما قدرش يحل اسم github (DNS)", "could not resolve github.com (DNS)"],
+                  7: ["ما قدرش يتصل بـ github", "could not connect to github.com"],
+                  22: ["GitHub رد بخطأ (الملف مش موجود؟)", "GitHub answered with an error (file not found?)"],
+                  23: ["خطأ كتابة على التلفزيون (مساحة؟)", "write error on the TV (disk space?)"],
+                  28: ["انتهت المهلة (النت بطيء)", "timed out (slow Internet)"],
+                  35: ["اتصال آمن (TLS) مرفوض", "secure (TLS) connection refused"],
+                  51: ["شهادة الموقع مرفوضة", "certificate refused"], 58: ["شهادة مرفوضة", "certificate refused"],
+                  60: ["شهادة github مش معروفة للتلفزيون", "the TV does not trust GitHub's certificate"],
+                  77: ["ملف الشهادات مفقود على التلفزيون", "the TV's certificate file is missing"],
+                  56: ["انقطع الاتصال أثناء التحميل", "connection dropped while downloading"] };
+        return m[n] ? tr(m[n][0], m[n][1]) : "";
+    }
+
+    /* step: [number, Arabic name, English name]; reason: text; extra: technical detail */
+    var STEPS = {
+        vetro: [1, "Vetro (أوامر الروت)", "Vetro (root commands)"],
+        folder: [2, "مكان اللانشر", "the launcher folder"],
+        tools: [3, "أدوات التلفزيون", "tools on the TV"],
+        prepare: [4, "تجهيز مكان التحميل", "preparing the download folder"],
+        download: [4, "التحميل", "download"],
+        hash: [5, "فحص الملف", "checking the file"],
+        verify: [5, "فحص الملف", "checking the file"],
+        unpack: [6, "فك الضغط", "unpacking"],
+        writable: [7, "الكتابة في مجلد اللانشر", "writing to the launcher folder"],
+        copy: [7, "نسخ الملفات", "copying the files"]
+    };
+    function fail(step, reason, extra, v) {
+        busy = false;
+        var st = STEPS[step] || [0, step, step];
+        var head = tr("فشل في الخطوة " + st[0] + ": " + st[1], "Failed at step " + st[0] + ": " + st[2]);
+        var msg = head + "\n" + tr("السبب: ", "Reason: ") + reason + (extra ? "\n(" + extra + ")" : "");
+        saveReport(head + " | " + reason + (extra ? " | " + extra : ""));
+        toast(head, false);
         try {
             APL.alert({
-                title: tr("التثبيت اليدوي", "Manual install"),
-                message: tr("ثبّت الملف ده من فلاشة أو Apps2Samsung:\n", "Install this file from a USB drive or Apps2Samsung:\n") + wgtUrl(v),
+                title: tr("التثبيت من اللانشر ماتمّش", "Install did not finish"),
+                message: msg + "\n\n" + tr("ثبّت الملف ده من فلاشة أو Apps2Samsung:\n", "Install this file from a USB drive or Apps2Samsung:\n") + wgtUrl(v),
                 buttons: [{ label: tr("تمام", "OK") }]
             });
         } catch (e) {}
     }
+    function explain(code, detail) {
+        var d = String(detail || ""), m;
+        if (code === "download") {
+            m = /curl=(\d+)/.exec(d);
+            var n = m ? parseInt(m[1], 10) : -1, why = curlWhy(n);
+            if (/curl=none/.test(d) && /wget=none/.test(d) && /busybox=none/.test(d)) why = tr("مفيش curl ولا wget على التلفزيون", "the TV has no curl or wget");
+            return { r: why || tr("التحميل ماكملش", "the download did not complete"), x: d };
+        }
+        if (code === "hash") return { r: /no-sha256sum/.test(d) ? tr("التلفزيون مش بيقدر يتحقق من سلامة الملف", "the TV cannot verify the file") : tr("الملف المحمّل مش مطابق للأصلي", "the downloaded file does not match the original"), x: d };
+        if (code === "verify") return { r: tr("الملف المحمّل مش نسخة صالحة من اللانشر", "the downloaded file is not a valid launcher package"), x: d };
+        if (code === "unpack") return { r: tr("فك الضغط فشل (مفيش unzip شغال أو الملف تالف)", "unpacking failed (no working unzip, or the file is damaged)"), x: d };
+        if (code === "writable") return { r: tr("مجلد اللانشر مقفول للكتابة", "the launcher folder is read-only"), x: d };
+        if (code === "copy") return { r: tr("نسخ الملفات فشل (مساحة أو صلاحيات). لو اللانشر ماشتغلش، النسخة الاحتياطية بترجّعه.", "copying failed (space or permissions). If the launcher does not start, the safety copy restores it."), x: d };
+        if (code === "prepare") return { r: tr("ماقدرتش أجهز مكان التحميل", "could not create the download folder"), x: d };
+        return { r: tr("سبب غير معروف", "unknown reason"), x: d };
+    }
 
-    function poll(v, tries) {
-        var sys = APL.sys;
-        sys.exec("cat " + DIR + "/status 2>/dev/null; true").then(function (r) {
-            var s = String((r && r.output) || "").replace(/\s+/g, "");
+    function poll(v, tries, o) {
+        var sys = APL.sys, T = o.DIR;
+        sys.exec("cat " + T + "/status 2>/dev/null; echo; tail -c 300 " + T + "/log 2>/dev/null; true").then(function (r) {
+            var raw = String((r && r.output) || ""), s = raw.split(/\r?\n/)[0].replace(/\s+/g, "");
             if (s === "OK") {
                 busy = false;
+                saveReport("OK " + v);
                 toast(tr("اتثبّتت النسخة " + v + ". بعيد التشغيل...", "Version " + v + " installed. Restarting..."), true);
                 global.setTimeout(function () { try { global.location.reload(); } catch (e) {} }, 2200);
-            } else if (/^FAIL/.test(s)) {
-                busy = false; toast(failText(s), false); manual(v);
+            } else if (/^FAIL:/.test(s)) {
+                var p = s.split(":"), e = explain(p[1], p.slice(2).join(":"));
+                var tail = raw.split(/\r?\n/).slice(1).join(" ").replace(/\s+/g, " ").trim().slice(-160);
+                fail(p[1], e.r, e.x + (tail ? " | " + tail : ""), v);
             } else if (tries <= 0) {
-                busy = false; toast(tr("التحديث أخد وقت طويل. اتأكد من النت وجرّب تاني.", "The update is taking too long. Check the Internet and try again."), false);
+                fail("download", tr("الخطوة " + (s || "؟") + " أخدت وقت طويل جداً", "step " + (s || "?") + " took too long"), "status=" + s, v);
             } else {
-                if (s === "DOWNLOAD") toast(tr("بنزّل النسخة " + v + "...", "Downloading version " + v + "..."), true);
-                global.setTimeout(function () { poll(v, tries - 1); }, 4000);
+                if (s === "DOWNLOAD" && tries % 15 === 0) toast(tr("بنزّل النسخة " + v + "...", "Downloading version " + v + "..."), true);
+                global.setTimeout(function () { poll(v, tries - 1, o); }, 4000);
             }
-        }, function () {
-            if (tries <= 0) { busy = false; toast(tr("Vetro مش متصل", "Vetro is not responding"), false); }
-            else global.setTimeout(function () { poll(v, tries - 1); }, 4000);
+        }, function (e) {
+            if (tries <= 0) fail("vetro", tr("Vetro وقف يرد أثناء التثبيت", "Vetro stopped answering during the install"), String(e && e.message || e), v);
+            else global.setTimeout(function () { poll(v, tries - 1, o); }, 4000);
         });
     }
 
-    function doInstall(v) {
+    function doInstall(v, hash) {
         var sys = APL.sys;
-        if (!sys || typeof sys.exec !== "function" || !www()) { manual(v); return; }
+        if (!sys || typeof sys.exec !== "function") { fail("vetro", tr("اللانشر مفيهوش وصلة لـ Vetro", "this launcher has no connection to Vetro"), "", v); return; }
         busy = true;
-        var cmd = "mkdir -p " + DIR + "; cat > " + DIR + "/run.sh <<'APLEOS'\n" + script(v) + "\nAPLEOS\n" +
-                  "rm -f " + DIR + "/status; nohup sh " + DIR + "/run.sh >" + DIR + "/log 2>&1 &\nsleep 1; echo STARTED";
-        sys.exec(cmd).then(function () {
-            toast(tr("بدأ التحديث...", "Update started..."), true);
-            global.setTimeout(function () { poll(v, 120); }, 3000);
-        }, function () { busy = false; toast(tr("Vetro مش متصل (افتح Vetro مرة على الشاشة)", "Vetro is not responding (open Vetro once on the screen)"), false); manual(v); });
+        toast(tr("بفحص التلفزيون قبل التحديث...", "Checking the TV before the update..."), true);
+        sys.exec(preflightCmd()).then(function (r) {
+            var o = kv(r && r.output), why;
+            info = o;
+            var det = "uid=" + (o.UID || "?") + " dir=" + (o.W || "-") + " curl=" + (has(o, "curl") ? "y" : "n") + " wget=" + ((has(o, "wget") || has(o, "busybox")) ? "y" : "n") +
+                      " unzip=" + ((has(o, "unzip") || has(o, "busybox") || has(o, "bsdtar") || has(o, "python3")) ? "y" : "n") + " net=" + (o.NETCURL || "-") + " free=" + (o.FREE_KB || "?") + "KB";
+            if (!o.UID) { fail("vetro", tr("Vetro رد بس مش بيشغّل الأوامر", "Vetro answered but did not run the command"), String((r && r.output) || "").slice(0, 80), v); return; }
+            if (!o.W) { fail("folder", tr("ماقدرتش ألاقي مجلد اللانشر على التلفزيون", "could not find the launcher folder on the TV"), "page=" + ((global.location && global.location.pathname) || "?"), v); return; }
+            if (!has(o, "curl") && !has(o, "wget") && !has(o, "busybox")) { fail("tools", tr("مفيش curl ولا wget على التلفزيون", "the TV has no curl or wget"), det, v); return; }
+            if (!has(o, "unzip") && !has(o, "busybox") && !has(o, "bsdtar") && !has(o, "python3")) { fail("tools", tr("مفيش أداة فك ضغط (unzip) على التلفزيون", "the TV has no unzip tool"), det, v); return; }
+            if (o.WRITABLE === "0") { fail("writable", tr("مجلد اللانشر مقفول للكتابة", "the launcher folder is read-only"), det, v); return; }
+            var cmd = "mkdir -p " + o.DIR + "; rm -f " + o.DIR + "/status; N=; command -v nohup >/dev/null 2>&1 && N=nohup; " +
+                      "$N sh -c '" + script(v, o, hash) + "' </dev/null >" + o.DIR + "/log2 2>&1 & sleep 1; echo STARTED";
+            return sys.exec(cmd).then(function () {
+                toast(tr("بدأ التحديث...", "Update started..."), true);
+                global.setTimeout(function () { poll(v, 200, o); }, 3000);
+            }, function (e) { fail("vetro", tr("Vetro مارضيش يشغّل التحديث", "Vetro would not start the update"), String(e && e.message || e), v); });
+        }, function (e) {
+            fail("vetro", tr("Vetro مش بيرد (افتح Vetro مرة على الشاشة)", "Vetro is not answering (open Vetro once on the screen)"), String(e && e.message || e), v);
+        });
+    }
+
+    function getText(url) {
+        return new Promise(function (resolve, reject) {
+            try {
+                var x = new XMLHttpRequest();
+                x.open("GET", url + "?t=" + Date.now(), true);
+                x.timeout = 15000;
+                x.onload = function () { x.status === 200 ? resolve(String(x.responseText || "")) : reject(new Error("HTTP " + x.status)); };
+                x.onerror = x.ontimeout = function () { reject(new Error("network")); };
+                x.send();
+            } catch (e) { reject(e); }
+        });
+    }
+    /* The package's SHA-256 is published beside it (releases/<file>.sha256) and read over the launcher's own HTTPS. */
+    function getHash(v) {
+        return getText(wgtUrl(v) + ".sha256").then(function (t) {
+            var m = /\b([0-9a-fA-F]{64})\b/.exec(t);
+            return m ? m[1].toLowerCase() : "-";
+        }, function () { return "-"; });
     }
 
     /* Settings > Launcher Update > Install Update: checks, asks, installs. */
@@ -155,9 +292,9 @@
                     title: tr("تحديث اللانشر", "Update the launcher"),
                     message: tr("النسخة الحالية " + U.running + "، الجديدة " + r.version + ".\nهتتحمّل من GitHub وتتثبت وبعدها اللانشر يعيد التشغيل. الإعدادات بتفضل زي ما هي.",
                                 "Running " + U.running + ", new " + r.version + ".\nIt downloads from GitHub, installs, then the launcher restarts. Your settings are kept."),
-                    buttons: [{ label: tr("نزّل وثبّت", "Download and install"), run: function () { doInstall(r.version); } }, { label: tr("مش دلوقتي", "Not now") }]
+                    buttons: [{ label: tr("نزّل وثبّت", "Download and install"), run: function () { getHash(r.version).then(function (h) { doInstall(r.version, h); }); } }, { label: tr("مش دلوقتي", "Not now") }]
                 });
-            } catch (e) { doInstall(r.version); }
+            } catch (e) { getHash(r.version).then(function (h) { doInstall(r.version, h); }); }
             return true;
         });
     }
@@ -189,6 +326,7 @@
         latest: function () { return latest ? latest.version : ""; },
         fromBundle: function () { return false; },
         repo: REPO,
+        report: lastReport,
         custom: true
     };
 })(window);

@@ -1291,7 +1291,11 @@
                     action(APL.t("Check for Update"), function () { if (APL.updater) APL.updater.check(true); },
                         APL.t("Checks right away for a new version."), "update"),
                     action(APL.t("Install Update"), function () { if (APL.updater) APL.updater.install(); },
-                        APL.t("Downloads the newest version from GitHub and installs it here, then restarts the launcher."), "update")
+                        APL.t("Downloads the newest version from GitHub and installs it here, then restarts the launcher."), "update"),
+                    info(APL.t("Last install result"), function () {
+                        var u = APL.updater, r = u && u.report ? u.report() : "";
+                        return r || "-";
+                    }, APL.t("What happened the last time Install Update ran: the step and the reason if it failed."))
                 ], APL.t("Automatic updates from GitHub.")),
                 action(APL.t("Support Salah Launcher"), function () {
                     var page = (window.APL_SITE && window.APL_SITE.support && window.APL_SITE.support.url) || "", qr = document.createElement("div");

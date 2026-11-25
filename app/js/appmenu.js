@@ -84,16 +84,18 @@
     }
 
     /* ---------- confirmation box (tvOS alert) ---------- */
-    var alertRoot, alertTitle, alertMsg, alertExtra, alertBtns, alertNav, alertSpec = null;
+    var alertRoot, alertTitle, alertMsg, alertMore, alertExtra, alertBtns, alertNav, alertSpec = null;
 
     function buildAlert() {
         alertRoot = el("div", "aplalert");
         var box = el("div", "aplalert__box");
         alertTitle = el("h2", "aplalert__title");
         alertMsg = el("p", "aplalert__msg");
+        alertMore = el("div", "aplalert__more");                // v8.7.34: "more below" hint for a long message
+        alertMsg.addEventListener("scroll", updateMore);
         alertExtra = el("div", "aplalert__extra");              // spec.node: a picture under the message (a QR code)
         alertBtns = el("div", "aplalert__buttons");
-        box.appendChild(alertTitle); box.appendChild(alertMsg); box.appendChild(alertExtra); box.appendChild(alertBtns);
+        box.appendChild(alertTitle); box.appendChild(alertMsg); box.appendChild(alertMore); box.appendChild(alertExtra); box.appendChild(alertBtns);
         alertRoot.appendChild(box);
         document.body.appendChild(alertRoot);
         alertNav = new APL.Nav({
@@ -102,8 +104,27 @@
                 closeAlert();
                 if (b && b.run) b.run();
             },
-            onBack: closeAlert
+            onBack: closeAlert,
+            /* v8.7.34: a long message (What's New) scrolls with Up / Down. Down scrolls until the end, then moves on
+               to the buttons as before; Up scrolls back up and otherwise does what it always did. */
+            onKey: function (code) {
+                if (!alertMsg || (code !== 38 && code !== 40)) return false;
+                var room = alertMsg.scrollHeight - alertMsg.clientHeight;
+                if (room <= 4) return false;
+                var top = alertMsg.scrollTop, step = Math.max(120, Math.round(alertMsg.clientHeight * 0.7));
+                if (code === 40 && top < room - 2) { alertMsg.scrollTop = Math.min(room, top + step); updateMore(); return true; }
+                if (code === 38 && top > 2) { alertMsg.scrollTop = Math.max(0, top - step); updateMore(); return true; }
+                return false;
+            }
         });
+    }
+
+    function updateMore() {
+        if (!alertMore || !alertMsg) return;
+        var room = alertMsg.scrollHeight - alertMsg.clientHeight, top = alertMsg.scrollTop;
+        var down = room > 4 && top < room - 2, up = room > 4 && top > 2;
+        alertMore.textContent = down ? (up ? "\u25B2 \u25BC  " : "\u25BC  ") + APL.t("Press Down to read more") : (up ? "\u25B2  " + APL.t("Press Up to go back") : "");
+        alertMore.style.display = (down || up) ? "block" : "none";
     }
 
     function openAlert(spec) {
@@ -112,6 +133,7 @@
         alertTitle.textContent = APL.enx ? APL.enx(spec.title || "") : (spec.title || "");
         alertMsg.textContent = APL.enx ? APL.enx(spec.message || "") : (spec.message || "");
         alertMsg.style.display = spec.message ? "" : "none";
+        alertMsg.scrollTop = 0;
         alertExtra.innerHTML = "";
         if (spec.node) alertExtra.appendChild(spec.node);
         alertExtra.style.display = spec.node ? "" : "none";
@@ -123,6 +145,8 @@
             return e;
         });
         alertRoot.classList.add("is-open");
+        updateMore();
+        global.setTimeout(updateMore, 60);
         alertNav.setTiles(btns);
         alertNav.focus(spec.focus || 0);
         APL.pushNav(alertNav);

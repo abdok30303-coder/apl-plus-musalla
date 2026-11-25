@@ -278,11 +278,53 @@
        down to a readable minimum; if a wisdom still needs more room the window grows taller instead of
        cutting the text. The same fit now also runs in the screen saver and the live mihrab, where a fixed
        font size used to override it. */
+    /* v8.7.34: the wisdom window must never sit on the clock or the prayer widget. After the text fits, the window is
+       placed in the free space: the gap between the widgets on its own row (next to its corner if that gap is wide
+       enough, else the widest gap). The width is the gap, the font shrinks to the readable minimum, and only
+       then does the window grow taller, always inside the free column. Measured live, so it works for any
+       widget layout, left-to-right or right-to-left, 720p or 1080p. */
+    var lastFit = null, obsSig = "";
+    /* Rectangles in the 1920x1080 stage's own pixels (the PC preview scales the stage; on the TV the scale is 1). */
+    function stageBox() {
+        var bd = document.body, r = bd.getBoundingClientRect(), w = bd.offsetWidth || global.innerWidth || 1920;
+        return { k: (r.width / w) || 1, x: r.left, y: r.top, w: w, h: bd.offsetHeight || global.innerHeight || 1080 };
+    }
+    function stageRect(e, sb) {
+        var r = e.getBoundingClientRect();
+        return { l: (r.left - sb.x) / sb.k, t: (r.top - sb.y) / sb.k, r: (r.right - sb.x) / sb.k, b: (r.bottom - sb.y) / sb.k };
+    }
+    function hekamObstacles() {
+        var out = [], sb = stageBox();
+        [".status", ".statusx"].forEach(function (sel) {
+            var e = document.querySelector(sel);
+            if (!e) return;
+            var cs = global.getComputedStyle(e);
+            if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0) return;
+            var r = stageRect(e, sb);
+            if (r.r - r.l > 4 && r.b - r.t > 4) out.push(r);
+        });
+        return out;
+    }
+    function gapsFor(obs, top, bottom, lo, hi, gap) {
+        var segs = [[lo, hi]];
+        obs.forEach(function (o) {
+            if (o.b <= top || o.t >= bottom) return;
+            var cl = o.l - gap, cr = o.r + gap, next = [];
+            segs.forEach(function (g) {
+                if (cr <= g[0] || cl >= g[1]) { next.push(g); return; }
+                if (cl > g[0]) next.push([g[0], cl]);
+                if (cr < g[1]) next.push([cr, g[1]]);
+            });
+            segs = next;
+        });
+        return segs;
+    }
     function fitHekam(hb, scale, pos, ssActive) {
+        lastFit = [hb, scale, pos, ssActive];
         try {
             var txt = hb.querySelector(".hekam-w__text");
             if (!txt) return;
-            var vw = global.innerWidth || 1920, vh = global.innerHeight || 1080;
+            var sbx = stageBox(), vw = sbx.w, vh = sbx.h;
             var mihrab = !!(document.body && document.body.classList.contains("mihrab-active"));
             var centered = ssActive || pos === "above-dock" || pos === "top-center" || pos === "bottom-center";
             var fs = mihrab ? 28 : ssActive ? 23 : Math.round(24 * (scale / 100));
@@ -290,19 +332,56 @@
             var maxH = Math.round(vh * (ssActive ? 0.5 : 0.33));
             var wNorm = Math.round(vw * (centered ? 0.6 : 0.42));
             var wWide = Math.round(vw * (centered ? 0.92 : 0.8));
-            hb.style.maxHeight = "";
-            hb.style.maxWidth = wNorm + "px";
+            var free = !ssActive && !mihrab;
+            var margin = Math.round(vw * 0.026), gap = Math.round(vw * 0.0125), minW = Math.round(vw * 0.22);
+            hb.style.left = ""; hb.style.right = ""; hb.style.transform = ""; hb.style.maxHeight = "";
+            var cap = wNorm, wide = false, rect, i, segs, anchor, pick, k, len;
             txt.style.fontSize = fs + "px";
-            /* 1) widen the window before touching the font */
-            if (hb.offsetHeight > maxH && wWide > wNorm) hb.style.maxWidth = wWide + "px";
-            /* 2) shrink the font, never below the readable minimum */
-            while (fs > min && hb.offsetHeight > maxH) {
-                fs -= 1;
-                txt.style.fontSize = fs + "px";
+            for (i = 0; i < 5; i++) {
+                hb.style.maxWidth = cap + "px";
+                if (free) {
+                    rect = stageRect(hb, sbx);
+                    segs = gapsFor(hekamObstacles(), rect.top - 6, rect.bottom + 6, margin, vw - margin, gap);
+                    anchor = centered ? vw / 2 : (/left/.test(pos) ? margin : vw - margin);
+                    pick = null;
+                    for (k = 0; k < segs.length; k++) if (segs[k][0] <= anchor + 1 && segs[k][1] >= anchor - 1 && segs[k][1] - segs[k][0] >= minW) pick = segs[k];
+                    if (!pick) for (k = 0; k < segs.length; k++) if (!pick || segs[k][1] - segs[k][0] > pick[1] - pick[0]) pick = segs[k];
+                    if (pick) {
+                        len = Math.floor(pick[1] - pick[0]);
+                        var want = Math.min(len, wide ? wWide : wNorm);
+                        hb.style.maxWidth = want + "px";
+                        hb.style.minWidth = Math.min(want, 440) + "px";
+                        if (centered) { hb.style.left = Math.round((pick[0] + pick[1]) / 2) + "px"; }
+                        else if (/left/.test(pos)) { hb.style.left = Math.round(pick[0]) + "px"; hb.style.right = "auto"; }
+                        else { hb.style.right = Math.round(vw - pick[1]) + "px"; hb.style.left = "auto"; }
+                    }
+                }
+                /* 1) widen the window (inside the free gap) before touching the font */
+                if (!wide && hb.offsetHeight > maxH) { wide = true; cap = wWide; if (!free) { hb.style.maxWidth = cap + "px"; } continue; }
+                /* 2) shrink the font, never below the readable minimum */
+                while (fs > min && hb.offsetHeight > maxH) {
+                    fs -= 1;
+                    txt.style.fontSize = fs + "px";
+                }
+                if (!free) break;
+                /* 3) the height may have changed, so the free gap may have changed too: look again (a few rounds) */
+                var r2 = stageRect(hb, sbx), s2 = gapsFor(hekamObstacles(), r2.top - 6, r2.bottom + 6, margin, vw - margin, gap), ok = false;
+                for (k = 0; k < s2.length; k++) if (r2.left >= s2[k][0] - 2 && r2.right <= s2[k][1] + 2) ok = true;
+                if (ok) break;
             }
-            /* 3) fallback: still tall at the minimum font - the window stays tall; nothing is ever cut */
+            /* still tall at the minimum font: the window stays tall inside its column; nothing is ever cut */
         } catch (e) {}
     }
+    /* the widgets next to it can change size (prayer card, tasks): look again every few seconds, only when they moved */
+    global.setInterval(function () {
+        try {
+            if (!lastFit || !lastFit[0] || !lastFit[0].parentNode || document.hidden) return;
+            var sig = hekamObstacles().map(function (o) { return [o.l, o.t, o.r, o.b].map(Math.round).join(","); }).join(";") + "|" + (global.innerWidth || 0);
+            if (sig === obsSig) return;
+            obsSig = sig;
+            fitHekam(lastFit[0], lastFit[1], lastFit[2], lastFit[3]);
+        } catch (e) {}
+    }, 2500);
     function rotateHekam() {
         hekamPick();
         updateHekamWidget();

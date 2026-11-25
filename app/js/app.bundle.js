@@ -810,6 +810,10 @@ window.APL_LANG_AR = {
     "Automatic updates": "التحديث التلقائي",
     "Latest on GitHub": "آخر نسخة على GitHub",
     "Install Update": "تثبيت التحديث",
+    "Last install result": "نتيجة آخر تثبيت",
+    "What happened the last time Install Update ran: the step and the reason if it failed.": "اللي حصل آخر مرة اتعمل فيها تثبيت التحديث: الخطوة والسبب لو فشل.",
+    "Press Down to read more": "اضغط لتحت لقراءة الباقي",
+    "Press Up to go back": "اضغط لفوق للرجوع",
     "Downloads the newest version from GitHub and installs it here, then restarts the launcher.": "ينزّل أحدث نسخة من GitHub ويثبتها هنا ثم يعيد تشغيل اللانشر.",
     "Updates come from the Salah Launcher repository on GitHub: abdok30303-coder/apl-plus-musalla.": "التحديثات من مستودع Salah Launcher على GitHub: abdok30303-coder/apl-plus-musalla.",
     "The launcher checks GitHub once every 24 hours and tells you when a new version is out. It never installs on its own.": "اللانشر يفحص GitHub مرة كل 24 ساعة وينبهك لما تنزل نسخة جديدة. ما بيثبتش لوحده.",
@@ -2007,7 +2011,6 @@ window.APL_LANG_AR_EXTRA = {
     "Enhanced Glass & Motion": "المؤثرات الحركية والزجاجية المتقدمة",
     "Apple TV-style depth, fluid spring motion and real frosted glass blur. Off by default for maximum speed; recommended for fast processors.": "عمق بصري بأسلوب Apple TV، وانتقالات حركية ناعمة، وتمويه زجاجي فائق. مغلق افتراضياً لضمان أعلى سرعة، ومناسب للمعالجات القوية."
 };
-
 /* === js/i18n.js === */
 /* ============================================================
    i18n.js — interface language.
@@ -5943,11 +5946,53 @@ window.APL_CATALOG = [
        down to a readable minimum; if a wisdom still needs more room the window grows taller instead of
        cutting the text. The same fit now also runs in the screen saver and the live mihrab, where a fixed
        font size used to override it. */
+    /* v8.7.34: the wisdom window must never sit on the clock or the prayer widget. After the text fits, the window is
+       placed in the free space: the gap between the widgets on its own row (next to its corner if that gap is wide
+       enough, else the widest gap). The width is the gap, the font shrinks to the readable minimum, and only
+       then does the window grow taller, always inside the free column. Measured live, so it works for any
+       widget layout, left-to-right or right-to-left, 720p or 1080p. */
+    var lastFit = null, obsSig = "";
+    /* Rectangles in the 1920x1080 stage's own pixels (the PC preview scales the stage; on the TV the scale is 1). */
+    function stageBox() {
+        var bd = document.body, r = bd.getBoundingClientRect(), w = bd.offsetWidth || global.innerWidth || 1920;
+        return { k: (r.width / w) || 1, x: r.left, y: r.top, w: w, h: bd.offsetHeight || global.innerHeight || 1080 };
+    }
+    function stageRect(e, sb) {
+        var r = e.getBoundingClientRect();
+        return { l: (r.left - sb.x) / sb.k, t: (r.top - sb.y) / sb.k, r: (r.right - sb.x) / sb.k, b: (r.bottom - sb.y) / sb.k };
+    }
+    function hekamObstacles() {
+        var out = [], sb = stageBox();
+        [".status", ".statusx"].forEach(function (sel) {
+            var e = document.querySelector(sel);
+            if (!e) return;
+            var cs = global.getComputedStyle(e);
+            if (cs.display === "none" || cs.visibility === "hidden" || parseFloat(cs.opacity) === 0) return;
+            var r = stageRect(e, sb);
+            if (r.r - r.l > 4 && r.b - r.t > 4) out.push(r);
+        });
+        return out;
+    }
+    function gapsFor(obs, top, bottom, lo, hi, gap) {
+        var segs = [[lo, hi]];
+        obs.forEach(function (o) {
+            if (o.b <= top || o.t >= bottom) return;
+            var cl = o.l - gap, cr = o.r + gap, next = [];
+            segs.forEach(function (g) {
+                if (cr <= g[0] || cl >= g[1]) { next.push(g); return; }
+                if (cl > g[0]) next.push([g[0], cl]);
+                if (cr < g[1]) next.push([cr, g[1]]);
+            });
+            segs = next;
+        });
+        return segs;
+    }
     function fitHekam(hb, scale, pos, ssActive) {
+        lastFit = [hb, scale, pos, ssActive];
         try {
             var txt = hb.querySelector(".hekam-w__text");
             if (!txt) return;
-            var vw = global.innerWidth || 1920, vh = global.innerHeight || 1080;
+            var sbx = stageBox(), vw = sbx.w, vh = sbx.h;
             var mihrab = !!(document.body && document.body.classList.contains("mihrab-active"));
             var centered = ssActive || pos === "above-dock" || pos === "top-center" || pos === "bottom-center";
             var fs = mihrab ? 28 : ssActive ? 23 : Math.round(24 * (scale / 100));
@@ -5955,19 +6000,56 @@ window.APL_CATALOG = [
             var maxH = Math.round(vh * (ssActive ? 0.5 : 0.33));
             var wNorm = Math.round(vw * (centered ? 0.6 : 0.42));
             var wWide = Math.round(vw * (centered ? 0.92 : 0.8));
-            hb.style.maxHeight = "";
-            hb.style.maxWidth = wNorm + "px";
+            var free = !ssActive && !mihrab;
+            var margin = Math.round(vw * 0.026), gap = Math.round(vw * 0.0125), minW = Math.round(vw * 0.22);
+            hb.style.left = ""; hb.style.right = ""; hb.style.transform = ""; hb.style.maxHeight = "";
+            var cap = wNorm, wide = false, rect, i, segs, anchor, pick, k, len;
             txt.style.fontSize = fs + "px";
-            /* 1) widen the window before touching the font */
-            if (hb.offsetHeight > maxH && wWide > wNorm) hb.style.maxWidth = wWide + "px";
-            /* 2) shrink the font, never below the readable minimum */
-            while (fs > min && hb.offsetHeight > maxH) {
-                fs -= 1;
-                txt.style.fontSize = fs + "px";
+            for (i = 0; i < 5; i++) {
+                hb.style.maxWidth = cap + "px";
+                if (free) {
+                    rect = stageRect(hb, sbx);
+                    segs = gapsFor(hekamObstacles(), rect.top - 6, rect.bottom + 6, margin, vw - margin, gap);
+                    anchor = centered ? vw / 2 : (/left/.test(pos) ? margin : vw - margin);
+                    pick = null;
+                    for (k = 0; k < segs.length; k++) if (segs[k][0] <= anchor + 1 && segs[k][1] >= anchor - 1 && segs[k][1] - segs[k][0] >= minW) pick = segs[k];
+                    if (!pick) for (k = 0; k < segs.length; k++) if (!pick || segs[k][1] - segs[k][0] > pick[1] - pick[0]) pick = segs[k];
+                    if (pick) {
+                        len = Math.floor(pick[1] - pick[0]);
+                        var want = Math.min(len, wide ? wWide : wNorm);
+                        hb.style.maxWidth = want + "px";
+                        hb.style.minWidth = Math.min(want, 440) + "px";
+                        if (centered) { hb.style.left = Math.round((pick[0] + pick[1]) / 2) + "px"; }
+                        else if (/left/.test(pos)) { hb.style.left = Math.round(pick[0]) + "px"; hb.style.right = "auto"; }
+                        else { hb.style.right = Math.round(vw - pick[1]) + "px"; hb.style.left = "auto"; }
+                    }
+                }
+                /* 1) widen the window (inside the free gap) before touching the font */
+                if (!wide && hb.offsetHeight > maxH) { wide = true; cap = wWide; if (!free) { hb.style.maxWidth = cap + "px"; } continue; }
+                /* 2) shrink the font, never below the readable minimum */
+                while (fs > min && hb.offsetHeight > maxH) {
+                    fs -= 1;
+                    txt.style.fontSize = fs + "px";
+                }
+                if (!free) break;
+                /* 3) the height may have changed, so the free gap may have changed too: look again (a few rounds) */
+                var r2 = stageRect(hb, sbx), s2 = gapsFor(hekamObstacles(), r2.top - 6, r2.bottom + 6, margin, vw - margin, gap), ok = false;
+                for (k = 0; k < s2.length; k++) if (r2.left >= s2[k][0] - 2 && r2.right <= s2[k][1] + 2) ok = true;
+                if (ok) break;
             }
-            /* 3) fallback: still tall at the minimum font - the window stays tall; nothing is ever cut */
+            /* still tall at the minimum font: the window stays tall inside its column; nothing is ever cut */
         } catch (e) {}
     }
+    /* the widgets next to it can change size (prayer card, tasks): look again every few seconds, only when they moved */
+    global.setInterval(function () {
+        try {
+            if (!lastFit || !lastFit[0] || !lastFit[0].parentNode || document.hidden) return;
+            var sig = hekamObstacles().map(function (o) { return [o.l, o.t, o.r, o.b].map(Math.round).join(","); }).join(";") + "|" + (global.innerWidth || 0);
+            if (sig === obsSig) return;
+            obsSig = sig;
+            fitHekam(lastFit[0], lastFit[1], lastFit[2], lastFit[3]);
+        } catch (e) {}
+    }, 2500);
     function rotateHekam() {
         hekamPick();
         updateHekamWidget();
@@ -6050,7 +6132,6 @@ window.APL_CATALOG = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { build(); armHekamWidget(); });
     else { build(); armHekamWidget(); }
 })(window);
-
 /* === js/weather.js === */
 /* ============================================================
    weather.js — the weather on the Home Screen, from Open-Meteo.
@@ -17562,7 +17643,11 @@ window.APL_KEYS = {
                     action(APL.t("Check for Update"), function () { if (APL.updater) APL.updater.check(true); },
                         APL.t("Checks right away for a new version."), "update"),
                     action(APL.t("Install Update"), function () { if (APL.updater) APL.updater.install(); },
-                        APL.t("Downloads the newest version from GitHub and installs it here, then restarts the launcher."), "update")
+                        APL.t("Downloads the newest version from GitHub and installs it here, then restarts the launcher."), "update"),
+                    info(APL.t("Last install result"), function () {
+                        var u = APL.updater, r = u && u.report ? u.report() : "";
+                        return r || "-";
+                    }, APL.t("What happened the last time Install Update ran: the step and the reason if it failed."))
                 ], APL.t("Automatic updates from GitHub.")),
                 action(APL.t("Support Salah Launcher"), function () {
                     var page = (window.APL_SITE && window.APL_SITE.support && window.APL_SITE.support.url) || "", qr = document.createElement("div");
@@ -17667,7 +17752,6 @@ window.APL_KEYS = {
 
     APL.settingsTree = build;
 })(window);
-
 /* === js/settings.js === */
 /* ============================================================
    settings.js — the Settings app, Apple TV–style split view:
@@ -19790,16 +19874,18 @@ window.APL_DEVICES = [
     }
 
     /* ---------- confirmation box (tvOS alert) ---------- */
-    var alertRoot, alertTitle, alertMsg, alertExtra, alertBtns, alertNav, alertSpec = null;
+    var alertRoot, alertTitle, alertMsg, alertMore, alertExtra, alertBtns, alertNav, alertSpec = null;
 
     function buildAlert() {
         alertRoot = el("div", "aplalert");
         var box = el("div", "aplalert__box");
         alertTitle = el("h2", "aplalert__title");
         alertMsg = el("p", "aplalert__msg");
+        alertMore = el("div", "aplalert__more");                // v8.7.34: "more below" hint for a long message
+        alertMsg.addEventListener("scroll", updateMore);
         alertExtra = el("div", "aplalert__extra");              // spec.node: a picture under the message (a QR code)
         alertBtns = el("div", "aplalert__buttons");
-        box.appendChild(alertTitle); box.appendChild(alertMsg); box.appendChild(alertExtra); box.appendChild(alertBtns);
+        box.appendChild(alertTitle); box.appendChild(alertMsg); box.appendChild(alertMore); box.appendChild(alertExtra); box.appendChild(alertBtns);
         alertRoot.appendChild(box);
         document.body.appendChild(alertRoot);
         alertNav = new APL.Nav({
@@ -19808,8 +19894,27 @@ window.APL_DEVICES = [
                 closeAlert();
                 if (b && b.run) b.run();
             },
-            onBack: closeAlert
+            onBack: closeAlert,
+            /* v8.7.34: a long message (What's New) scrolls with Up / Down. Down scrolls until the end, then moves on
+               to the buttons as before; Up scrolls back up and otherwise does what it always did. */
+            onKey: function (code) {
+                if (!alertMsg || (code !== 38 && code !== 40)) return false;
+                var room = alertMsg.scrollHeight - alertMsg.clientHeight;
+                if (room <= 4) return false;
+                var top = alertMsg.scrollTop, step = Math.max(120, Math.round(alertMsg.clientHeight * 0.7));
+                if (code === 40 && top < room - 2) { alertMsg.scrollTop = Math.min(room, top + step); updateMore(); return true; }
+                if (code === 38 && top > 2) { alertMsg.scrollTop = Math.max(0, top - step); updateMore(); return true; }
+                return false;
+            }
         });
+    }
+
+    function updateMore() {
+        if (!alertMore || !alertMsg) return;
+        var room = alertMsg.scrollHeight - alertMsg.clientHeight, top = alertMsg.scrollTop;
+        var down = room > 4 && top < room - 2, up = room > 4 && top > 2;
+        alertMore.textContent = down ? (up ? "\u25B2 \u25BC  " : "\u25BC  ") + APL.t("Press Down to read more") : (up ? "\u25B2  " + APL.t("Press Up to go back") : "");
+        alertMore.style.display = (down || up) ? "block" : "none";
     }
 
     function openAlert(spec) {
@@ -19818,6 +19923,7 @@ window.APL_DEVICES = [
         alertTitle.textContent = APL.enx ? APL.enx(spec.title || "") : (spec.title || "");
         alertMsg.textContent = APL.enx ? APL.enx(spec.message || "") : (spec.message || "");
         alertMsg.style.display = spec.message ? "" : "none";
+        alertMsg.scrollTop = 0;
         alertExtra.innerHTML = "";
         if (spec.node) alertExtra.appendChild(spec.node);
         alertExtra.style.display = spec.node ? "" : "none";
@@ -19829,6 +19935,8 @@ window.APL_DEVICES = [
             return e;
         });
         alertRoot.classList.add("is-open");
+        updateMore();
+        global.setTimeout(updateMore, 60);
         alertNav.setTiles(btns);
         alertNav.focus(spec.focus || 0);
         APL.pushNav(alertNav);
@@ -19846,7 +19954,6 @@ window.APL_DEVICES = [
     APL.alert.close = closeAlert;
     APL.alert.isOpen = function () { return !!alertSpec; };
 })(window);
-
 /* === js/aerials.js === */
 /* ============================================================
    aerials.js — REMOVED IN THIS CUSTOM BUILD (v1.1.1).
@@ -20638,8 +20745,9 @@ window.APL_DEVICES = [
    Install: asks, then (through Vetro root exec, the same way safe-restore.js works) downloads the .wgt
             to /tmp, tests it, unpacks it, checks it holds this launcher's index.html and the new version,
             and only then copies the files over the installed ones and restarts the launcher.
-            If anything fails nothing is replaced. If the TV has no curl/wget/unzip, or the package folder
-            is read-only, it says so and shows the file to install from a USB drive / Apps2Samsung instead.
+            If anything fails nothing is replaced, and the message names the exact step that failed and why
+            (v8.7.34: 1 Vetro, 2 launcher folder, 3 tools on the TV, 4 download, 5 file check, 6 unpack, 7 copy),
+            then shows the file to install from a USB drive / Apps2Samsung.
    Never touches: the saved settings (localStorage), audio files, radio.
    ============================================================ */
 (function (global) {
@@ -20699,77 +20807,213 @@ window.APL_DEVICES = [
         });
     }
 
-    function script(v) {
-        var W = www();
-        return [
-            "T=" + DIR + "; W='" + W + "'; V=" + v + "; U='" + wgtUrl(v) + "'; S=$T/status",
-            "echo RUN > $S",
-            "rm -rf $T/x $T/u.wgt; mkdir -p $T/x",
-            "echo DOWNLOAD > $S",
-            "{ curl -fsSL -m 900 -o $T/u.wgt \"$U\" || wget -q -O $T/u.wgt \"$U\" || busybox wget -q -O $T/u.wgt \"$U\"; } >/dev/null 2>&1",
-            "SZ=$(wc -c < $T/u.wgt 2>/dev/null || echo 0); [ \"${SZ:-0}\" -gt 1000000 ] || { echo FAIL_DOWNLOAD > $S; exit 0; }",
-            "echo UNPACK > $S",
-            "{ unzip -oq $T/u.wgt -d $T/x || busybox unzip -oq $T/u.wgt -d $T/x; } >/dev/null 2>&1",
-            "[ -s $T/x/index.html ] && [ -s $T/x/js/boot.js ] && grep -q \"\\\"version\\\": \\\"$V\\\"\" $T/x/js/build.js || { echo FAIL_PACKAGE > $S; exit 0; }",
-            "[ -w \"$W\" ] || { echo FAIL_READONLY > $S; exit 0; }",
-            "echo COPY > $S",
-            "rm -f $T/x/config.xml $T/x/author-signature.xml $T/x/signature1.xml",
-            "cp -a $T/x/. \"$W\"/ && sync && echo OK > $S || echo FAIL_COPY > $S",
-            "rm -rf $T/x $T/u.wgt"
-        ].join("\n");
+    /* ---------------- v8.7.34: every step reports its own name and reason ----------------
+       Steps: 1 Vetro (root command) | 2 the launcher folder | 3 tools on the TV (downloader, unzip) |
+              4 download | 5 check of the file | 6 unpack | 7 copy into the launcher folder.
+       Rules for the commands we send through Vetro: no backslashes (Vetro doubles them), no single quotes
+       inside the background script, and one single line (no heredoc). */
+    var STORE = "apl.upd.report";
+    var CANDIDATES = ["/opt/usr/apps/APLMusalla/res/wgt"];
+    var info = null;   /* what the TV told us before the install */
+
+    function saveReport(text) {
+        try { global.localStorage.setItem(STORE, new Date().toISOString().slice(0, 16).replace("T", " ") + "  " + text); } catch (e) {}
+    }
+    function lastReport() { try { return global.localStorage.getItem(STORE) || ""; } catch (e) { return ""; } }
+
+    function kv(out) {
+        var o = {}, m, re = /^([A-Za-z_0-9]+)=(.*)$/gm;
+        while ((m = re.exec(String(out || "")))) o[m[1]] = m[2].replace(/\s+$/, "");
+        return o;
+    }
+    function has(o, t) { return !!(o["T_" + t] && o["T_" + t] !== "-"); }
+
+    /* One short command: who we are, which tools exist, which folder is the launcher, can we write there, can curl reach GitHub. */
+    function preflightCmd() {
+        var c = ["echo UID=$(id -u)"];
+        c.push("for t in curl wget busybox unzip bsdtar python3 sha256sum nohup; do echo T_$t=$(command -v $t || echo -); done");
+        c.push("W=; for p in " + [www()].concat(CANDIDATES).join(" ") + "; do [ -s $p/js/app.bundle.js ] && W=$p && break; done; echo W=$W");
+        c.push("if [ -n \"$W\" ]; then touch $W/.apl-w 2>/dev/null && echo WRITABLE=1 || echo WRITABLE=0; rm -f $W/.apl-w 2>/dev/null; fi");
+        c.push("D=/opt/usr/home/owner/APL/upd; mkdir -p $D 2>/dev/null; touch $D/.t 2>/dev/null && echo DIR=$D || echo DIR=/tmp/apl-upd; rm -f $D/.t 2>/dev/null");
+        c.push("echo FREE_KB=$(df -k /opt/usr/home/owner 2>/dev/null | tail -n 1 | tr -s ' ' | cut -d ' ' -f4)");
+        c.push("echo CURLV=$(curl -V 2>/dev/null | head -n 1)");
+        c.push("command -v curl >/dev/null 2>&1 && { N=$(curl -s -m 15 -o /dev/null -w %{http_code} https://raw.githubusercontent.com/ 2>&1); echo NETCURL=$N/$?; }");
+        c.push("true");
+        return c.join("; ");
     }
 
-    function failText(code) {
-        var m = {
-            FAIL_DOWNLOAD: tr("التحميل فشل (النت أو التلفزيون مفيهوش curl/wget).", "Download failed (Internet, or the TV has no curl/wget)."),
-            FAIL_PACKAGE: tr("الملف اتحمّل بس مش نسخة صالحة (أو مفيش unzip على التلفزيون).", "The file downloaded but is not a valid package (or the TV has no unzip)."),
-            FAIL_READONLY: tr("مجلد اللانشر مقفول للكتابة.", "The launcher folder is read-only."),
-            FAIL_COPY: tr("نسخ الملفات فشل. اللانشر ممكن يحتاج إعادة تثبيت.", "Copying the files failed. The launcher may need a reinstall.")
-        };
-        return m[code] || tr("التثبيت فشل.", "Install failed.");
+    function script(v, o, hash) {
+        var T = o.DIR, W = o.W;
+        var s = [
+            "T=" + T, "W=" + W, "V=" + v, "U=" + wgtUrl(v), "H=" + (hash || "-"), "S=$T/status", "L=$T/log",
+            "f() { echo FAIL:$1:$2 > $S; exit 0; }",
+            "sz() { wc -c < $T/u.wgt 2>/dev/null || echo 0; }",
+            "big() { [ $(sz) -gt 1000000 ]; }",
+            "rm -rf $T/x $T/u.wgt $L; mkdir -p $T/x || f prepare cannot-create-$T",
+            "echo DOWNLOAD > $S",
+            "ok=0; INS=0; CE=none; WE=none; BE=none; KE=none",
+            "if command -v curl >/dev/null 2>&1; then curl -fsSL --connect-timeout 25 -m 900 -o $T/u.wgt $U >>$L 2>&1; CE=$?; [ $CE = 0 ] && big && ok=1; fi",
+            "if [ $ok = 0 ] && command -v wget >/dev/null 2>&1; then wget -q -O $T/u.wgt $U >>$L 2>&1; WE=$?; [ $WE = 0 ] && big && ok=1; fi",
+            "if [ $ok = 0 ] && command -v busybox >/dev/null 2>&1; then busybox wget -q -O $T/u.wgt $U >>$L 2>&1; BE=$?; [ $BE = 0 ] && big && ok=1; fi",
+            "if [ $ok = 0 ] && [ $H != - ] && command -v curl >/dev/null 2>&1; then curl -fsSLk --connect-timeout 25 -m 900 -o $T/u.wgt $U >>$L 2>&1; KE=$?; [ $KE = 0 ] && big && ok=1 && INS=1; fi",
+            "[ $ok = 1 ] || f download curl=$CE,wget=$WE,busybox=$BE,curl-k=$KE,bytes=$(sz)",
+            "echo CHECK > $S",
+            "if [ $H != - ]; then if command -v sha256sum >/dev/null 2>&1; then A=$(sha256sum $T/u.wgt); A=${A%% *}; [ $A = $H ] || f hash got-$A; else [ $INS = 0 ] || f hash no-sha256sum; fi; fi",
+            "echo UNPACK > $S",
+            "X=0",
+            "if command -v unzip >/dev/null 2>&1; then unzip -oq $T/u.wgt -d $T/x >>$L 2>&1 && X=1; fi",
+            "[ $X = 1 ] || { busybox unzip -oq $T/u.wgt -d $T/x >>$L 2>&1 && X=1; }",
+            "[ $X = 1 ] || { bsdtar -xf $T/u.wgt -C $T/x >>$L 2>&1 && X=1; }",
+            "[ $X = 1 ] || { python3 -c \"import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall(sys.argv[2])\" $T/u.wgt $T/x >>$L 2>&1 && X=1; }",
+            "[ $X = 1 ] || f unpack all-unpackers-failed-or-file-damaged",
+            "rm -f $T/u.wgt",
+            "echo VERIFY > $S",
+            "[ -s $T/x/index.html ] && [ -s $T/x/js/boot.js ] && [ -s $T/x/js/app.bundle.js ] || f verify files-missing-in-package",
+            "grep -q $V $T/x/js/build.js || f verify wrong-version-in-package",
+            "echo WRITE > $S",
+            "touch $W/.apl-w 2>>$L || mount -o remount,rw $W >>$L 2>&1",
+            "touch $W/.apl-w 2>>$L || f writable uid-$(id -u)",
+            "rm -f $W/.apl-w",
+            "echo COPY > $S",
+            "rm -f $T/x/config.xml $T/x/author-signature.xml $T/x/signature1.xml",
+            "cp -a $T/x/. $W/ >>$L 2>&1 || f copy $(df -k $W | tail -n 1)",
+            "chmod -R a+rX $W 2>/dev/null",
+            "sync",
+            "grep -q $V $W/js/build.js || f copy installed-files-do-not-show-new-version",
+            "echo OK > $S",
+            "rm -rf $T/x"
+        ];
+        return s.join("; ");
     }
-    function manual(v) {
+
+    function curlWhy(n) {
+        var m = { 6: ["ما قدرش يحل اسم github (DNS)", "could not resolve github.com (DNS)"],
+                  7: ["ما قدرش يتصل بـ github", "could not connect to github.com"],
+                  22: ["GitHub رد بخطأ (الملف مش موجود؟)", "GitHub answered with an error (file not found?)"],
+                  23: ["خطأ كتابة على التلفزيون (مساحة؟)", "write error on the TV (disk space?)"],
+                  28: ["انتهت المهلة (النت بطيء)", "timed out (slow Internet)"],
+                  35: ["اتصال آمن (TLS) مرفوض", "secure (TLS) connection refused"],
+                  51: ["شهادة الموقع مرفوضة", "certificate refused"], 58: ["شهادة مرفوضة", "certificate refused"],
+                  60: ["شهادة github مش معروفة للتلفزيون", "the TV does not trust GitHub's certificate"],
+                  77: ["ملف الشهادات مفقود على التلفزيون", "the TV's certificate file is missing"],
+                  56: ["انقطع الاتصال أثناء التحميل", "connection dropped while downloading"] };
+        return m[n] ? tr(m[n][0], m[n][1]) : "";
+    }
+
+    /* step: [number, Arabic name, English name]; reason: text; extra: technical detail */
+    var STEPS = {
+        vetro: [1, "Vetro (أوامر الروت)", "Vetro (root commands)"],
+        folder: [2, "مكان اللانشر", "the launcher folder"],
+        tools: [3, "أدوات التلفزيون", "tools on the TV"],
+        prepare: [4, "تجهيز مكان التحميل", "preparing the download folder"],
+        download: [4, "التحميل", "download"],
+        hash: [5, "فحص الملف", "checking the file"],
+        verify: [5, "فحص الملف", "checking the file"],
+        unpack: [6, "فك الضغط", "unpacking"],
+        writable: [7, "الكتابة في مجلد اللانشر", "writing to the launcher folder"],
+        copy: [7, "نسخ الملفات", "copying the files"]
+    };
+    function fail(step, reason, extra, v) {
+        busy = false;
+        var st = STEPS[step] || [0, step, step];
+        var head = tr("فشل في الخطوة " + st[0] + ": " + st[1], "Failed at step " + st[0] + ": " + st[2]);
+        var msg = head + "\n" + tr("السبب: ", "Reason: ") + reason + (extra ? "\n(" + extra + ")" : "");
+        saveReport(head + " | " + reason + (extra ? " | " + extra : ""));
+        toast(head, false);
         try {
             APL.alert({
-                title: tr("التثبيت اليدوي", "Manual install"),
-                message: tr("ثبّت الملف ده من فلاشة أو Apps2Samsung:\n", "Install this file from a USB drive or Apps2Samsung:\n") + wgtUrl(v),
+                title: tr("التثبيت من اللانشر ماتمّش", "Install did not finish"),
+                message: msg + "\n\n" + tr("ثبّت الملف ده من فلاشة أو Apps2Samsung:\n", "Install this file from a USB drive or Apps2Samsung:\n") + wgtUrl(v),
                 buttons: [{ label: tr("تمام", "OK") }]
             });
         } catch (e) {}
     }
+    function explain(code, detail) {
+        var d = String(detail || ""), m;
+        if (code === "download") {
+            m = /curl=(\d+)/.exec(d);
+            var n = m ? parseInt(m[1], 10) : -1, why = curlWhy(n);
+            if (/curl=none/.test(d) && /wget=none/.test(d) && /busybox=none/.test(d)) why = tr("مفيش curl ولا wget على التلفزيون", "the TV has no curl or wget");
+            return { r: why || tr("التحميل ماكملش", "the download did not complete"), x: d };
+        }
+        if (code === "hash") return { r: /no-sha256sum/.test(d) ? tr("التلفزيون مش بيقدر يتحقق من سلامة الملف", "the TV cannot verify the file") : tr("الملف المحمّل مش مطابق للأصلي", "the downloaded file does not match the original"), x: d };
+        if (code === "verify") return { r: tr("الملف المحمّل مش نسخة صالحة من اللانشر", "the downloaded file is not a valid launcher package"), x: d };
+        if (code === "unpack") return { r: tr("فك الضغط فشل (مفيش unzip شغال أو الملف تالف)", "unpacking failed (no working unzip, or the file is damaged)"), x: d };
+        if (code === "writable") return { r: tr("مجلد اللانشر مقفول للكتابة", "the launcher folder is read-only"), x: d };
+        if (code === "copy") return { r: tr("نسخ الملفات فشل (مساحة أو صلاحيات). لو اللانشر ماشتغلش، النسخة الاحتياطية بترجّعه.", "copying failed (space or permissions). If the launcher does not start, the safety copy restores it."), x: d };
+        if (code === "prepare") return { r: tr("ماقدرتش أجهز مكان التحميل", "could not create the download folder"), x: d };
+        return { r: tr("سبب غير معروف", "unknown reason"), x: d };
+    }
 
-    function poll(v, tries) {
-        var sys = APL.sys;
-        sys.exec("cat " + DIR + "/status 2>/dev/null; true").then(function (r) {
-            var s = String((r && r.output) || "").replace(/\s+/g, "");
+    function poll(v, tries, o) {
+        var sys = APL.sys, T = o.DIR;
+        sys.exec("cat " + T + "/status 2>/dev/null; echo; tail -c 300 " + T + "/log 2>/dev/null; true").then(function (r) {
+            var raw = String((r && r.output) || ""), s = raw.split(/\r?\n/)[0].replace(/\s+/g, "");
             if (s === "OK") {
                 busy = false;
+                saveReport("OK " + v);
                 toast(tr("اتثبّتت النسخة " + v + ". بعيد التشغيل...", "Version " + v + " installed. Restarting..."), true);
                 global.setTimeout(function () { try { global.location.reload(); } catch (e) {} }, 2200);
-            } else if (/^FAIL/.test(s)) {
-                busy = false; toast(failText(s), false); manual(v);
+            } else if (/^FAIL:/.test(s)) {
+                var p = s.split(":"), e = explain(p[1], p.slice(2).join(":"));
+                var tail = raw.split(/\r?\n/).slice(1).join(" ").replace(/\s+/g, " ").trim().slice(-160);
+                fail(p[1], e.r, e.x + (tail ? " | " + tail : ""), v);
             } else if (tries <= 0) {
-                busy = false; toast(tr("التحديث أخد وقت طويل. اتأكد من النت وجرّب تاني.", "The update is taking too long. Check the Internet and try again."), false);
+                fail("download", tr("الخطوة " + (s || "؟") + " أخدت وقت طويل جداً", "step " + (s || "?") + " took too long"), "status=" + s, v);
             } else {
-                if (s === "DOWNLOAD") toast(tr("بنزّل النسخة " + v + "...", "Downloading version " + v + "..."), true);
-                global.setTimeout(function () { poll(v, tries - 1); }, 4000);
+                if (s === "DOWNLOAD" && tries % 15 === 0) toast(tr("بنزّل النسخة " + v + "...", "Downloading version " + v + "..."), true);
+                global.setTimeout(function () { poll(v, tries - 1, o); }, 4000);
             }
-        }, function () {
-            if (tries <= 0) { busy = false; toast(tr("Vetro مش متصل", "Vetro is not responding"), false); }
-            else global.setTimeout(function () { poll(v, tries - 1); }, 4000);
+        }, function (e) {
+            if (tries <= 0) fail("vetro", tr("Vetro وقف يرد أثناء التثبيت", "Vetro stopped answering during the install"), String(e && e.message || e), v);
+            else global.setTimeout(function () { poll(v, tries - 1, o); }, 4000);
         });
     }
 
-    function doInstall(v) {
+    function doInstall(v, hash) {
         var sys = APL.sys;
-        if (!sys || typeof sys.exec !== "function" || !www()) { manual(v); return; }
+        if (!sys || typeof sys.exec !== "function") { fail("vetro", tr("اللانشر مفيهوش وصلة لـ Vetro", "this launcher has no connection to Vetro"), "", v); return; }
         busy = true;
-        var cmd = "mkdir -p " + DIR + "; cat > " + DIR + "/run.sh <<'APLEOS'\n" + script(v) + "\nAPLEOS\n" +
-                  "rm -f " + DIR + "/status; nohup sh " + DIR + "/run.sh >" + DIR + "/log 2>&1 &\nsleep 1; echo STARTED";
-        sys.exec(cmd).then(function () {
-            toast(tr("بدأ التحديث...", "Update started..."), true);
-            global.setTimeout(function () { poll(v, 120); }, 3000);
-        }, function () { busy = false; toast(tr("Vetro مش متصل (افتح Vetro مرة على الشاشة)", "Vetro is not responding (open Vetro once on the screen)"), false); manual(v); });
+        toast(tr("بفحص التلفزيون قبل التحديث...", "Checking the TV before the update..."), true);
+        sys.exec(preflightCmd()).then(function (r) {
+            var o = kv(r && r.output), why;
+            info = o;
+            var det = "uid=" + (o.UID || "?") + " dir=" + (o.W || "-") + " curl=" + (has(o, "curl") ? "y" : "n") + " wget=" + ((has(o, "wget") || has(o, "busybox")) ? "y" : "n") +
+                      " unzip=" + ((has(o, "unzip") || has(o, "busybox") || has(o, "bsdtar") || has(o, "python3")) ? "y" : "n") + " net=" + (o.NETCURL || "-") + " free=" + (o.FREE_KB || "?") + "KB";
+            if (!o.UID) { fail("vetro", tr("Vetro رد بس مش بيشغّل الأوامر", "Vetro answered but did not run the command"), String((r && r.output) || "").slice(0, 80), v); return; }
+            if (!o.W) { fail("folder", tr("ماقدرتش ألاقي مجلد اللانشر على التلفزيون", "could not find the launcher folder on the TV"), "page=" + ((global.location && global.location.pathname) || "?"), v); return; }
+            if (!has(o, "curl") && !has(o, "wget") && !has(o, "busybox")) { fail("tools", tr("مفيش curl ولا wget على التلفزيون", "the TV has no curl or wget"), det, v); return; }
+            if (!has(o, "unzip") && !has(o, "busybox") && !has(o, "bsdtar") && !has(o, "python3")) { fail("tools", tr("مفيش أداة فك ضغط (unzip) على التلفزيون", "the TV has no unzip tool"), det, v); return; }
+            if (o.WRITABLE === "0") { fail("writable", tr("مجلد اللانشر مقفول للكتابة", "the launcher folder is read-only"), det, v); return; }
+            var cmd = "mkdir -p " + o.DIR + "; rm -f " + o.DIR + "/status; N=; command -v nohup >/dev/null 2>&1 && N=nohup; " +
+                      "$N sh -c '" + script(v, o, hash) + "' </dev/null >" + o.DIR + "/log2 2>&1 & sleep 1; echo STARTED";
+            return sys.exec(cmd).then(function () {
+                toast(tr("بدأ التحديث...", "Update started..."), true);
+                global.setTimeout(function () { poll(v, 200, o); }, 3000);
+            }, function (e) { fail("vetro", tr("Vetro مارضيش يشغّل التحديث", "Vetro would not start the update"), String(e && e.message || e), v); });
+        }, function (e) {
+            fail("vetro", tr("Vetro مش بيرد (افتح Vetro مرة على الشاشة)", "Vetro is not answering (open Vetro once on the screen)"), String(e && e.message || e), v);
+        });
+    }
+
+    function getText(url) {
+        return new Promise(function (resolve, reject) {
+            try {
+                var x = new XMLHttpRequest();
+                x.open("GET", url + "?t=" + Date.now(), true);
+                x.timeout = 15000;
+                x.onload = function () { x.status === 200 ? resolve(String(x.responseText || "")) : reject(new Error("HTTP " + x.status)); };
+                x.onerror = x.ontimeout = function () { reject(new Error("network")); };
+                x.send();
+            } catch (e) { reject(e); }
+        });
+    }
+    /* The package's SHA-256 is published beside it (releases/<file>.sha256) and read over the launcher's own HTTPS. */
+    function getHash(v) {
+        return getText(wgtUrl(v) + ".sha256").then(function (t) {
+            var m = /\b([0-9a-fA-F]{64})\b/.exec(t);
+            return m ? m[1].toLowerCase() : "-";
+        }, function () { return "-"; });
     }
 
     /* Settings > Launcher Update > Install Update: checks, asks, installs. */
@@ -20783,9 +21027,9 @@ window.APL_DEVICES = [
                     title: tr("تحديث اللانشر", "Update the launcher"),
                     message: tr("النسخة الحالية " + U.running + "، الجديدة " + r.version + ".\nهتتحمّل من GitHub وتتثبت وبعدها اللانشر يعيد التشغيل. الإعدادات بتفضل زي ما هي.",
                                 "Running " + U.running + ", new " + r.version + ".\nIt downloads from GitHub, installs, then the launcher restarts. Your settings are kept."),
-                    buttons: [{ label: tr("نزّل وثبّت", "Download and install"), run: function () { doInstall(r.version); } }, { label: tr("مش دلوقتي", "Not now") }]
+                    buttons: [{ label: tr("نزّل وثبّت", "Download and install"), run: function () { getHash(r.version).then(function (h) { doInstall(r.version, h); }); } }, { label: tr("مش دلوقتي", "Not now") }]
                 });
-            } catch (e) { doInstall(r.version); }
+            } catch (e) { getHash(r.version).then(function (h) { doInstall(r.version, h); }); }
             return true;
         });
     }
@@ -20817,10 +21061,10 @@ window.APL_DEVICES = [
         latest: function () { return latest ? latest.version : ""; },
         fromBundle: function () { return false; },
         repo: REPO,
+        report: lastReport,
         custom: true
     };
 })(window);
-
 /* === js/launcher.js === */
 /* ============================================================
    launcher.js — tvOS Home Screen.
@@ -24562,6 +24806,12 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.34: تثبيت التحديث بقى يقول بالظبط أنهي خطوة فشلت وليه؛ وبيفحص التلفزيون الأول (Vetro والمجلد والأدوات) وبيتأكد من الملف المحمّل",
+        "✔ قائمة «إيه الجديد» بتتحرك بالأسهم فوق وتحت؛ وويدجت الحكمة بقى بعيد عن الساعة وويدجت الصلاة",
+        "✔ 8.7.33: الحكمة بتظهر كاملة دايماً؛ فحص التحديث مرة كل 24 ساعة؛ وتجربة المدفع بتبدأ أسرع",
+        "✔ 8.7.32: صوت المدفع بيتدوّر عليه في أماكن أكتر؛ والموقع التلقائي بيسأل خدمات أكتر",
+        "✔ 8.7.31: تثبيت التحديث من جوه اللانشر؛ وكل منافذ HDMI الأربعة بتظهر",
+        "✔ 8.7.28: الموقع التلقائي اختياري (مقفول افتراضياً)؛ اختيار الدولة ثم المدينة؛ مفاتيح المصحف؛ والمحراب الحي شاشة التوقف الافتراضية",
         "\u2714 8.7.27: \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0628\u062a\u062a\u062d\u062f\u062f \u0644\u0648\u062d\u062f\u0647\u0627 \u0645\u0646 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0634\u0627\u0634\u0629 (\u0627\u0644\u062f\u0648\u0644\u0629 \u0648\u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629) \u0648\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a\u060c \u0648\u062a\u0642\u062f\u0631 \u062a\u062e\u062a\u0627\u0631\u0647\u0627 \u064a\u062f\u0648\u064a \u0641\u064a \u0623\u064a \u0648\u0642\u062a",
         "\u2714 \u0627\u0644\u062a\u0642\u0648\u064a\u0645 \u0627\u0644\u0647\u062c\u0631\u064a \u0628\u064a\u062a\u0628\u0639 \u062f\u0648\u0644\u0629 \u0627\u0644\u0645\u062f\u064a\u0646\u0629\u060c \u0648\u0645\u0648\u0639\u062f \u0631\u0645\u0636\u0627\u0646 \u0648\u0627\u0644\u0639\u064a\u062f \u0628\u064a\u062a\u062c\u062f\u062f \u0644\u0648\u062d\u062f\u0647 \u0648\u0645\u0639\u0627\u0647 \u0632\u0631 \u062a\u062d\u062f\u064a\u062b \u064a\u062f\u0648\u064a \u0648\u062a\u0635\u062d\u064a\u062d \u0628\u0627\u0644\u0623\u064a\u0627\u0645",
         "\u2714 \u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0647\u062c\u0631\u064a \u0648\u0627\u062d\u062f \u0641\u064a \u0643\u0644 \u0627\u0644\u0634\u0627\u0634\u0627\u062a\u060c \u0648\u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u2248 \u0645\u0639\u0646\u0627\u0647\u0627 \u0625\u0646 \u0627\u0644\u0645\u0648\u0639\u062f \u0644\u0633\u0647 \u0645\u0627 \u0627\u062a\u0639\u0644\u0646\u0634 \u0631\u0633\u0645\u064a\u064b\u0627",
@@ -24580,6 +24830,12 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.34: Install Update now says exactly which step failed and why; it checks the TV first (Vetro, folder, tools) and checks the downloaded file",
+        "✔ What's New scrolls with Up and Down; the wisdom widget stays clear of the clock and the prayer widget",
+        "✔ 8.7.33: the whole wisdom always shows; the update check runs once every 24 hours; the cannon test starts faster",
+        "✔ 8.7.32: the cannon sound is found in more places; automatic location asks more services",
+        "✔ 8.7.31: Install Update from inside the launcher; all four HDMI ports are listed",
+        "✔ 8.7.28: automatic location is optional (off by default); one country-then-city picker; Mushaf keys; Living Mihrab is the default screen saver",
         "✔ 8.7.27: The city is now found by itself from the screen (country, time zone) and the Internet address; you can still choose it by hand",
         "✔ The Hijri calendar follows the city's country; Ramadan and Eid renew themselves, with a manual update and a correction in days",
         "✔ One Hijri date everywhere; ≈ means the date is not announced yet",
@@ -24636,7 +24892,6 @@ window.APL_DEVICES = [
     newsOnce();
     APL.whatsNew = { show: showNews };
 })(window);
-
 /* === js/kid-limits.js === */
 /* ============================================================
    kid-limits.js (v3.4.0) - CHILD PROFILE follow-up: allowed apps, daily time limit,
