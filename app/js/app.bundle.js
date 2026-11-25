@@ -713,7 +713,7 @@ window.APL_LANG_AR = {
     "Ramadan & Eid Songs": "أغاني رمضان والعيد",
     "Opens the song on YouTube (online, with picture).": "بيفتح الأغنية على يوتيوب (أونلاين، بالصورة).",
     "Opens the old Ramadan song on YouTube (online, with picture).": "بيفتح أغنية رمضان القديمة على يوتيوب (أونلاين، بالصورة).",
-    "Songs that open on YouTube: first in YouTube Dummy, then TizenTube, then the YouTube app.": "أغاني بتفتح على يوتيوب: أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب.",
+    "Songs that open on YouTube: the YouTube app first, then TizenTube, then YouTube Dummy, then the TV browser.": "أغاني بتفتح على يوتيوب: تطبيق يوتيوب أول حاجة، وبعدها TizenTube، وبعدها YouTube Dummy، وبعدها متصفح التلفزيون.",
     "Opening the song on YouTube…": "بنفتح الأغنية على يوتيوب…",
     "Can't open YouTube": "مش قادر أفتح يوتيوب",
     "Day 1 (lantern)": "اليوم ١ (فانوس)",
@@ -12178,19 +12178,30 @@ window.APL_KEYS = {
                     a = list[i];
                     if (isDummyYouTube(a.id, a.name)) dummy = dummy || a.id;
                     else if (a.id === BREW || isTizenTube(a.id, a.name)) tube = tube || a.id;
-                    else if (/^(9Ur5IzDKqV\.TizenYouTube|9uQXbeqlCA\.YouTube)$/.test(a.id)) yt = yt || a.id;
+                    else if (/^(9Ur5IzDKqV\.TizenYouTube|9uQXbeqlCA\.YouTube|111299001912)$/.test(a.id)) yt = yt || a.id;
                 }
+                /* v8.7.44: the app that reads the video is tried first. The Samsung YouTube app takes the video as PAYLOAD "v=ID" with the
+                   plain "default" operation (the form Samsung's own cast and SmartThings launch use); the JSON-wrapped payload of 8.7.42-8.7.43
+                   only opened its home screen. TizenTube takes it as the module's args (the way its own DIAL service starts it). The Dummy app
+                   is a stand-in whose behaviour is unknown, so it comes after them. A launch that "succeeds" cannot be told from one that
+                   only opened the home screen, so the last resort (the browser) is the one that surely opens the video. */
                 var order = [];
-                if (dummy) order.push(["dummy", dummy]);
-                if (tube) order.push(["tube", tube]);
                 if (yt) order.push(["youtube", yt]);
+                if (tube) order.push(["tube", tube]);
+                if (dummy) order.push(["dummy", dummy]);
                 function next(k) {
                     if (k >= order.length) { browser(); return; }
                     var kind = order[k][0], id = order[k][1];
                     try {
-                        if (kind === "tube") { launchTizenTube().then(function () { resolve(kind); }, function () { next(k + 1); }); return; }
-                        var data = [new T.ApplicationControlData("PAYLOAD", [JSON.stringify({ values: "v=" + videoId })])];
-                        var ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, null, null, data);
+                        var ctl;
+                        if (kind === "tube") {
+                            ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", null, null, null,
+                                [new T.ApplicationControlData("module", [JSON.stringify({ moduleName: "@foxreis/tizentube", moduleType: "npm", args: "v=" + videoId })])]);
+                            T.application.launchAppControl(ctl, BREW, function () { resolve(kind); }, function () { next(k + 1); });
+                            return;
+                        }
+                        ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/default", null, null, null,
+                            [new T.ApplicationControlData("PAYLOAD", ["v=" + videoId])]);
                         T.application.launchAppControl(ctl, id, function () { resolve(kind); }, function () { next(k + 1); });
                     } catch (e) { next(k + 1); }
                 }
@@ -17154,8 +17165,10 @@ window.APL_KEYS = {
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
                 menu(APL.t("Ramadan & Eid Songs"), "speaker", [
                     action("\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", function () { playSong("3EYDurKhcDs"); },
-                        APL.t("Opens the song on YouTube (online, with picture)."), "speaker")
-                ], APL.t("Songs that open on YouTube: first in YouTube Dummy, then TizenTube, then the YouTube app.")),
+                        APL.t("Opens the song on YouTube (online, with picture)."), "speaker"),
+                    action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
+                        APL.t("Opens the old Ramadan song on YouTube (online, with picture)."), "speaker")
+                ], APL.t("Songs that open on YouTube: the YouTube app first, then TizenTube, then YouTube Dummy, then the TV browser.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
@@ -17895,8 +17908,6 @@ window.APL_KEYS = {
 
             /* -------- Support -------- */
             menu(APL.t("Support"), "info", [
-                action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
-                    APL.t("Opens the old Ramadan song on YouTube (online, with picture)."), "speaker"),
                 menu(APL.t("Launcher Update"), "update", [
                     info(APL.t("Version"), function () {
                         var u = APL.updater;
@@ -25087,6 +25098,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.44: أغاني رمضان والعيد بتفتح الفيديو نفسه بدل الشاشة الرئيسية ليوتيوب (تطبيق يوتيوب، وبعده TizenTube، وبعده YouTube Dummy، وآخر حاجة متصفح التلفزيون). الأغنيتين «أهلا بالعيد» و«رمضان جانا» بقوا الاتنين في الإعدادات > الصلاة والقرآن > أغاني رمضان والعيد.",
         "✔ 8.7.43: ودجت رمضان بقى على 3 مراحل مش بتتخلط: قبل رمضان بيوم لحد اليوم ٢٠ (أدعية ونصايح وفضائل)، من ٢١ لـ٣٠ (العشر الأواخر وليلة القدر وقيام الليل بس)، وأول ٣ أيام عيد الفطر (نصايح العيد بس). اليوم الإسلامي بيبدأ من المغرب. معاينات جديدة في الإعدادات، وإطار الشاشة الذهبي اتشال من المحراب الحي.",
         "✔ 8.7.42: قسم جديد «أغاني رمضان والعيد» في الإعدادات (الصلاة والقرآن، وسط عناصر رمضان) بيفتح «أهلا بالعيد» على يوتيوب، وأغنية تانية مخفية في الإعدادات > الدعم. الأغنية بتفتح أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب، وآخر حاجة متصفح التلفزيون. بتشتغل أونلاين بالصورة ومفيش حاجة متخزنة في اللانشر.",
         "✔ 8.7.41: ويدجت رمضان بقى في نص الشاشة فوق صف التطبيقات مباشرة، بمسافة واضحة تحت كارت الصلاة وبعيد عن اسم التطبيق ووصفه. والمحتوى زاد من ٣٨ لـ ١٢٠ دعاء ونصيحة وأدعية ليلة القدر وفضائل رمضان (قرآن وأحاديث صحيحة فقط)، وكل مصدر حديث بقى مكتوب كامل زي «صحيح البخاري · حديث ٢٠١٧».",
@@ -25120,6 +25132,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.44: the Ramadan & Eid songs now open the video itself instead of the YouTube home screen (YouTube app, then TizenTube, then YouTube Dummy, then the TV browser). Both songs, “Ahlan bel Eid” and “Ramadan Gana”, are now in Settings > Prayer and Quran > Ramadan & Eid Songs.",
         "✔ 8.7.43: the Ramadan widget now has three phases that never mix: the day before Ramadan to day 20 (duas, tips, virtues), days 21-30 (last ten nights, Laylat al-Qadr and night prayer only) and the first 3 days of Eid (Eid tips only). The Islamic day starts at Maghrib. New previews in Settings, and the gold outline is gone from the Living Mihrab.",
         "✔ 8.7.42: new “Ramadan & Eid Songs” entry in Settings (Prayer and Quran, among the Ramadan items) that opens “Ahlan bel Eid” on YouTube, and a second, hidden song entry in Settings > Support. A song opens first in YouTube Dummy, then TizenTube, then the YouTube app, and last in the TV browser. They play online with picture; nothing is stored in the launcher.",
         "✔ 8.7.41: the Ramadan widget is now centred just above the apps row, with a clear gap under the prayer card and clear of the focused app's name and description. The pool grows from 38 to 120 duas, tips, Laylat al-Qadr duas and virtues of Ramadan (Quran and hadith only), and every hadith source now reads “Sahih al-Bukhari · Hadith 2017” in full. The wisdom widget stays clear of the screen edge.",

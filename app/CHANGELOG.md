@@ -1,3 +1,9 @@
+## 8.7.44
+
+- Songs: pressing OK opened only the YouTube home screen. The launch data was wrapped in JSON, which the YouTube app does not read. It now sends the plain `v=ID` with the default operation. TizenTube gets the video as its module `args` (the way its own DIAL service starts it). YouTube Dummy gets the same plain data. Order: YouTube app, TizenTube, YouTube Dummy, then the TV browser, which opens the video for sure.
+- Both songs ("أهلا بالعيد" and "رمضان جانا") are listed in Settings > Prayer and Quran > Ramadan & Eid Songs. The row in Settings > Support is removed.
+- Checked in Node with simulated apps (all present, YouTube fails, Dummy only, none). Not verified on the TV: whether the installed YouTube / TizenTube / Dummy apps play the video from the launch data. A launch that played the video cannot be told from one that only opened the app, so a fallback only happens when a launch is refused.
+
 ## 8.7.43
 
 - Ramadan widget phases (never mixed): the day before Ramadan and days 1-20 show general duas, tips and virtues; days 21-30 show only last-ten and Laylat al-Qadr items (plus night-prayer items, new label "Night prayer"); the first 3 days of Eid al-Fitr show only Eid items (28, label "Eid"). 151 items, each tagged with its phase, and the picker never leaves the current phase.

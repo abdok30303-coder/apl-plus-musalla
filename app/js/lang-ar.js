@@ -158,7 +158,7 @@ window.APL_LANG_AR = {
     "Ramadan & Eid Songs": "أغاني رمضان والعيد",
     "Opens the song on YouTube (online, with picture).": "بيفتح الأغنية على يوتيوب (أونلاين، بالصورة).",
     "Opens the old Ramadan song on YouTube (online, with picture).": "بيفتح أغنية رمضان القديمة على يوتيوب (أونلاين، بالصورة).",
-    "Songs that open on YouTube: first in YouTube Dummy, then TizenTube, then the YouTube app.": "أغاني بتفتح على يوتيوب: أول حاجة في YouTube Dummy، وبعدها TizenTube، وبعدها تطبيق يوتيوب.",
+    "Songs that open on YouTube: the YouTube app first, then TizenTube, then YouTube Dummy, then the TV browser.": "أغاني بتفتح على يوتيوب: تطبيق يوتيوب أول حاجة، وبعدها TizenTube، وبعدها YouTube Dummy، وبعدها متصفح التلفزيون.",
     "Opening the song on YouTube…": "بنفتح الأغنية على يوتيوب…",
     "Can't open YouTube": "مش قادر أفتح يوتيوب",
     "Day 1 (lantern)": "اليوم ١ (فانوس)",

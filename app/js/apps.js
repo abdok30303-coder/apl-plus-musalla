@@ -401,19 +401,30 @@
                     a = list[i];
                     if (isDummyYouTube(a.id, a.name)) dummy = dummy || a.id;
                     else if (a.id === BREW || isTizenTube(a.id, a.name)) tube = tube || a.id;
-                    else if (/^(9Ur5IzDKqV\.TizenYouTube|9uQXbeqlCA\.YouTube)$/.test(a.id)) yt = yt || a.id;
+                    else if (/^(9Ur5IzDKqV\.TizenYouTube|9uQXbeqlCA\.YouTube|111299001912)$/.test(a.id)) yt = yt || a.id;
                 }
+                /* v8.7.44: the app that reads the video is tried first. The Samsung YouTube app takes the video as PAYLOAD "v=ID" with the
+                   plain "default" operation (the form Samsung's own cast and SmartThings launch use); the JSON-wrapped payload of 8.7.42-8.7.43
+                   only opened its home screen. TizenTube takes it as the module's args (the way its own DIAL service starts it). The Dummy app
+                   is a stand-in whose behaviour is unknown, so it comes after them. A launch that "succeeds" cannot be told from one that
+                   only opened the home screen, so the last resort (the browser) is the one that surely opens the video. */
                 var order = [];
-                if (dummy) order.push(["dummy", dummy]);
-                if (tube) order.push(["tube", tube]);
                 if (yt) order.push(["youtube", yt]);
+                if (tube) order.push(["tube", tube]);
+                if (dummy) order.push(["dummy", dummy]);
                 function next(k) {
                     if (k >= order.length) { browser(); return; }
                     var kind = order[k][0], id = order[k][1];
                     try {
-                        if (kind === "tube") { launchTizenTube().then(function () { resolve(kind); }, function () { next(k + 1); }); return; }
-                        var data = [new T.ApplicationControlData("PAYLOAD", [JSON.stringify({ values: "v=" + videoId })])];
-                        var ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", url, null, null, data);
+                        var ctl;
+                        if (kind === "tube") {
+                            ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/view", null, null, null,
+                                [new T.ApplicationControlData("module", [JSON.stringify({ moduleName: "@foxreis/tizentube", moduleType: "npm", args: "v=" + videoId })])]);
+                            T.application.launchAppControl(ctl, BREW, function () { resolve(kind); }, function () { next(k + 1); });
+                            return;
+                        }
+                        ctl = new T.ApplicationControl("http://tizen.org/appcontrol/operation/default", null, null, null,
+                            [new T.ApplicationControlData("PAYLOAD", ["v=" + videoId])]);
                         T.application.launchAppControl(ctl, id, function () { resolve(kind); }, function () { next(k + 1); });
                     } catch (e) { next(k + 1); }
                 }
