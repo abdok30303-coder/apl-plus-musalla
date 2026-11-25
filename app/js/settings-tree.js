@@ -220,6 +220,31 @@
         if (APL.weather) APL.weather.refresh();
         APL.toast(APL.t("City set: {name}", { name: x.name }), true);
     }
+    /* v8.7.27: Ramadan and the two Eids: the next date of each, corrected by hand when the announcement differs. */
+    function keyDatesText() {
+        var I = APL.islamic;
+        if (!I || !I.keyDates) return "";
+        return I.keyDates().map(function (k) {
+            return k.name + " " + I.gregorian(k.start).date + (k.fix ? " (" + signed(k.fix) + ")" : "") + (k.exact ? "" : " \u2248");
+        }).join("  \u00b7  ");
+    }
+    function fixPick(k) {
+        var I = APL.islamic, items = [-2, -1, 0, 1, 2].map(function (d) {
+            return { label: I.gregorian(k.auto + d).date + (d ? " (" + signed(d) + ")" : " \u2014 " + APL.t("automatic")), icon: d ? "calendar" : "refresh",
+                     run: function () { I.setFix(k.hy, k.m, d); APL.toast(k.name + ": " + I.gregorian(k.auto + d).date, true); } };
+        });
+        APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
+    }
+    function fixDates() {
+        var I = APL.islamic;
+        if (!I || !I.keyDates) return;
+        var items = I.keyDates().map(function (k) {
+            return { label: k.name + " \u00b7 " + I.gregorian(k.start).date + (k.fix ? " (" + signed(k.fix) + ")" : "") + (k.exact ? "" : " \u2248"), icon: "calendar",
+                     run: function () { setTimeout(function () { fixPick(k); }, 120); } };
+        });
+        items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
+        APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
+    }
     function openDuck() { APL.settings.close(); if (APL.openUrl) APL.openUrl("https://duck.ai/").catch(function (e) { if (APL.toast) APL.toast(e.message); }); }
     function openPrayer() { APL.settings.close(); if (APL.prayerPage) APL.prayerPage.open(); }
     /* Tint: 15 is neutral, below it more green, above it more red. */
@@ -457,6 +482,15 @@
                 }, APL.lang === "ar" ? "استماع لتلاوات القرآن الكريم بأصوات كبار القراء مع التفسير والبحث المباشر." : "Listen to online Quran recitations from top reciters with verse-by-verse Saadi/Muyassar Tafsir.", "headphones"),
                 action(APL.t("Prayer Times"), openPrayer,
                     APL.t("Today's six times, the next prayer, the radio and the black screen."), "moon"),
+                toggle(APL.t("Detect Location Automatically"), "prayerAuto",
+                    APL.t("Finds the city from the screen's settings and the Internet address. Choosing a city by hand turns this off.")),
+                info(APL.t("Detected Location"), function () { return APL.autoLocation ? APL.autoLocation.describe() : ""; },
+                    APL.t("The city used for the prayer times, the weather and the Hijri calendar.")),
+                action(APL.t("Detect Location Now"), function () {
+                    if (!APL.autoLocation) return;
+                    APL.toast(APL.t("Detecting the location…"), true);
+                    APL.autoLocation.detect(true);
+                }, APL.t("Needs internet for the Internet address; without it the screen's own country and time zone are used. Turns automatic detection on."), "sparkle"),
                 action(APL.t("Update Prayer Times & Islamic Calendar"), function () {
                     APL.toast(APL.t("Updating prayer times & calendar…"), true);
                     if (APL.prayer) {
@@ -476,6 +510,19 @@
                     if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache();
                     APL.toast(APL.t("Hijri calendar adjusted"), true);
                 }),
+                choice(APL.t("Hijri Calendar Source"), "hijriSource", [
+                    ["auto", APL.t("Automatic (by the country)")],
+                    ["egypt", APL.t("Egypt (Dar Al-Ifta, crescent rule)")],
+                    ["HJCoSA", APL.t("Saudi Arabia (announcements)")],
+                    ["UAQ", APL.t("Umm Al-Qura (Saudi civil)")],
+                    ["DIYANET", APL.t("Turkey (Diyanet)")]
+                ], APL.t("Which authority's Hijri calendar sets Ramadan and the Eids. Automatic follows the country of the city."), function () {
+                    APL.toast(APL.t("Hijri calendar updated"), true);
+                }),
+                info(APL.t("Ramadan & Eid Dates"), keyDatesText,
+                    APL.t("Worked out from the moon and renewed by itself; \u2248 means not announced yet.")),
+                action(APL.t("Correct Ramadan & Eid Dates"), fixDates,
+                    APL.t("If the announcement differs by a day, shift Ramadan or an Eid by hand."), "calendar"),
                 action(APL.t("Islamic Occasions & Holidays"), function () {
                     APL.settings.close();
                     if (APL.prayerPage) {

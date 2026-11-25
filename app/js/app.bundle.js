@@ -1506,6 +1506,42 @@ window.APL_LANG_AR_EXTRA = {
     "Adjust Hijri calendar by ±1 or ±2 days according to Dar Al-Ifta Egypt moon sighting announcement.": "تعديل التقويم الهجري بزيادة أو إنقاص يومين بحسب إعلان دار الإفتاء المصرية لرؤية الهلال.",
     "Automatic (Egypt Official)": "تلقائي (الرسمي المعتمد في مصر)",
     "Hijri calendar adjusted": "تم تعديل التاريخ الهجري",
+
+    /* v8.7.27: automatic location and Hijri calendar source */
+    "Detect Location Automatically": "تحديد الموقع تلقائيًا",
+    "Finds the city from the screen's settings and the Internet address. Choosing a city by hand turns this off.": "بيحدد المدينة من إعدادات الشاشة وعنوان الإنترنت (IP). اختيارك لمدينة يدويًا بيقفل التحديد التلقائي.",
+    "Detected Location": "الموقع المُحدَّد",
+    "The city used for the prayer times, the weather and the Hijri calendar.": "المدينة المستخدمة في مواقيت الصلاة والطقس والتقويم الهجري.",
+    "Detect Location Now": "حدّد الموقع الآن",
+    "Detecting the location…": "جارٍ تحديد الموقع…",
+    "Needs internet for the Internet address; without it the screen's own country and time zone are used. Turns automatic detection on.": "محتاج إنترنت لعنوان الـ IP؛ ومن غيره بيعتمد على دولة الشاشة ومنطقتها الزمنية. بيشغّل التحديد التلقائي.",
+    "Location set automatically: {name}": "تم تحديد الموقع تلقائيًا: {name}",
+    "Your location: {name}": "موقعك: {name}",
+    "The Internet address and the screen's settings disagree, so nothing was changed. Choose the city yourself.": "عنوان الإنترنت وإعدادات الشاشة مش متفقين، فمفيش حاجة اتغيرت. اختار المدينة بنفسك.",
+    "Could not reach the internet to detect the location.": "مقدرتش أوصل للإنترنت لتحديد الموقع.",
+    "Could not tell the time zone of this place. Choose the city yourself.": "معرفتش المنطقة الزمنية للمكان ده. اختار المدينة بنفسك.",
+    "Off. The city is the one you chose.": "مقفول. المدينة هي اللي اخترتها.",
+    "not changed: the Internet address and the screen disagree": "مفيش تغيير: عنوان الإنترنت والشاشة مش متفقين",
+    "not detected yet": "لسه ما اتحددش",
+    "by Internet address": "من عنوان الإنترنت",
+    "by the screen's settings": "من إعدادات الشاشة",
+    "your chosen city fits your Internet address": "المدينة اللي اخترتها مناسبة لعنوان الإنترنت",
+    "no internet: using the screen's settings": "مفيش إنترنت: من إعدادات الشاشة",
+    "Hijri Calendar Source": "مصدر التقويم الهجري",
+    "Automatic (by the country)": "تلقائي (حسب الدولة)",
+    "Egypt (Dar Al-Ifta, crescent rule)": "مصر (دار الإفتاء، قاعدة الهلال)",
+    "Saudi Arabia (announcements)": "السعودية (الإعلانات)",
+    "Umm Al-Qura (Saudi civil)": "أم القرى (التقويم المدني السعودي)",
+    "Turkey (Diyanet)": "تركيا (ديانت)",
+    "Which authority's Hijri calendar sets Ramadan and the Eids. Automatic follows the country of the city.": "تقويم أي جهة بيحدد رمضان والأعياد. التلقائي بيتبع دولة المدينة.",
+    "Hijri calendar updated": "تم تحديث التقويم الهجري",
+    "Ramadan & Eid Dates": "مواعيد رمضان والعيد",
+    "Worked out from the moon and renewed by itself; ≈ means not announced yet.": "بتتحسب من القمر وبتتجدد لوحدها؛ علامة ≈ يعني لسه ما اتعلنش.",
+    "Correct Ramadan & Eid Dates": "تصحيح مواعيد رمضان والعيد",
+    "If the announcement differs by a day, shift Ramadan or an Eid by hand.": "لو الإعلان الرسمي اختلف بيوم، قدّم أو أخّر رمضان أو العيد يدويًا.",
+    "automatic": "تلقائي",
+    "Reset all corrections": "إلغاء كل التصحيحات",
+    "Corrections removed": "اتلغت التصحيحات",
     "Islamic Occasions & Holidays": "المناسبات والأعياد الإسلامية",
     "Browse Islamic occasions, Ramadan countdown, and Eid dates.": "استعراض المناسبات الدينية والعد التنازلي لرمضان والأعياد.",
     "Button mapped to {name}": "تم ربط الزر بتطبيق {name}",
@@ -3131,6 +3167,9 @@ window.APL_CATALOG = [
         onlineWallpaperSource: "both", // "both" | "bing" | "nasa"
         onlineIcons: false,         // v1.2.108: real icons from the App Store catalogue for apps with no tile of their own (autoart.js)
         prayerCity: "cairo",       // key in js/cities.js (prayer.js)
+        prayerAuto: true,           // v8.7.27: the city is found from the screen's settings and the Internet address (js/auto-location.js); choosing a city by hand turns it off
+        hijriSource: "auto",        // v8.7.27: "auto" (by the country of the city) | "egypt" | "HJCoSA" | "UAQ" | "DIYANET" (js/islamic.js, js/prayer.js)
+        hijriFix: {},               // v8.7.27: Ramadan / Eid corrected by hand: { "1448-9": 1 } = month 9 of 1448 starts 1 day later (js/islamic.js setFix)
         prayerAlerts: true,         // a short spoken alert at each prayer time
         prayerAlertVolume: 0.92,
         prayerWidgetShow: "occ",    // v7.2.1/v8.5.0: "occ" | "ayah" | "tafsir" | "hekam" | "pers"
@@ -5491,6 +5530,55 @@ window.APL_CATALOG = [
         return { id: m[0], en: m[1], ar: m[2], fajr: m[3], isha: m[4], ishaMin: m[5], mag: m[6] };
     });
     global.APL_METHOD_AUTO = function (cc) { return METHOD_BY_CC[cc] || 3; };
+
+    /* ---------- v8.7.27: what follows the country (location, Hijri calendar) ---------- */
+
+    /* The Hijri calendar a country follows. "egypt": Dar al-Ifta's astronomical rule, worked out on the screen (js/islamic.js).
+       The others are AlAdhan's calendarMethod: HJCoSA (Saudi announcements, adjusted after each sighting), UAQ, DIYANET.
+       Every other country: HJCoSA, the nearest regional announcement. Settings > Hijri Calendar Source can pick another one. */
+    var CAL_BY_CC = { EG: "egypt", TR: "DIYANET" };
+    global.APL_CAL_AUTO = function (cc) { return CAL_BY_CC[String(cc || "").toUpperCase()] || "HJCoSA"; };
+
+    /* The main city of a country, for when the screen only tells us the country (no internet, no position). */
+    var MAIN_CITY = {
+        EG: "cairo", SA: "riyadh", AE: "dubai", KW: "kuwait", QA: "doha", BH: "manama", OM: "muscat", YE: "sanaa",
+        JO: "amman", PS: "jerusalem", LB: "beirut", SY: "damascus", IQ: "baghdad", LY: "tripoli", TN: "tunis", DZ: "algiers",
+        MA: "rabat", SD: "khartoum", MR: "nouakchott", SO: "mogadishu", TR: "istanbul", IR: "tehran", PK: "karachi",
+        IN: "delhi", BD: "dhaka", AF: "kabul", LK: "colombo", ID: "jakarta", MY: "kualalumpur", SG: "singapore",
+        UZ: "tashkent", AZ: "baku", RU: "moscow", GB: "london", FR: "paris", DE: "berlin", ES: "madrid", IT: "rome",
+        NL: "amsterdam", BE: "brussels", SE: "stockholm", BA: "sarajevo", US: "newyork", CA: "toronto", BR: "saopaulo",
+        AU: "sydney", NZ: "auckland", ZA: "johannesburg", NG: "lagos", SN: "dakar", ET: "addisababa", KE: "nairobi", TZ: "daressalaam"
+    };
+    /* A city for a country and/or a time zone (either may be empty): the one that matches both, else the country's main city. */
+    global.APL_CITY_FOR = function (cc, tz) {
+        cc = String(cc || "").toUpperCase();
+        var main = MAIN_CITY[cc] && BY_KEY[MAIN_CITY[cc]], i, c;
+        if (cc && tz) {
+            if (main && main.tz === tz) return main;
+            for (i = 0; i < CITIES.length; i++) { c = CITIES[i]; if (c.cc === cc && c.tz === tz) return c; }
+        }
+        if (cc && main) return main;
+        if (tz) { for (i = 0; i < CITIES.length; i++) if (CITIES[i].tz === tz) return CITIES[i]; }
+        return null;
+    };
+
+    /* A country code from whatever the screen gives: "EG", "EGY", "ar_EG", "ar-EG". "" when it is not one we know. */
+    var ALPHA3 = {
+        EGY: "EG", SAU: "SA", ARE: "AE", KWT: "KW", QAT: "QA", BHR: "BH", OMN: "OM", YEM: "YE", JOR: "JO", PSE: "PS",
+        LBN: "LB", SYR: "SY", IRQ: "IQ", LBY: "LY", TUN: "TN", DZA: "DZ", MAR: "MA", SDN: "SD", MRT: "MR", SOM: "SO",
+        TUR: "TR", IRN: "IR", PAK: "PK", IND: "IN", BGD: "BD", AFG: "AF", LKA: "LK", IDN: "ID", MYS: "MY", SGP: "SG",
+        UZB: "UZ", AZE: "AZ", RUS: "RU", GBR: "GB", FRA: "FR", DEU: "DE", ESP: "ES", ITA: "IT", NLD: "NL", BEL: "BE",
+        SWE: "SE", BIH: "BA", USA: "US", CAN: "CA", BRA: "BR", AUS: "AU", NZL: "NZ", ZAF: "ZA", NGA: "NG", SEN: "SN",
+        ETH: "ET", KEN: "KE", TZA: "TZ"
+    };
+    global.APL_CC_FROM = function (v) {
+        var s = String(v || "").toUpperCase().replace(/[^A-Z_\-]/g, "");
+        if (!s) return "";
+        var m = /[_\-]([A-Z]{2,3})$/.exec(s);
+        if (m) s = m[1];
+        if (s.length === 3) s = ALPHA3[s] || "";
+        return (s.length === 2 && COUNTRY[s]) ? s : "";
+    };
 })(window);
 
 /* === js/light-mode.js === */
@@ -8094,8 +8182,18 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     /* What the saved month belongs to: the city, the method, the Asr rule and the high-latitude rule. */
     function locSig() {
         var c = city();
-        return c.key + (c.key === "custom" ? "@" + c.lat.toFixed(3) + "," + c.lon.toFixed(3) : "") + "|" + methodId() + "|" + schoolId() + "|" + hlNum();
+        return c.key + (c.key === "custom" ? "@" + c.lat.toFixed(3) + "," + c.lon.toFixed(3) : "") + "|" + methodId() + "|" + schoolId() + "|" + hlNum() + "|" + calSource();
     }
+    /* v8.7.27: the Hijri calendar of this place: the one picked in Settings > Hijri Calendar Source, else the one of the city's country
+       (js/cities.js APL_CAL_AUTO: Egypt = Dar al-Ifta's rule worked out in js/islamic.js, Turkey = Diyanet, the rest = Saudi announcements).
+       AlAdhan is always asked for a calendarMethod too, so its Hijri dates follow the country (Egypt uses HJCoSA only as the fallback). */
+    function calSource() {
+        var v = sys.pref("hijriSource");
+        if (v && v !== "auto") return String(v);
+        var c = city();
+        return global.APL_CAL_AUTO ? global.APL_CAL_AUTO(c && c.cc) : "HJCoSA";
+    }
+    function calParam() { var s = calSource(); return "&calendarMethod=" + (s === "egypt" ? "HJCoSA" : s); }
     function methodNote() {
         var m = methodInfo();
         return APL.t("Times from AlAdhan, {method}. Timezone {tz}.", { method: APL.lang === "ar" ? m.ar : m.en, tz: tz() });
@@ -8225,13 +8323,28 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         } catch (e) {}
     }
 
+    /* v8.7.27: the Hijri days of a saved month can change when a moon sighting is announced, so a saved month is renewed after 7 days,
+       and after 12 hours in the days around a Hijri month change (day 27 to day 2). What is saved is shown meanwhile and kept if the renewal fails. */
+    function staleMs() {
+        var d = 7 * 24 * 3600000;
+        try { var h = APL.islamic && APL.islamic.hijriToday ? APL.islamic.hijriToday() : null; if (h && (h.d >= 27 || h.d <= 2)) d = 12 * 3600000; } catch (e) {}
+        return d;
+    }
+    function isStale(y, m) {
+        try {
+            var raw = JSON.parse(global.localStorage.getItem(monthKey(y, m)) || "null");
+            return !raw || !raw.at || Date.now() - raw.at > staleMs();
+        } catch (e) { return false; }
+    }
     function fetchMonth(y, m, force) {
         var mk = y + "-" + (m < 10 ? "0" : "") + m;
-        if (loadedMonths[mk] && !force) return Promise.resolve(true);
-        if (!force && readMonth(y, m)) return Promise.resolve(true);
+        if (!force) {
+            if (!loadedMonths[mk]) readMonth(y, m);
+            if (loadedMonths[mk] && !isStale(y, m)) return Promise.resolve(true);
+        }
         var c = city();
         var url = "https://api.aladhan.com/v1/calendar?latitude=" + c.lat + "&longitude=" + c.lon +
-                  "&method=" + methodId() + "&school=" + schoolId() + hlParam() +
+                  "&method=" + methodId() + "&school=" + schoolId() + hlParam() + calParam() +
                   "&month=" + m + "&year=" + y;
         return APL.fetchJSON(url, 15000).then(function (j) {   // v1.2.115: 15 s limit
             var list = (j && j.data) || [];
@@ -8309,7 +8422,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var pauseRad = sys.pref("radioDuringAlert") !== false;
         var vol = parseFloat(sys.pref("prayerAlertVolume"));
         if (!(vol >= 0.1 && vol <= 1.5)) vol = 0.92;
-        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0, methodId(), schoolId(), hlNum()].join("|");
+        var sig = [locSig(), (APL.islamic && APL.islamic.stateSig ? APL.islamic.stateSig() : ""), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0].join("|");
         if (!force && sig === syncedSig && entries.length > 0) return;
 
         if (!force && Date.now() < retryAt) return;          // Vetro was not ready: wait before asking again
@@ -8764,17 +8877,22 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         tz: tz,
         methodId: methodId,
         methodNote: methodNote,
+        calendarSource: calSource,
         reload: function () {
             loadedMonths = {};
             days = {};
             syncedSig = "";
+            try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             return loadAll(true).then(function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
         },
-        setCity: function (key) {
+        /* v8.7.27: opts.auto = chosen by js/auto-location.js. Any other call is a choice by hand and turns the automatic mode off. */
+        setCity: function (key, opts) {
             loadedMonths = {};
             days = {};
             syncedSig = "";
             sys.setPref("prayerCity", key);
+            if (!(opts && opts.auto)) sys.setPref("prayerAuto", false);
+            try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             loadAll(true).then(function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
         },
         alertsOn: alertsOn,
@@ -8795,6 +8913,12 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         nameOf: nameOf,
         names: function () { return NAMES.map(function (n) { return { key: n[0], name: nameOf(n[0]) }; }); },
         hijri: function () {
+            try {                                               // v8.7.27: the same date as the Home Screen (offset, month corrections, calendar of the place)
+                if (APL.islamic && APL.islamic.hijriToday) {
+                    var hh = APL.islamic.hijriToday();
+                    if (hh && hh.m >= 1 && hh.m <= 12) return (hh.exact ? "" : "\u2248 ") + APL.islamic.hijriText(hh);
+                }
+            } catch (e) {}
             var t = days[todayKey()];
             if (!t) return "";
             var month = APL.lang === "ar" ? t.hijriAr : t.hijriEn;
@@ -8824,6 +8948,15 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     sys.onPref("iqamaMin", function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });     // v1.2.117: display only, nothing goes to Vetro
     applyScale();
     sys.onPref("prayerWidgetScale", function () { applyScale(); render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
+    /* v8.7.27: the Hijri offset, the month corrections and the calendar source change the Ramadan marks of the background schedule and the pages */
+    ["hijriOffset", "hijriFix", "hijriSource"].forEach(function (k) {
+        sys.onPref(k, function () {
+            try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
+            if (k === "hijriSource") { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); return; }
+            syncedSig = ""; syncToVetro(true); render();
+            if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh();
+        });
+    });
     sys.onPref("prayerAlerts", function () { syncToVetro(true); });
     sys.onPref("radioDuringAlert", function () { syncToVetro(true); });
     sys.onPref("prayerAlertVolume", function () { syncToVetro(true); });
@@ -9067,18 +9200,28 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                                    Eid al-Adha and the other occasions, with the days left
                                    (v1.2.117: also the voluntary fasts: White Days, Monday/Thursday, six of Shawwal)
 
-   Where the dates come from, in this order:
-     1. The Hijri date that AlAdhan sends with the prayer times (already saved on the screen for
-        this month and the next one, see js/prayer.js). These days are exact: the page shows
-        the same Hijri date as the prayer page.
-     2. Beyond them, the months are worked out from the astronomical new moon (Meeus, chapter 49),
-        starting from the last exact month: a month begins the next day when the new moon is at
-        least 5 hours old at sunset in Cairo (the rule the Egyptian authorities use, in short).
-        These dates can be one day off from the announcement of the moon sighting: they are shown
-        with a "≈" in the launcher, and replaced by exact ones as the days come within the saved
-        prayer times.
-     3. With no saved prayer times at all (first start, no network ever): the plain tabular
-        Islamic calendar, also marked "≈".
+   v8.7.27: the calendar follows the PLACE of the prayer times (the city, found by js/auto-location.js
+   or chosen by hand), not Cairo only. "Today" is the date in that city, and the crescent is checked
+   at that city's sunset.
+
+   Where the dates come from (Settings > Hijri Calendar Source: Automatic by country, or one picked):
+     0. A month corrected by hand (Settings > Correct Ramadan & Eid dates): that start date, shifted
+        by the days given. Always exact.
+     1. Egypt (the Automatic choice for Egypt): the crescent rule below, from a firm anchor
+        (1 Ramadan 1447 = 19 February 2026, announced by Dar al-Ifta).
+        Other countries: the Hijri date AlAdhan sends with the prayer times (calendarMethod HJCoSA =
+        Saudi announcements, UAQ, or DIYANET for Turkey; saved on the screen for this month and the next
+        one, see js/prayer.js), renewed weekly and every 12 hours around a month change.
+     2. Every other month: worked out from the astronomical new moon (Meeus, chapter 49). A month ends
+        on the evening of its 29th day when the new moon is at least MIN_AGE hours old at sunset in
+        the city, otherwise it has 30 days. MIN_AGE is 4 hours (it was 5).
+        Checked against 15 Egyptian month starts (Ramadan, Eid al-Fitr, Dhul-Hijjah, 1443 to 1447), taken from the
+        announcements as remembered, not re-read from the bulletins: 4 hours fits all 15, 5 hours misses
+        Dhul-Hijjah 1445 (the moon was 4.3 hours old at sunset). The hours that fit all 15 are only 3.7 to
+        4.3, so this is an estimate, not the authority's real method (which also looks at moonset).
+        A date is "exact" once its month has begun and the moon was clearly on one side
+        of the limit (1.5 hours); otherwise it is shown with a "≈" until the announcement.
+     3. Before the anchor (a screen with a wrong date): the plain tabular Islamic calendar, "≈".
    Nothing here reads the network. All dates are plain day numbers (JDN), so the TV's time
    zone never moves a date.
    ============================================================ */
@@ -9104,7 +9247,12 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
         return m ? jdn(+m[1], +m[2], +m[3]) : null;
     }
+    /* v8.7.27: today's date in the city of the prayer times (its own time zone), else the screen's date. */
     function todayJdn() {
+        try {
+            var j = jdnOfIso(APL.prayer && APL.prayer.todayKey ? APL.prayer.todayKey() : "");
+            if (j !== null) return j;
+        } catch (e) {}
         var d = new Date();
         return jdn(d.getFullYear(), d.getMonth() + 1, d.getDate());
     }
@@ -9157,9 +9305,15 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         return jde + c - DELTA_T / 86400;
     }
 
-    /* ---------- the sunset in Cairo (NOAA's short formula, good to a minute or two) ---------- */
-    var LAT = 30.0444, LON = 31.2357;
-    function sunsetJd(j) {
+    /* ---------- the sunset of the prayer city (NOAA's short formula, good to a minute or two) ---------- */
+    /* v8.7.27: the city of the prayer times (before: Cairo only). */
+    function where() {
+        var c = null;
+        try { c = APL.prayer && APL.prayer.city ? APL.prayer.city() : null; } catch (e) { c = null; }
+        return (c && typeof c.lat === "number" && typeof c.lon === "number") ? { lat: c.lat, lon: c.lon, cc: c.cc || "" } : { lat: 30.0444, lon: 31.2357, cc: "EG" };
+    }
+    function sunsetJd(j, lat, lon) {
+        var LAT = typeof lat === "number" ? lat : 30.0444, LON = typeof lon === "number" ? lon : 31.2357;
         var jd = j - LON / 360;                                       // about solar noon there
         var T = (jd - 2451545) / 36525;
         var L0 = (280.46646 + 36000.76983 * T) % 360;
@@ -9191,14 +9345,36 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
 
     /* Is the new crescent counted on the evening of civil day j (the 29th of the month)?
        The new moon (conjunction) is behind us, by at least MIN_AGE hours at sunset. A new moon that
-       comes after sunset, or only a few hours before it, does not count: the month then has 30 days. */
-    var MIN_AGE = 5;
-    function crescentCounted(j) {
-        var ss = sunsetJd(j), nm = nearestNewMoon(ss);
-        return (ss - nm) * 24 >= MIN_AGE;
+       comes after sunset, or only a few hours before it, does not count: the month then has 30 days.
+       v8.7.27: MIN_AGE 4 (was 5), see the header for what it was checked against and how far it can be trusted. */
+    var MIN_AGE = 4;
+    function crescentAge(j, w) {
+        w = w || where();
+        var ss = sunsetJd(j, w.lat, w.lon);
+        return (ss - nearestNewMoon(ss)) * 24;
     }
+    function crescentCounted(j, w) { return crescentAge(j, w) >= MIN_AGE; }
 
     /* ---------- the Hijri months ---------- */
+    var version = 0;                                                  // bumped by clearCache()
+    function offset() {
+        var off = 0;
+        try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
+        return off;
+    }
+    /* Corrections made by hand: { "1448-9": 1 } = the month 9 of 1448 starts one day later than the automatic date. */
+    function fixes() {
+        var o = null;
+        try { o = APL.sys && APL.sys.pref("hijriFix"); } catch (e) { o = null; }
+        return (o && typeof o === "object") ? o : {};
+    }
+    /* The calendar followed here: "egypt" (the rule), "HJCoSA", "UAQ" or "DIYANET" (AlAdhan's Hijri dates). */
+    function source() {
+        var s = "";
+        try { s = APL.prayer && APL.prayer.calendarSource ? APL.prayer.calendarSource() : ""; } catch (e) { s = ""; }
+        return s || "egypt";
+    }
+
     /* What the saved prayer times know: { "y-m": first day (JDN) }, and the last saved day. */
     function savedMonths() {
         var known = {}, last = 0, list = [];
@@ -9212,28 +9388,61 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         return { known: known, last: last };
     }
 
-    function hijriFor(j) {
-        var h = null;
-        try { h = APL.prayer && APL.prayer.hijriOf ? APL.prayer.hijriOf(isoOf(j)) : null; } catch (e) { h = null; }
-        if (h) return { y: h.y, m: h.m, d: h.d, exact: true };
-        var t = tabular(j);
-        return { y: t.y, m: t.m, d: t.d, exact: false };
+    /* The months by the crescent rule, one after the other from the anchor: [{ y, m, start, len, firm, endFirm }].
+       firm = the start of this month was decided with the moon clearly on one side of the limit (the anchor is announced). */
+    var ANCHOR = { y: 1447, m: 9, start: jdn(2026, 2, 19) };
+    var rule = { sig: "", list: [] };
+    function ruleList(w, upto) {
+        var sig = w.lat.toFixed(2) + "," + w.lon.toFixed(2);
+        if (rule.sig !== sig) rule = { sig: sig, list: [] };
+        var L = rule.list, guard = 0;
+        if (!L.length) L.push({ y: ANCHOR.y, m: ANCHOR.m, start: ANCHOR.start, firm: true });
+        while (L[L.length - 1].start <= upto && guard++ < 1500) {
+            var a = L[L.length - 1], age = crescentAge(a.start + 28, w), counted = age >= MIN_AGE;
+            a.len = counted ? 29 : 30;
+            a.endFirm = counted ? age >= MIN_AGE + 1.5 : age <= MIN_AGE - 1.5;
+            var ny = a.y, nm = a.m + 1;
+            if (nm > 12) { nm = 1; ny++; }
+            L.push({ y: ny, m: nm, start: a.start + a.len, firm: a.endFirm });
+        }
+        return L;
     }
 
-    /* count months from the one that holds day j, each with its first day and its length */
-    function monthsFrom(j, h, saved, count) {
-        var out = [], y = h.y, m = h.m, start = j - (h.d - 1), i, key;
-        if (saved.known[y + "-" + m] !== undefined) start = saved.known[y + "-" + m];
-        for (i = 0; i < count; i++) {
-            var ny = y, nm = m + 1;
+    /* Before the anchor (a screen with a wrong date): the tabular calendar, months by the rule from there. */
+    function tabularMonths(j, count, w) {
+        var t = tabular(j), y = t.y, m = t.m, start = j - (t.d - 1), out = [];
+        for (var i = 0; i < count; i++) {
+            var len = crescentCounted(start + 28, w) ? 29 : 30, ny = y, nm = m + 1;
             if (nm > 12) { nm = 1; ny++; }
-            var nextKey = ny + "-" + nm, len, nextStart;
-            if (saved.known[nextKey] !== undefined) { nextStart = saved.known[nextKey]; len = nextStart - start; }
-            else { len = crescentCounted(start + 28) ? 29 : 30; nextStart = start + len; }
-            out.push({ y: y, m: m, start: start, len: len });
-            y = ny; m = nm; start = nextStart;
+            out.push({ y: y, m: m, start: start, len: len, exact: false });
+            y = ny; m = nm; start += len;
         }
         return out;
+    }
+
+    /* The months from the one that holds day j, `count` of them: { y, m, start, len, exact }, with the corrections applied:
+         1. a month corrected by hand: shifted by that many days, exact;
+         2. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
+         3. the crescent rule: exact once the month has begun and its start was firm. */
+    function monthsFrom(j, count) {
+        var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i;
+        if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
+        var L = ruleList(w, j + (count + 3) * 31), eff = [];
+        for (i = 0; i < L.length - 1; i++) {
+            var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10);
+            if (saved.known[key] !== undefined && Math.abs(saved.known[key] - r.start) <= 3) { s = saved.known[key]; ex = true; }
+            if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; }
+            eff.push({ y: r.y, m: r.m, start: s, exact: ex });
+        }
+        for (i = 0; i < eff.length - 1; i++) eff[i].len = eff[i + 1].start - eff[i].start;
+        eff.pop();
+        for (i = 0; i < eff.length; i++) if (eff[i].start <= j && j < eff[i].start + eff[i].len) break;
+        if (i >= eff.length) return tabularMonths(j, count, w);
+        return eff.slice(i, i + count);
+    }
+    function hijriOnDay(j) {
+        var mo = monthsFrom(j, 1)[0];
+        return { y: mo.y, m: mo.m, d: j - mo.start + 1, exact: mo.exact };
     }
 
     /* ---------- names, in the launcher's language ---------- */
@@ -9273,11 +9482,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var s = (opts && opts.night ? opts.night : h.d) + " " + HIJRI_MONTHS[lang][h.m - 1] + (h.y ? " " + h.y + " " + AH[lang] : "");
         return (opts && opts.night ? (lang === 0 ? "ليلة " : lang === 2 ? "nuit du " : "night of ") : "") + s;
     }
-    function hijriToday() {
-        var off = 0;
-        try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
-        return hijriFor(todayJdn() + off);
-    }
+    function hijriToday() { return hijriOnDay(todayJdn() + offset()); }
 
     /* ---------- the occasions ---------- */
     /* m = Hijri month, d = day it begins on. evening: it begins at Maghrib of that day (the night
@@ -9319,7 +9524,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     var cache = { sig: "", data: null };
 
     /* One occasion, from the first month that still has it ahead (or under way). */
-    function place(ev, months, today, lastExact) {
+    function place(ev, months, today) {
         for (var i = 0; i < months.length; i++) {
             var mo = months[i];
             if (mo.m !== ev.m) continue;
@@ -9327,7 +9532,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
             if (ev.span === "month") end = mo.start + mo.len - 1;
             else if (typeof ev.span === "number") end = start + ev.span - 1;
             if (end < today) continue;
-            var st = { ev: ev, start: start, end: end, hy: mo.y, exact: lastExact >= start };
+            var st = { ev: ev, start: start, end: end, hy: mo.y, exact: mo.exact };
             if (start > today) { st.kind = "soon"; st.days = start - today; }
             else if (start === today) { st.kind = ev.evening ? "tonight" : (end > start ? "now" : "today"); st.days = 0; }
             else { st.kind = "now"; st.days = 0; }
@@ -9361,19 +9566,19 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         for (var i = 0; i < months.length; i++) {
             if (months[i].m === 9 || months[i].m === 12) continue;
             var ev = { key: "white", m: months[i].m, d: 13, span: 3, names: WHITE_NAMES };
-            var st = place(ev, [months[i]], today, 0);
+            var st = place(ev, [months[i]], today);
             if (st && (!best || st.start < best.start)) best = st;
             if (best) break;                                  // months are in order: the first one that is still ahead
         }
         return best;
     }
-    function mondayThursday(months, today, lastExact) {
+    function mondayThursday(months, today) {
         for (var j = today, n = 0; n < 21; j++, n++) {
             var wd = weekday(j);
             if (wd !== 1 && wd !== 4) continue;
             if (fastClosed(months, j)) continue;
             var mo = monthAt(months, j), g = gregorian(j);
-            var st = { ev: { key: "monthu", names: MONTHU_NAMES[wd === 1 ? 0 : 1] }, start: j, end: j, hy: mo.y, exact: lastExact >= j };
+            var st = { ev: { key: "monthu", names: MONTHU_NAMES[wd === 1 ? 0 : 1] }, start: j, end: j, hy: mo.y, exact: mo.exact };
             st.kind = j === today ? "today" : "soon"; st.days = j - today;
             st.name = pick(st.ev.names);
             st.hijri = hijriText({ d: j - mo.start + 1, m: mo.m, y: mo.y });
@@ -9384,19 +9589,17 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     }
 
     function occasions() {
-        var off = 0;
-        try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
-        var today = todayJdn() + off, h = hijriFor(today), saved = savedMonths();
-        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, APL.lang].join("|");
+        var off = offset(), today = todayJdn() + off, h = hijriOnDay(today), saved = source() === "egypt" ? { last: 0 } : savedMonths(), w = where();
+        var sig = [today, off, h.y, h.m, h.d, h.exact ? 1 : 0, saved.last, source(), w.lat.toFixed(2), w.lon.toFixed(2), JSON.stringify(fixes()), version, APL.lang].join("|");
         if (cache.sig === sig && cache.data) return cache.data;
-        var months = monthsFrom(today, h, saved, 26), all = [], i;
+        var months = monthsFrom(today, 26), all = [], i;
         for (i = 0; i < EVENTS.length; i++) {
-            var st = place(EVENTS[i], months, today, saved.last);
+            var st = place(EVENTS[i], months, today);
             if (st) { st.order = i; all.push(st); }
         }
         function rank(a) { return a.kind === "now" || a.kind === "today" || a.kind === "tonight" ? -1 : a.days; }
         function byStart(a, b) { return (rank(a) - rank(b)) || (a.start - b.start) || (a.order - b.order); }
-        var wd = whiteDays(months, today), mt = mondayThursday(months, today, saved.last);
+        var wd = whiteDays(months, today), mt = mondayThursday(months, today);
         if (wd) { wd.order = EVENTS.length; all.push(wd); }
         if (mt) { mt.order = EVENTS.length + 1; all.push(mt); }
         all.sort(byStart);
@@ -9412,21 +9615,391 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         return out;
     }
 
+    /* v8.7.27: Ramadan and the two Eids the way Settings > Correct Ramadan & Eid dates lists them: the next one of each,
+       with the Hijri month it belongs to, its date, and the correction made by hand (days). */
+    function keyDates() {
+        var o = occasions(), fx = fixes(), out = [];
+        ["ramadan", "fitr", "adha"].forEach(function (k) {
+            for (var i = 0; i < o.all.length; i++) {
+                var st = o.all[i];
+                if (st.ev.key !== k) continue;
+                var d = parseInt(fx[st.hy + "-" + st.ev.m], 10) || 0;
+                out.push({ key: k, name: st.name, hy: st.hy, m: st.ev.m, start: st.start, auto: st.start - d, fix: d, exact: st.exact, dateText: st.dateText });
+                break;
+            }
+        });
+        return out;
+    }
+    function setFix(y, m, delta) {
+        var cur = fixes(), o = {}, d = Math.max(-2, Math.min(2, parseInt(delta, 10) || 0)), hy = 0;
+        try { hy = hijriToday().y; } catch (e) { hy = 0; }
+        Object.keys(cur).forEach(function (q) { if (!hy || parseInt(q, 10) >= hy - 1) o[q] = cur[q]; });   // corrections of past years are dropped
+        if (d) o[y + "-" + m] = d; else delete o[y + "-" + m];
+        APL.sys.setPref("hijriFix", o);
+    }
+    function clearCache() { cache = { sig: "", data: null }; rule = { sig: "", list: [] }; version++; }
+
     APL.islamic = {
         jdn: jdn, ymd: ymd, isoOf: isoOf, weekday: weekday, today: todayJdn,
         hijriToday: hijriToday, hijriText: hijriText, gregorian: gregorian,
         /* v8.7.22: Hijri date of any Gregorian day (y, m, d), same offset and rules as hijriToday. prayer.js needs it to mark Ramadan Maghrib in the background schedule. */
-        toHijri: function (y, m, d) {
-            var off = 0;
-            try { off = parseInt(APL.sys && APL.sys.pref("hijriOffset"), 10) || 0; } catch (e) { off = 0; }
-            return hijriFor(jdn(y, m, d) + off);
-        },
+        toHijri: function (y, m, d) { return hijriOnDay(jdn(y, m, d) + offset()); },
         occasions: occasions,
         monthName: function (m) { return pick(HIJRI_MONTHS)[m - 1]; },
+        /* v8.7.27 */
+        clearCache: clearCache,
+        stateSig: function () { return [source(), offset(), JSON.stringify(fixes()), version].join(":"); },
+        source: source, keyDates: keyDates, setFix: setFix,
         /* for the tests: the pieces that can be checked on their own */
-        _newMoon: newMoon, _sunsetJd: sunsetJd, _tabular: tabular, _crescentCounted: crescentCounted,
-        _monthsFrom: function (j, h, saved, count) { return monthsFrom(j, h, saved, count); }
+        _newMoon: newMoon, _sunsetJd: sunsetJd, _tabular: tabular, _crescentCounted: crescentCounted, _crescentAge: crescentAge,
+        _monthsFrom: monthsFrom, _ruleList: ruleList
     };
+})(window);
+
+/* === js/auto-location.js === */
+/* ============================================================
+   auto-location.js (v8.7.27) — the city of the prayer times and the weather, found by itself.
+
+   Two kinds of evidence, both read without asking the viewer anything:
+     1. The screen: its time zone, and its country (Smart Hub country / Tizen locale / language tag).
+        Works with no internet.
+     2. The Internet address (IP): a free, keyless geolocation service gives an approximate position.
+        Tried in this order: ipwho.is, geojs.io, ipapi.co, freeipapi.com (the first answer wins).
+   The two are compared. When both are known and BOTH disagree (a VPN, a TV set to another country),
+   nothing is changed. When only the screen is known (no internet), the city is set only if the current
+   one does not fit the screen's country and time zone.
+
+   The answer is snapped to the nearest city of js/cities.js when it is within 35 km (so the name,
+   time zone and country are the city's own); farther away it becomes a "custom" place named by the
+   service. It then writes exactly what a manual choice writes (prayerCity / customPlace) and reloads
+   the prayer times and the weather, so everything else (Hijri calendar, Ramadan, Eid, alerts sent to
+   Vetro) follows by itself.
+
+   Settings > Prayer and Quran: "Detect location automatically" (on by default), "Detect location now",
+   and the city lists. Choosing a city by hand turns the automatic mode off (prayer.js setCity).
+
+   Care taken:
+     - Runs 4 s after start-up, every 12 hours, when the network comes back, and when turned on.
+     - A city someone chose by hand before this version is respected: automatic mode starts OFF for them
+       (Settings shows it) until they turn it on or press "Detect location now".
+     - The region of the language tag is used only for Arabic ("ar-EG"); "en-US" says nothing about where the screen is.
+     - A change between two known cities needs two matching detections in a row (no flip-flopping on a
+       jumpy address), except the first detection and "Detect now".
+     - Internet addresses are only sent to the geolocation service, never stored: the saved record
+       holds only the place that was found.
+   ============================================================ */
+(function (global) {
+    "use strict";
+
+    var APL = global.APL, sys = APL && APL.sys;
+    if (!APL || !sys) return;
+
+    var KEY = "apl.autoloc";
+    var SNAP_KM = 35;          // an answer this close to a known city becomes that city
+    var lastRun = 0;
+
+    function T(s, p) { try { return APL.t(s, p); } catch (e) { return s; } }
+    function say(m) { try { if (APL.toast) APL.toast(m, true); } catch (e) {} }
+    function enabled() { return sys.pref("prayerAuto") !== false; }
+    function load() {
+        try { var o = JSON.parse(global.localStorage.getItem(KEY) || "null"); return (o && typeof o === "object") ? o : {}; } catch (e) { return {}; }
+    }
+    function save(o) { try { global.localStorage.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
+    function nameOf(c) { return APL.lang === "ar" ? (c.ar || c.en) : (c.en || c.ar); }
+    function curCity() { try { return (APL.prayer && APL.prayer.city) ? APL.prayer.city() : null; } catch (e) { return null; } }
+
+    /* Did the viewer pick a city before automatic mode existed? (only a saved preference counts, not the default) */
+    function userChoseCity() {
+        try {
+            var p = JSON.parse(global.localStorage.getItem("apl.prefs") || "{}");
+            return Object.prototype.hasOwnProperty.call(p, "prayerCity") || Object.prototype.hasOwnProperty.call(p, "customPlace");
+        } catch (e) { return false; }
+    }
+
+    /* ---------- small maths ---------- */
+    function km(lat1, lon1, lat2, lon2) {
+        var d2r = Math.PI / 180, dLat = (lat2 - lat1) * d2r, dLon = (lon2 - lon1) * d2r;
+        var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * d2r) * Math.cos(lat2 * d2r) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(a)));
+    }
+    /* The offset (minutes east of UTC) of an IANA zone right now, or null. */
+    function zoneOffset(zone) {
+        if (!zone) return null;
+        try {
+            var f = new global.Intl.DateTimeFormat("en-GB", {
+                timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit",
+                hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+            });
+            var o = {}, list = f.formatToParts(new Date()), i;
+            for (i = 0; i < list.length; i++) o[list[i].type] = list[i].value;
+            var now = new Date();
+            var asUTC = Date.UTC(+o.year, +o.month - 1, +o.day, (+o.hour) % 24, +o.minute, +o.second);
+            return Math.round((asUTC - Math.floor(now.getTime() / 1000) * 1000) / 60000);
+        } catch (e) { return null; }
+    }
+
+    /* ---------- 1. what the screen knows ---------- */
+    function deviceInfo() {
+        return new Promise(function (resolve) {
+            var info = { cc: "", tz: "", off: -new Date().getTimezoneOffset(), lang: "" }, done = false;
+            try {
+                var z = global.Intl.DateTimeFormat().resolvedOptions().timeZone;
+                if (z && !/^(UTC|GMT|Etc\/)/i.test(z)) info.tz = z;
+            } catch (e) {}
+            try { info.lang = String(global.navigator.language || ""); } catch (e) {}
+            function finish() {
+                if (done) return;
+                done = true;
+                /* the region of the language tag counts only for Arabic ("ar-EG", "ar-SA"): "en-US" is on countless screens outside the US */
+                if (!info.cc && /^ar[-_][A-Za-z]{2}$/i.test(info.lang) && global.APL_CC_FROM) info.cc = global.APL_CC_FROM(info.lang);
+                resolve(info);
+            }
+            try {                                              // Samsung: the Smart Hub country
+                var wa = global.webapis;
+                if (wa && wa.productinfo && wa.productinfo.getSystemConfig && wa.productinfo.ProductInfoConfigKey) {
+                    var c = global.APL_CC_FROM(wa.productinfo.getSystemConfig(wa.productinfo.ProductInfoConfigKey.CONFIG_KEY_SERVICE_COUNTRY));
+                    if (c) info.cc = c;
+                }
+            } catch (e) {}
+            if (!info.cc) {                                    // Tizen: the locale of the screen
+                try {
+                    var tz = global.tizen;
+                    if (tz && tz.systeminfo && tz.systeminfo.getPropertyValue) {
+                        tz.systeminfo.getPropertyValue("LOCALE", function (l) {
+                            var c2 = l && global.APL_CC_FROM ? global.APL_CC_FROM(l.country) : "";
+                            if (c2 && !info.cc) info.cc = c2;
+                            finish();
+                        }, function () { finish(); });
+                        global.setTimeout(finish, 1500);
+                        return;
+                    }
+                } catch (e) {}
+            }
+            finish();
+        });
+    }
+
+    /* ---------- 2. what the Internet address says ---------- */
+    function num(v) { var n = parseFloat(v); return isFinite(n) ? n : null; }
+    var SERVICES = [
+        { name: "ipwho.is", url: "https://ipwho.is/", parse: function (j) {
+            if (!j || j.success === false) return null;
+            return { lat: num(j.latitude), lon: num(j.longitude), cc: j.country_code, city: j.city, region: j.region,
+                     tz: j.timezone && (j.timezone.id || j.timezone) };
+        } },
+        { name: "geojs.io", url: "https://get.geojs.io/v1/ip/geo.json", parse: function (j) {
+            return j ? { lat: num(j.latitude), lon: num(j.longitude), cc: j.country_code, city: j.city, region: j.region, tz: j.timezone } : null;
+        } },
+        { name: "ipapi.co", url: "https://ipapi.co/json/", parse: function (j) {
+            if (!j || j.error) return null;
+            return { lat: num(j.latitude), lon: num(j.longitude), cc: j.country_code, city: j.city, region: j.region, tz: j.timezone };
+        } },
+        { name: "freeipapi.com", url: "https://freeipapi.com/api/json", parse: function (j) {
+            if (!j) return null;
+            return { lat: num(j.latitude), lon: num(j.longitude), cc: j.countryCode, city: j.cityName, region: j.regionName,
+                     tz: (j.timeZones && j.timeZones[0]) || j.timeZone };
+        } }
+    ];
+    function clean(o) {
+        if (!o || o.lat === null || o.lon === null || Math.abs(o.lat) > 90 || Math.abs(o.lon) > 180 || (o.lat === 0 && o.lon === 0)) return null;
+        var cc = String(o.cc || "").toUpperCase(), tz = String(o.tz || "");
+        if (!/^[A-Z]{2}$/.test(cc)) cc = "";
+        if (!/^[A-Za-z_]+\/[A-Za-z0-9_+\-\/]+$/.test(tz)) tz = "";
+        return { lat: o.lat, lon: o.lon, cc: cc, tz: tz, city: String(o.city || "").slice(0, 40), region: String(o.region || "").slice(0, 40) };
+    }
+    function lookupIP() {
+        var i = 0;
+        return new Promise(function (resolve) {
+            (function next() {
+                if (i >= SERVICES.length) { resolve(null); return; }
+                var s = SERVICES[i++];
+                APL.fetchJSON(s.url, 8000).then(function (j) {
+                    var r = null;
+                    try { r = clean(s.parse(j)); } catch (e) { r = null; }
+                    if (r) { r.via = s.name; resolve(r); } else next();
+                }, next);
+            })();
+        });
+    }
+
+    /* ---------- comparing and choosing ---------- */
+    function nearestKnown(lat, lon, cc) {
+        var best = null, bestKm = Infinity, list = global.APL_CITIES || [], i, d;
+        for (i = 0; i < list.length; i++) {
+            if (cc && list[i].cc !== cc) continue;
+            d = km(lat, lon, list[i].lat, list[i].lon);
+            if (d < bestKm) { bestKm = d; best = list[i]; }
+        }
+        return best ? { city: best, km: bestKm } : null;
+    }
+    /* How the Internet address and the screen compare: conflict = every signal that is known disagrees. */
+    function judge(ip, dev) {
+        var known = 0, agree = 0, o;
+        if (dev.cc && ip.cc) { known++; if (dev.cc === ip.cc) agree++; }
+        o = zoneOffset(ip.tz);
+        if (o !== null && dev.off !== null) { known++; if (o === dev.off) agree++; }
+        return { known: known, agree: agree, conflict: known > 0 && agree === 0 };
+    }
+    /* Is a place consistent with the screen (its country and its time zone)? */
+    function fitsScreen(c, dev) {
+        if (!c) return false;
+        if (dev.cc && c.cc && c.cc !== dev.cc) return false;
+        var o = zoneOffset(c.tz);
+        return o === null || dev.off === null || o === dev.off;
+    }
+    /* A place from the Internet address: a known city when close enough, else a custom place. null when it cannot be used. */
+    function placeFromIP(ip, dev) {
+        var n = nearestKnown(ip.lat, ip.lon, ip.cc || dev.cc);
+        if (n && n.km <= SNAP_KM) {
+            return { key: n.city.key, name: nameOf(n.city), cc: n.city.cc, tz: n.city.tz, lat: n.city.lat, lon: n.city.lon };
+        }
+        var name = ip.city || ip.region;
+        var tz = ip.tz || (n && n.km < 300 ? n.city.tz : "") || dev.tz;
+        if (!name || !tz || zoneOffset(tz) === null) {
+            return n && n.km <= 150 ? { key: n.city.key, name: nameOf(n.city), cc: n.city.cc, tz: n.city.tz, lat: n.city.lat, lon: n.city.lon } : null;
+        }
+        return { key: "custom", name: name, cc: ip.cc || dev.cc, tz: tz, lat: ip.lat, lon: ip.lon };
+    }
+    /* A place from the screen alone: the current city when it fits, else the main city of the screen's country. */
+    function placeFromDevice(dev, cur) {
+        if (fitsScreen(cur, dev)) return null;
+        var c = global.APL_CITY_FOR ? global.APL_CITY_FOR(dev.cc, dev.tz) : null, list, i;
+        if (c && !fitsScreen(c, dev)) c = null;
+        if (!c && dev.cc) {                                   // right country, but the time zone name is unknown: match by offset
+            list = global.APL_CITIES || [];
+            for (i = 0; i < list.length; i++) if (list[i].cc === dev.cc && zoneOffset(list[i].tz) === dev.off) { c = list[i]; break; }
+        }
+        return c ? { key: c.key, name: nameOf(c), cc: c.cc, tz: c.tz, lat: c.lat, lon: c.lon } : null;
+    }
+    function sameAsCurrent(pl, cur) {
+        if (!cur) return false;
+        if (pl.key !== "custom") return cur.key === pl.key;
+        return cur.key === "custom" && km(cur.lat, cur.lon, pl.lat, pl.lon) < 5;
+    }
+    function placeSig(pl) { return pl.key === "custom" ? "custom@" + pl.lat.toFixed(1) + "," + pl.lon.toFixed(1) : pl.key; }
+    function countryName(cc) { return (cc && global.APL_COUNTRY_NAME) ? global.APL_COUNTRY_NAME(cc) : ""; }
+
+    /* ---------- applying ---------- */
+    function applyPlace(pl) {
+        if (pl.key === "custom") sys.setPref("customPlace", { name: pl.name, lat: pl.lat, lon: pl.lon, cc: pl.cc || "", tz: pl.tz });
+        if (APL.prayer && APL.prayer.setCity) APL.prayer.setCity(pl.key, { auto: true });
+        else sys.setPref("prayerCity", pl.key);
+        try { if (APL.weather && APL.weather.refresh) APL.weather.refresh(); } catch (e) {}
+    }
+
+    /* ---------- one detection ---------- */
+    var inflight = null;
+    function run(force) {
+        if (inflight) return inflight;
+        if (!enabled()) return Promise.resolve(null);
+        lastRun = Date.now();
+        var dev = null;
+        inflight = deviceInfo().then(function (d) {
+            dev = d;
+            return lookupIP();
+        }).then(function (ip) {
+            var rec = load(), cur = curCity(), out = { status: "", changed: false, name: "" };
+            var pl = null, source = "", pending = rec.pending || null;
+            rec.at = Date.now();
+            rec.dev = { cc: dev.cc, tz: dev.tz, off: dev.off };
+
+            if (ip) {
+                rec.ip = { city: ip.city, region: ip.region, cc: ip.cc, via: ip.via };
+                if (judge(ip, dev).conflict) out.status = "conflict";          // every known signal disagrees: change nothing
+                else {
+                    pl = placeFromIP(ip, dev); source = "ip";
+                    if (!pl) out.status = "nozone";
+                }
+            } else {
+                rec.ip = null;
+                pl = placeFromDevice(dev, cur); source = "tv";
+                if (!pl) out.status = "offline";                                // no internet, and the current city fits the screen
+            }
+
+            if (pl) {
+                out.name = pl.name;
+                var first = !rec.seenAt;
+                rec.seenAt = Date.now();
+                if (sameAsCurrent(pl, cur)) {
+                    out.status = "same"; rec.pending = null;
+                    if (!rec.source) rec.source = source;
+                } else {
+                    var go = force || first || source === "tv";
+                    if (!go) {
+                        // a change between two cities must be seen twice in a row
+                        if (pending && pending.sig === placeSig(pl)) go = true;
+                        else { rec.pending = { sig: placeSig(pl), n: 1 }; out.status = "waiting"; pl = null; }
+                    }
+                    if (pl && go) {
+                        applyPlace(pl);
+                        rec.pending = null; rec.source = source;
+                        rec.key = pl.key; rec.name = pl.name; rec.cc = pl.cc; rec.tz = pl.tz; rec.lat = pl.lat; rec.lon = pl.lon;
+                        out.status = "changed"; out.changed = true;
+                    }
+                }
+            }
+            rec.status = out.status;
+            save(rec);
+            report(out, force);
+            try { if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); } catch (e) {}
+            return out;
+        }).then(function (r) { inflight = null; return r; }, function () { inflight = null; return null; });
+        return inflight;
+    }
+    function report(out, force) {
+        var c = curCity(), nm = c ? nameOf(c) : out.name;
+        if (out.changed) { say(T("Location set automatically: {name}", { name: out.name })); return; }
+        if (!force) return;
+        if (out.status === "conflict") say(T("The Internet address and the screen's settings disagree, so nothing was changed. Choose the city yourself."));
+        else if (out.status === "offline") say(T("Could not reach the internet to detect the location."));
+        else if (out.status === "nozone") say(T("Could not tell the time zone of this place. Choose the city yourself."));
+        else say(T("Your location: {name}", { name: nm }));
+    }
+
+    /* ---------- what Settings shows ---------- */
+    function describe() {
+        if (!enabled()) return T("Off. The city is the one you chose.");
+        var rec = load(), c = curCity();
+        if (!c) return T("Loading…");
+        var nm = nameOf(c), cn = countryName(c.cc);
+        var s = nm + (cn ? " · " + cn : "");
+        if (rec.status === "conflict") return s + " — " + T("not changed: the Internet address and the screen disagree");
+        if (!rec.at) return s + " — " + T("not detected yet");
+        var how = rec.source === "ip" ? T("by Internet address") : rec.source === "tv" ? T("by the screen's settings") : "";
+        if (rec.status === "offline" && !rec.source) how = T("no internet: using the screen's settings");
+        return s + (how ? " — " + how : "");
+    }
+
+    /* "Detect location now": turns automatic mode on when it was off. */
+    function detect(force) {
+        if (!enabled()) { sys.setPref("prayerAuto", true); }       // its listener starts a forced detection
+        return run(!!force);
+    }
+
+    function start() {
+        /* first start of this version: a city chosen by hand earlier is a choice, so automatic mode stays off for it */
+        try {
+            if (!global.localStorage.getItem(KEY) && userChoseCity()) { sys.setPref("prayerAuto", false); save({ at: 0, status: "manual" }); }
+        } catch (e) {}
+        if (enabled()) global.setTimeout(function () { run(false); }, 4000);
+        if (APL.timers && APL.timers.every) APL.timers.every("autoloc", 12 * 3600000, function () { run(false); }, { hidden: true });
+        try {
+            global.addEventListener("online", function () {
+                if (enabled() && Date.now() - lastRun > 600000) global.setTimeout(function () { run(false); }, 5000);
+            });
+        } catch (e) {}
+        sys.onPref("prayerAuto", function () { if (enabled()) run(true); });
+    }
+
+    APL.autoLocation = {
+        enabled: enabled,
+        detect: detect,
+        state: load,
+        describe: describe,
+        _judge: judge, _placeFromIP: placeFromIP, _placeFromDevice: placeFromDevice, _fitsScreen: fitsScreen, _nearest: nearestKnown
+    };
+    global.setTimeout(start, 2500);
 })(window);
 
 /* === js/adhkar.js === */
@@ -15796,6 +16369,31 @@ window.APL_KEYS = {
         if (APL.weather) APL.weather.refresh();
         APL.toast(APL.t("City set: {name}", { name: x.name }), true);
     }
+    /* v8.7.27: Ramadan and the two Eids: the next date of each, corrected by hand when the announcement differs. */
+    function keyDatesText() {
+        var I = APL.islamic;
+        if (!I || !I.keyDates) return "";
+        return I.keyDates().map(function (k) {
+            return k.name + " " + I.gregorian(k.start).date + (k.fix ? " (" + signed(k.fix) + ")" : "") + (k.exact ? "" : " \u2248");
+        }).join("  \u00b7  ");
+    }
+    function fixPick(k) {
+        var I = APL.islamic, items = [-2, -1, 0, 1, 2].map(function (d) {
+            return { label: I.gregorian(k.auto + d).date + (d ? " (" + signed(d) + ")" : " \u2014 " + APL.t("automatic")), icon: d ? "calendar" : "refresh",
+                     run: function () { I.setFix(k.hy, k.m, d); APL.toast(k.name + ": " + I.gregorian(k.auto + d).date, true); } };
+        });
+        APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
+    }
+    function fixDates() {
+        var I = APL.islamic;
+        if (!I || !I.keyDates) return;
+        var items = I.keyDates().map(function (k) {
+            return { label: k.name + " \u00b7 " + I.gregorian(k.start).date + (k.fix ? " (" + signed(k.fix) + ")" : "") + (k.exact ? "" : " \u2248"), icon: "calendar",
+                     run: function () { setTimeout(function () { fixPick(k); }, 120); } };
+        });
+        items.push({ label: APL.t("Reset all corrections"), icon: "refresh", run: function () { APL.sys.setPref("hijriFix", {}); APL.toast(APL.t("Corrections removed"), true); } });
+        APL.contextMenu.open(document.querySelector(".srow.is-focused") || document.body, items);
+    }
     function openDuck() { APL.settings.close(); if (APL.openUrl) APL.openUrl("https://duck.ai/").catch(function (e) { if (APL.toast) APL.toast(e.message); }); }
     function openPrayer() { APL.settings.close(); if (APL.prayerPage) APL.prayerPage.open(); }
     /* Tint: 15 is neutral, below it more green, above it more red. */
@@ -16033,6 +16631,15 @@ window.APL_KEYS = {
                 }, APL.lang === "ar" ? "استماع لتلاوات القرآن الكريم بأصوات كبار القراء مع التفسير والبحث المباشر." : "Listen to online Quran recitations from top reciters with verse-by-verse Saadi/Muyassar Tafsir.", "headphones"),
                 action(APL.t("Prayer Times"), openPrayer,
                     APL.t("Today's six times, the next prayer, the radio and the black screen."), "moon"),
+                toggle(APL.t("Detect Location Automatically"), "prayerAuto",
+                    APL.t("Finds the city from the screen's settings and the Internet address. Choosing a city by hand turns this off.")),
+                info(APL.t("Detected Location"), function () { return APL.autoLocation ? APL.autoLocation.describe() : ""; },
+                    APL.t("The city used for the prayer times, the weather and the Hijri calendar.")),
+                action(APL.t("Detect Location Now"), function () {
+                    if (!APL.autoLocation) return;
+                    APL.toast(APL.t("Detecting the location…"), true);
+                    APL.autoLocation.detect(true);
+                }, APL.t("Needs internet for the Internet address; without it the screen's own country and time zone are used. Turns automatic detection on."), "sparkle"),
                 action(APL.t("Update Prayer Times & Islamic Calendar"), function () {
                     APL.toast(APL.t("Updating prayer times & calendar…"), true);
                     if (APL.prayer) {
@@ -16052,6 +16659,19 @@ window.APL_KEYS = {
                     if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache();
                     APL.toast(APL.t("Hijri calendar adjusted"), true);
                 }),
+                choice(APL.t("Hijri Calendar Source"), "hijriSource", [
+                    ["auto", APL.t("Automatic (by the country)")],
+                    ["egypt", APL.t("Egypt (Dar Al-Ifta, crescent rule)")],
+                    ["HJCoSA", APL.t("Saudi Arabia (announcements)")],
+                    ["UAQ", APL.t("Umm Al-Qura (Saudi civil)")],
+                    ["DIYANET", APL.t("Turkey (Diyanet)")]
+                ], APL.t("Which authority's Hijri calendar sets Ramadan and the Eids. Automatic follows the country of the city."), function () {
+                    APL.toast(APL.t("Hijri calendar updated"), true);
+                }),
+                info(APL.t("Ramadan & Eid Dates"), keyDatesText,
+                    APL.t("Worked out from the moon and renewed by itself; \u2248 means not announced yet.")),
+                action(APL.t("Correct Ramadan & Eid Dates"), fixDates,
+                    APL.t("If the announcement differs by a day, shift Ramadan or an Eid by hand."), "calendar"),
                 action(APL.t("Islamic Occasions & Holidays"), function () {
                     APL.settings.close();
                     if (APL.prayerPage) {
@@ -23636,6 +24256,9 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "\u2714 8.7.27: \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0628\u062a\u062a\u062d\u062f\u062f \u0644\u0648\u062d\u062f\u0647\u0627 \u0645\u0646 \u0628\u064a\u0627\u0646\u0627\u062a \u0627\u0644\u0634\u0627\u0634\u0629 (\u0627\u0644\u062f\u0648\u0644\u0629 \u0648\u0627\u0644\u0645\u0646\u0637\u0642\u0629 \u0627\u0644\u0632\u0645\u0646\u064a\u0629) \u0648\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a\u060c \u0648\u062a\u0642\u062f\u0631 \u062a\u062e\u062a\u0627\u0631\u0647\u0627 \u064a\u062f\u0648\u064a \u0641\u064a \u0623\u064a \u0648\u0642\u062a",
+        "\u2714 \u0627\u0644\u062a\u0642\u0648\u064a\u0645 \u0627\u0644\u0647\u062c\u0631\u064a \u0628\u064a\u062a\u0628\u0639 \u062f\u0648\u0644\u0629 \u0627\u0644\u0645\u062f\u064a\u0646\u0629\u060c \u0648\u0645\u0648\u0639\u062f \u0631\u0645\u0636\u0627\u0646 \u0648\u0627\u0644\u0639\u064a\u062f \u0628\u064a\u062a\u062c\u062f\u062f \u0644\u0648\u062d\u062f\u0647 \u0648\u0645\u0639\u0627\u0647 \u0632\u0631 \u062a\u062d\u062f\u064a\u062b \u064a\u062f\u0648\u064a \u0648\u062a\u0635\u062d\u064a\u062d \u0628\u0627\u0644\u0623\u064a\u0627\u0645",
+        "\u2714 \u0627\u0644\u062a\u0627\u0631\u064a\u062e \u0627\u0644\u0647\u062c\u0631\u064a \u0648\u0627\u062d\u062f \u0641\u064a \u0643\u0644 \u0627\u0644\u0634\u0627\u0634\u0627\u062a\u060c \u0648\u0627\u0644\u0639\u0644\u0627\u0645\u0629 \u2248 \u0645\u0639\u0646\u0627\u0647\u0627 \u0625\u0646 \u0627\u0644\u0645\u0648\u0639\u062f \u0644\u0633\u0647 \u0645\u0627 \u0627\u062a\u0639\u0644\u0646\u0634 \u0631\u0633\u0645\u064a\u064b\u0627",
         "\u2714 8.7.26: \u0648\u0642\u062a \u0627\u0644\u0639\u0634\u0627\u0621 \u0641\u064a \u0631\u0645\u0636\u0627\u0646 \u0628\u0637\u0631\u064a\u0642\u0629 \u0623\u0645 \u0627\u0644\u0642\u0631\u0649 \u0628\u0642\u0649 120 \u062f\u0642\u064a\u0642\u0629 \u0628\u0639\u062f \u0627\u0644\u0645\u063a\u0631\u0628 \u062d\u062a\u0649 \u0644\u0645\u0627 \u0627\u0644\u0646\u062a \u064a\u0643\u0648\u0646 \u0642\u0627\u0637\u0639",
         "\u2714 \u0627\u0644\u0645\u062f\u064a\u0646\u0629 \u0627\u0644\u0644\u064a \u0628\u062a\u062f\u0648\u0631 \u0639\u0644\u064a\u0647\u0627 \u0628\u062a\u0627\u062e\u062f \u0645\u0646\u0637\u0642\u062a\u0647\u0627 \u0627\u0644\u0632\u0645\u0646\u064a\u0629 \u0627\u0644\u062d\u0642\u064a\u0642\u064a\u0629 \u0628\u062f\u0644 \u062a\u0648\u0642\u064a\u062a \u0627\u0644\u0642\u0627\u0647\u0631\u0629",
         "\u2714 \u0623\u0633\u0645\u0627\u0621 \u0645\u0646\u0627\u0633\u0628\u0627\u062a\u0643 \u0627\u0644\u0644\u064a \u0643\u062a\u0628\u062a\u0647\u0627 \u0628\u0642\u062a \u0628\u062a\u0638\u0647\u0631 \u0632\u064a \u0645\u0627 \u0643\u062a\u0628\u062a\u0647\u0627 \u0641\u064a \u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0625\u0646\u062c\u0644\u064a\u0632\u064a",
@@ -23651,6 +24274,9 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.27: The city is now found by itself from the screen (country, time zone) and the Internet address; you can still choose it by hand",
+        "✔ The Hijri calendar follows the city's country; Ramadan and Eid renew themselves, with a manual update and a correction in days",
+        "✔ One Hijri date everywhere; ≈ means the date is not announced yet",
         "✔ 8.7.26: Umm Al-Qura Isha in Ramadan is now 120 minutes after Maghrib even when the times are calculated offline",
         "✔ A searched city now gets its real time zone (looked up if missing) instead of silently using Cairo time",
         "✔ Occasion names you type stay exactly as you wrote them in English mode",

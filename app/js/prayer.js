@@ -56,8 +56,18 @@
     /* What the saved month belongs to: the city, the method, the Asr rule and the high-latitude rule. */
     function locSig() {
         var c = city();
-        return c.key + (c.key === "custom" ? "@" + c.lat.toFixed(3) + "," + c.lon.toFixed(3) : "") + "|" + methodId() + "|" + schoolId() + "|" + hlNum();
+        return c.key + (c.key === "custom" ? "@" + c.lat.toFixed(3) + "," + c.lon.toFixed(3) : "") + "|" + methodId() + "|" + schoolId() + "|" + hlNum() + "|" + calSource();
     }
+    /* v8.7.27: the Hijri calendar of this place: the one picked in Settings > Hijri Calendar Source, else the one of the city's country
+       (js/cities.js APL_CAL_AUTO: Egypt = Dar al-Ifta's rule worked out in js/islamic.js, Turkey = Diyanet, the rest = Saudi announcements).
+       AlAdhan is always asked for a calendarMethod too, so its Hijri dates follow the country (Egypt uses HJCoSA only as the fallback). */
+    function calSource() {
+        var v = sys.pref("hijriSource");
+        if (v && v !== "auto") return String(v);
+        var c = city();
+        return global.APL_CAL_AUTO ? global.APL_CAL_AUTO(c && c.cc) : "HJCoSA";
+    }
+    function calParam() { var s = calSource(); return "&calendarMethod=" + (s === "egypt" ? "HJCoSA" : s); }
     function methodNote() {
         var m = methodInfo();
         return APL.t("Times from AlAdhan, {method}. Timezone {tz}.", { method: APL.lang === "ar" ? m.ar : m.en, tz: tz() });
@@ -187,13 +197,28 @@
         } catch (e) {}
     }
 
+    /* v8.7.27: the Hijri days of a saved month can change when a moon sighting is announced, so a saved month is renewed after 7 days,
+       and after 12 hours in the days around a Hijri month change (day 27 to day 2). What is saved is shown meanwhile and kept if the renewal fails. */
+    function staleMs() {
+        var d = 7 * 24 * 3600000;
+        try { var h = APL.islamic && APL.islamic.hijriToday ? APL.islamic.hijriToday() : null; if (h && (h.d >= 27 || h.d <= 2)) d = 12 * 3600000; } catch (e) {}
+        return d;
+    }
+    function isStale(y, m) {
+        try {
+            var raw = JSON.parse(global.localStorage.getItem(monthKey(y, m)) || "null");
+            return !raw || !raw.at || Date.now() - raw.at > staleMs();
+        } catch (e) { return false; }
+    }
     function fetchMonth(y, m, force) {
         var mk = y + "-" + (m < 10 ? "0" : "") + m;
-        if (loadedMonths[mk] && !force) return Promise.resolve(true);
-        if (!force && readMonth(y, m)) return Promise.resolve(true);
+        if (!force) {
+            if (!loadedMonths[mk]) readMonth(y, m);
+            if (loadedMonths[mk] && !isStale(y, m)) return Promise.resolve(true);
+        }
         var c = city();
         var url = "https://api.aladhan.com/v1/calendar?latitude=" + c.lat + "&longitude=" + c.lon +
-                  "&method=" + methodId() + "&school=" + schoolId() + hlParam() +
+                  "&method=" + methodId() + "&school=" + schoolId() + hlParam() + calParam() +
                   "&month=" + m + "&year=" + y;
         return APL.fetchJSON(url, 15000).then(function (j) {   // v1.2.115: 15 s limit
             var list = (j && j.data) || [];
@@ -271,7 +296,7 @@
         var pauseRad = sys.pref("radioDuringAlert") !== false;
         var vol = parseFloat(sys.pref("prayerAlertVolume"));
         if (!(vol >= 0.1 && vol <= 1.5)) vol = 0.92;
-        var sig = [cityKey(), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0, methodId(), schoolId(), hlNum()].join("|");
+        var sig = [locSig(), (APL.islamic && APL.islamic.stateSig ? APL.islamic.stateSig() : ""), adjSig(), entries.length, entries[0] ? entries[0].id : "", on ? 1 : 0, pauseRad ? 1 : 0, vol, cannonOn() ? 1 : 0].join("|");
         if (!force && sig === syncedSig && entries.length > 0) return;
 
         if (!force && Date.now() < retryAt) return;          // Vetro was not ready: wait before asking again
@@ -726,17 +751,22 @@
         tz: tz,
         methodId: methodId,
         methodNote: methodNote,
+        calendarSource: calSource,
         reload: function () {
             loadedMonths = {};
             days = {};
             syncedSig = "";
+            try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             return loadAll(true).then(function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
         },
-        setCity: function (key) {
+        /* v8.7.27: opts.auto = chosen by js/auto-location.js. Any other call is a choice by hand and turns the automatic mode off. */
+        setCity: function (key, opts) {
             loadedMonths = {};
             days = {};
             syncedSig = "";
             sys.setPref("prayerCity", key);
+            if (!(opts && opts.auto)) sys.setPref("prayerAuto", false);
+            try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
             loadAll(true).then(function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
         },
         alertsOn: alertsOn,
@@ -757,6 +787,12 @@
         nameOf: nameOf,
         names: function () { return NAMES.map(function (n) { return { key: n[0], name: nameOf(n[0]) }; }); },
         hijri: function () {
+            try {                                               // v8.7.27: the same date as the Home Screen (offset, month corrections, calendar of the place)
+                if (APL.islamic && APL.islamic.hijriToday) {
+                    var hh = APL.islamic.hijriToday();
+                    if (hh && hh.m >= 1 && hh.m <= 12) return (hh.exact ? "" : "\u2248 ") + APL.islamic.hijriText(hh);
+                }
+            } catch (e) {}
             var t = days[todayKey()];
             if (!t) return "";
             var month = APL.lang === "ar" ? t.hijriAr : t.hijriEn;
@@ -786,6 +822,15 @@
     sys.onPref("iqamaMin", function () { render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });     // v1.2.117: display only, nothing goes to Vetro
     applyScale();
     sys.onPref("prayerWidgetScale", function () { applyScale(); render(); if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh(); });
+    /* v8.7.27: the Hijri offset, the month corrections and the calendar source change the Ramadan marks of the background schedule and the pages */
+    ["hijriOffset", "hijriFix", "hijriSource"].forEach(function (k) {
+        sys.onPref(k, function () {
+            try { if (APL.islamic && APL.islamic.clearCache) APL.islamic.clearCache(); } catch (e) {}
+            if (k === "hijriSource") { if (APL.prayer && APL.prayer.reload) APL.prayer.reload(); return; }
+            syncedSig = ""; syncToVetro(true); render();
+            if (APL.prayerPage && APL.prayerPage.refresh) APL.prayerPage.refresh();
+        });
+    });
     sys.onPref("prayerAlerts", function () { syncToVetro(true); });
     sys.onPref("radioDuringAlert", function () { syncToVetro(true); });
     sys.onPref("prayerAlertVolume", function () { syncToVetro(true); });
