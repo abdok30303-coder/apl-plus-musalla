@@ -1,3 +1,11 @@
+## 8.7.41
+
+- Ramadan widget position: centred horizontally and sitting just above the apps row. Its top edge is measured against the status column (prayer card, tasks) on every refresh and it keeps a clear gap of at least 16 px, shortening itself if needed (smaller text and spacing, never overlapping). When the focused app's name and description are showing, the card slides to the free side so it never covers them. In v8.7.40 it sat 90 px in from the edge, and on a TV with a taller prayer card its top touched the card.
+- Ramadan content: 38 to 120 items (34 duas, 34 tips, 15 Laylat al-Qadr items, 33 virtues of Ramadan, fasting, the Quran, qiyam and charity). Quran verses and hadith only, each with its source. New "Virtue of Ramadan" label. A repeat is avoided for 30 items in a row.
+- Citations: every hadith source now reads in full, e.g. "Sahih al-Bukhari · Hadith 2017" (Arabic: "صحيح البخاري · حديث ٢٠١٧"); agreed-upon hadiths list both books with their numbers; other books are named in full (Sunan Abi Dawud, Jami' at-Tirmidhi, Sunan Ibn Majah, Musnad Ahmad).
+- The wording and hadith numbers were written from knowledge of the sources, not copied from a printed edition. Worth a scholarly check before relying on them.
+- Checked in headless Chrome: layout with the prayer card at TV size, and a fit test of all 120 items in Arabic and English at normal and short height. A very long item (Sayyid al-Istighfar) drops its English line if it cannot fit. Untested on a physical TV.
+
 ## 8.7.40
 
 - Ramadan widget: a glass card above the apps row, shown automatically only in Ramadan (it follows the v8.7.38 Hijri calendar). A big crescent, or a fanous lantern, mostly in days 1-5. Beside it a rotating dua, tip or Laylat al-Qadr dua, with the Quran or hadith source and grading under it. Qadr duas lead in the last ten nights. Arabic and English, all offline (data/ramadan/ramadan.json, 38 items: 13 duas, 16 tips, 9 Qadr). Settings > Ramadan: "Ramadan Widget" switch (on by default) and "Ramadan Widget Preview" (Off / Day 1 lantern / Day 12 crescent / Night 27) to see it outside Ramadan. It hides over pages and when the shelf is not showing, and the wisdom widget moves up out of its way.

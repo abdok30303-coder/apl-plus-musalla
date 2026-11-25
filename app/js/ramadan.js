@@ -266,32 +266,61 @@
     }
     function rwPick(st) {
         var items = RW.data, last10 = st.day >= 21, r = Math.random(), kind, pool, i;
-        if (last10) kind = r < 0.55 ? "qadr" : (r < 0.8 ? "dua" : "tip");
-        else kind = r < 0.1 ? "qadr" : (r < 0.5 ? "dua" : "tip");
+        if (last10) kind = r < 0.4 ? "qadr" : (r < 0.6 ? "dua" : (r < 0.8 ? "fadl" : "tip"));
+        else kind = r < 0.06 ? "qadr" : (r < 0.36 ? "dua" : (r < 0.68 ? "fadl" : "tip"));
         pool = items.filter(function (x) { return x.k === kind && (kind !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
         if (!pool.length) pool = items.filter(function (x) { return (x.k !== "qadr" || last10 || x.any) && RW.recent.indexOf(x) < 0; });
         if (!pool.length) { RW.recent = []; pool = items.filter(function (x) { return x.k !== "qadr" || last10 || x.any; }); }
         i = pool[Math.floor(Math.random() * pool.length)];
         RW.recent.push(i);
-        if (RW.recent.length > 8) RW.recent.shift();
+        if (RW.recent.length > 30) RW.recent.shift();
         return i;
+    }
+    /* v8.7.41: centred above the apps row. Measured live: never over the focused app's name / description (it slides to the free side),
+       and always a clear 16px gap under the status column (prayer card, tasks): it is pushed down toward the apps row and shortened. */
+    function rwGap() {
+        var el = RW.el, doc = global.document;
+        if (!el || el.className.indexOf("is-on") < 0 || el.offsetWidth < 1) return;
+        el.style.top = ""; el.style.height = ""; el.style.left = "440px"; el.style.right = "auto";
+        el.classList.remove("rw--short");
+        var sc = el.getBoundingClientRect().width / el.offsetWidth || 1, g = 16 * sc, er = el.getBoundingClientRect(), si = doc.querySelector(".shelfinfo"), sx = doc.querySelector(".statusx");
+        try {
+            if (si && parseFloat(global.getComputedStyle(si).opacity) > 0.05 && (si.textContent || "").replace(/\s+/g, "") !== "") {
+                var rg = doc.createRange(); rg.selectNodeContents(si); var rr = rg.getBoundingClientRect();
+                if (rr.width > 0 && rr.bottom > er.top && rr.top < er.bottom) {
+                    if (rr.left + rr.width / 2 < (er.left + er.width / 2)) { if (er.left < rr.right + g) el.style.left = (440 + (rr.right + g - er.left) / sc) + "px"; }
+                    else if (er.right > rr.left - g) el.style.left = (440 - (er.right - rr.left + g) / sc) + "px";
+                }
+            }
+        } catch (e) {}
+        er = el.getBoundingClientRect();
+        if (sx) {
+            var sr = sx.getBoundingClientRect();
+            if (sr.width > 0 && sr.right > er.left && sr.left < er.right && er.top < sr.bottom + g) {
+                var d = Math.ceil((sr.bottom + g - er.top) / sc), h = Math.max(116, 172 - d);
+                el.style.top = "calc(var(--dock-top, 807px) - 188px + " + (172 - h) + "px)"; el.style.height = h + "px"; if (h < 160) el.classList.add("rw--short");
+            }
+        }
     }
     function rwFit() {
         var t = RW.el && RW.el.querySelector(".rw__text"), b = RW.el && RW.el.querySelector(".rw__body");
         if (!t || !b) return;
         var fs = 28, tr = RW.el.querySelector(".rw__tr");
         t.style.fontSize = fs + "px"; if (tr) tr.style.fontSize = Math.round(fs * 0.68) + "px";
-        while (fs > 15 && b.scrollHeight > b.clientHeight + 1) {
+        var floor = RW.el.classList.contains("rw--short") ? 12 : 15;
+        while (fs > floor && b.scrollHeight > b.clientHeight + 1) {
             fs -= 1;
-            t.style.fontSize = fs + "px"; if (tr) tr.style.fontSize = Math.max(14, Math.round(fs * 0.68)) + "px";
+            t.style.fontSize = fs + "px"; if (tr) tr.style.fontSize = Math.max(floor - 1, Math.round(fs * 0.68)) + "px";
         }
+        /* a very long item (e.g. Sayyid al-Istighfar): still too tall at the smallest size, so the English line goes and the Arabic text with its source stays */
+        if (tr && tr.style.display !== "none" && b.scrollHeight > b.clientHeight + 1) { tr.style.display = "none"; }
     }
     function rwPaint(st, fresh) {
         var el = rwBuild(), ar = rwAr(), it = RW.cur, kindTxt, dayTxt;
         if (!it) return;
         el.className = "rw rw--" + (RW.lantern ? "lantern" : "crescent") + (it.k === "qadr" ? " rw--qadr" : "") + " is-on";
         el.querySelector(".rw__art").innerHTML = RW.lantern ? RW_LANTERN : RW_CRESCENT;
-        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
+        kindTxt = it.k === "qadr" ? (ar ? "ليلة القدر" : "Laylat al-Qadr") : it.k === "fadl" ? (ar ? "فضل رمضان" : "Virtue of Ramadan") : it.k === "dua" ? (ar ? "دعاء" : "Dua") : (ar ? "نصيحة رمضانية" : "Ramadan tip");
         dayTxt = (ar ? "رمضان · اليوم " : "Ramadan · Day ") + dg(st.day) + (st.day >= 21 ? (ar ? " · العشر الأواخر" : " · last ten nights") : "") + (st.preview ? (ar ? " · معاينة" : " · preview") : "");
         el.querySelector(".rw__kind").textContent = kindTxt;
         el.querySelector(".rw__day").textContent = dayTxt;
@@ -300,7 +329,8 @@
         if (ar) { tr.textContent = ""; tr.style.display = "none"; }
         else { tr.textContent = it.en; tr.style.display = "block"; tr.setAttribute("dir", "ltr"); }
         el.querySelector(".rw__src").textContent = ar ? it.sar : it.sen;
-        rwFit();
+        rwGap(); rwFit();
+        global.setTimeout(function () { rwGap(); rwFit(); }, 400);
     }
     function rwSync(rotate) {
         var st = rwState(), body = global.document.body;
