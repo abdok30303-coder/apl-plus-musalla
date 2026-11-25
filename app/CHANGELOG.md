@@ -1,3 +1,7 @@
+## 8.7.29
+
+- Abu Taha (أبو طه) added to the Egypt city list for prayer times and weather, right after Belqas (approximate coordinates 31.28, 31.42). Nothing else changed.
+
 ## 8.7.28
 
 - Automatic location is optional and off by default; Settings has a toggle and a Detect Location Now button.
