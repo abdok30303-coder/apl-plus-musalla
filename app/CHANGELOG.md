@@ -1,3 +1,9 @@
+## 8.7.31
+
+- The update page is linked to our own GitHub repository (not the old APL Launcher). Check for Update reads the newest version; Install Update downloads the package from GitHub, installs it from inside the launcher and restarts.
+- Automatic updates now only check every 6 hours and tell you; nothing installs by itself.
+- Sources: all four HDMI ports are listed on a TV, whatever their state.
+
 ## 8.7.30
 
 - Minor internal update.

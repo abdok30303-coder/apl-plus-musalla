@@ -1283,13 +1283,15 @@
                         return u ? (u.fromBundle() ? APL.t("{v} (auto-update)", { v: u.running() }) : u.running()) : sys.version;
                     }, APL.t("The version running. “auto-update”: downloaded on its own from GitHub.")),
                     toggle(APL.t("Automatic updates"), "autoUpdate",
-                        APL.t("The launcher checks GitHub every 6 hours and installs the new version on its own. Nothing to do on the PC.")),
-                    info(APL.t("This Build"), function () {
-                        return (global.APL_SITE && global.APL_SITE.buildName ? global.APL_SITE.buildName : "APL") + " · " +
-                               APL.t("automatic updates off");
-                    }, APL.t("This is a custom build: the original project's automatic updates are off, so they cannot replace these changes.")),
+                        APL.t("The launcher checks GitHub every 6 hours and tells you when a new version is out. It never installs on its own.")),
+                    info(APL.t("Latest on GitHub"), function () {
+                        var u = APL.updater, v = u && u.latest ? u.latest() : "";
+                        return v || "-";
+                    }, APL.t("Updates come from the Salah Launcher repository on GitHub: abdok30303-coder/apl-plus-musalla.")),
                     action(APL.t("Check for Update"), function () { if (APL.updater) APL.updater.check(true); },
-                        APL.t("Checks right away for a new version."), "update")
+                        APL.t("Checks right away for a new version."), "update"),
+                    action(APL.t("Install Update"), function () { if (APL.updater) APL.updater.install(); },
+                        APL.t("Downloads the newest version from GitHub and installs it here, then restarts the launcher."), "update")
                 ], APL.t("Automatic updates from GitHub.")),
                 action(APL.t("Support Salah Launcher"), function () {
                     var page = (window.APL_SITE && window.APL_SITE.support && window.APL_SITE.support.url) || "", qr = document.createElement("div");

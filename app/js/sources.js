@@ -61,7 +61,9 @@
             function text(key) { return ((new RegExp(key + ", value = ([^\\n]*) \\(String\\)").exec(out) || [])[1] || "").trim(); }
             for (var n = 1; n <= 4; n++) {
                 var state = (new RegExp("memory/sysman/hdmi" + n + ", value = (\\d+)").exec(out) || [])[1];
-                if (state === undefined || state === "2") continue;
+                /* v8.7.31: a TV lists all four HDMI ports whatever their state (an empty port reads as 2 too, so
+                   state alone cannot say the port is missing). Only a Smart Monitor hides the ports it lacks. */
+                if (isMonitor() && (state === undefined || state === "2")) continue;
                 var hdmi = "db/Canalysis-service/hdmi" + n;
                 ports.push({ type: "HDMI", number: n, label: (text(hdmi + "/manufacturer_name") + " " + text(hdmi + "/model_name")).trim() });
             }

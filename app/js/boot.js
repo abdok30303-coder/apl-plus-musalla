@@ -28,7 +28,7 @@
     global.APL_ASSET = function (p) { return p; };
     global.APL_UPDATE = {
         LOADER: LOADER,
-        REPO: "", BRANCH: "", RAW: "",
+        REPO: "abdok30303-coder/apl-plus-musalla", BRANCH: "main", RAW: "https://raw.githubusercontent.com/abdok30303-coder/apl-plus-musalla/main/",
         cmp: function () { return 0; },
         installed: BUILD.version,
         running: BUILD.version,
