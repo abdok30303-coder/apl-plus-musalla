@@ -47,6 +47,9 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 
 <table>
   <tr>
+    <td colspan="2"><img src="docs/screenshots/14-english-ramadan-widget.jpg" alt="Home screen in English with a Ramadan tip card and an English wisdom line" width="100%"><br><b>English mode: Ramadan widget and wisdom</b><br>With the UI in English, the Ramadan card (tips, duas, Laylat al-Qadr) and the wisdom line are fully English, with their source shown.</td>
+  </tr>
+  <tr>
     <td width="50%"><img src="docs/screenshots/02-prayer-page.jpg" alt="Prayer and Quran page"><br><b>Prayer &amp; Quran hub</b><br>Five prayers with a live countdown, radio, alerts, Mushaf, Azkar, wisdom and occasion countdowns on one page.</td>
     <td width="50%"><img src="docs/screenshots/03-mushaf.jpg" alt="Mushaf reading view"><br><b>The Mushaf</b><br>Hafs text with full tashkeel and verse markers, page and juz' in the corner, OK to open the tafsir of the selected verse.</td>
   </tr>
@@ -74,7 +77,7 @@ A TV is the one screen the whole family gathers around, yet its home screen know
   </tr>
 </table>
 
-<sub>Screenshots 01–08 come from the launcher's built-in browser preview, so the app shelf shows demo apps and the Wi-Fi name is a placeholder. Screenshots 09–13 are from a real Samsung TV running the app, with the owner's own apps, location and Wi-Fi.</sub>
+<sub>Screenshots 01–08 and 14 come from the launcher's built-in browser preview, so the app shelf shows demo apps and the Wi-Fi name is a placeholder. Screenshots 09–13 are from a real Samsung TV running the app, with the owner's own apps, location and Wi-Fi.</sub>
 
 ## Features
 
