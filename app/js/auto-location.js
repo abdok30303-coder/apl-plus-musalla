@@ -16,13 +16,12 @@
    the prayer times and the weather, so everything else (Hijri calendar, Ramadan, Eid, alerts sent to
    Vetro) follows by itself.
 
-   Settings > Prayer and Quran: "Detect location automatically" (on by default), "Detect location now",
+   Settings > Prayer and Quran: "Detect location automatically" (OFF by default since v8.7.28: until it is turned on,
+   no request is sent to any geolocation service), "Detect location now" (one check, does not turn the mode on),
    and the city lists. Choosing a city by hand turns the automatic mode off (prayer.js setCity).
 
    Care taken:
      - Runs 4 s after start-up, every 12 hours, when the network comes back, and when turned on.
-     - A city someone chose by hand before this version is respected: automatic mode starts OFF for them
-       (Settings shows it) until they turn it on or press "Detect location now".
      - The region of the language tag is used only for Arabic ("ar-EG"); "en-US" says nothing about where the screen is.
      - A change between two known cities needs two matching detections in a row (no flip-flopping on a
        jumpy address), except the first detection and "Detect now".
@@ -41,7 +40,7 @@
 
     function T(s, p) { try { return APL.t(s, p); } catch (e) { return s; } }
     function say(m) { try { if (APL.toast) APL.toast(m, true); } catch (e) {} }
-    function enabled() { return sys.pref("prayerAuto") !== false; }
+    function enabled() { return sys.pref("prayerAuto") === true; }   /* v8.7.28: OFF unless the viewer turns it on */
     function load() {
         try { var o = JSON.parse(global.localStorage.getItem(KEY) || "null"); return (o && typeof o === "object") ? o : {}; } catch (e) { return {}; }
     }
@@ -231,9 +230,9 @@
 
     /* ---------- one detection ---------- */
     var inflight = null;
-    function run(force) {
+    function run(force, once) {
         if (inflight) return inflight;
-        if (!enabled()) return Promise.resolve(null);
+        if (!enabled() && !once) return Promise.resolve(null);      // v8.7.28: no request leaves the screen unless the viewer turned this on, or pressed "Detect Location Now"
         lastRun = Date.now();
         var dev = null;
         inflight = deviceInfo().then(function (d) {
@@ -312,17 +311,13 @@
         return s + (how ? " — " + how : "");
     }
 
-    /* "Detect location now": turns automatic mode on when it was off. */
+    /* "Detect location now": ONE detection the viewer asked for; it does not turn automatic mode on (v8.7.28). */
     function detect(force) {
-        if (!enabled()) { sys.setPref("prayerAuto", true); }       // its listener starts a forced detection
-        return run(!!force);
+        return run(!!force, !enabled());
     }
 
     function start() {
-        /* first start of this version: a city chosen by hand earlier is a choice, so automatic mode stays off for it */
-        try {
-            if (!global.localStorage.getItem(KEY) && userChoseCity()) { sys.setPref("prayerAuto", false); save({ at: 0, status: "manual" }); }
-        } catch (e) {}
+        /* v8.7.28: automatic mode is OFF by default: nothing is sent to any service until the viewer turns it on in Settings */
         if (enabled()) global.setTimeout(function () { run(false); }, 4000);
         if (APL.timers && APL.timers.every) APL.timers.every("autoloc", 12 * 3600000, function () { run(false); }, { hidden: true });
         try {

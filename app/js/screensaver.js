@@ -205,9 +205,17 @@
     }
 
     // Any key: resets the idle time; if the screen saver is running, exits it without acting.
-    APL.addHotkey(function () {
+    APL.addHotkey(function (keyCode) {
         lastInput = Date.now();
-        if (active) { stop(); return true; }
+        if (active) {
+            /* v8.7.28: Living Mihrab with its radio button: OK starts / stops the radio and the screen saver stays; any other key leaves it */
+            if (keyCode === 13 && sys.pref("screensaverStyle") === "mihrab" && sys.pref("mihrabRadio") !== false && APL.ambient && APL.ambient.toggleRadio) {
+                APL.ambient.toggleRadio();
+                return true;
+            }
+            stop();
+            return true;
+        }
         return false;
     });
 

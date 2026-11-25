@@ -159,6 +159,20 @@
         });
         return list;
     }
+    /* v8.7.28: the city, shown with its country, and the picker (country first, then its cities) on the Prayer page */
+    function curCityText() {
+        var k = APL.sys.pref("prayerCity") || "cairo", c = global.APL_CITY ? global.APL_CITY(k) : null;
+        if (!c) return "";
+        var nm = APL.lang === "ar" ? (c.ar || c.en) : (c.en || c.ar), cn = c.cc && global.APL_COUNTRY_NAME ? global.APL_COUNTRY_NAME(c.cc) : "";
+        return nm + (cn ? " \u00b7 " + cn : "");
+    }
+    function openCityPicker() {
+        APL.settings.close();
+        if (APL.prayerPage) {
+            APL.prayerPage.open();
+            if (typeof APL.prayerPage.openCity === "function") APL.prayerPage.openCity();
+        }
+    }
     /* v8.7.21: world support for the prayer times and the weather. */
     function weatherOptions() { return [["same", APL.t("Same as prayer city")]].concat(cityOptions()); }
     function methodOptions() {
@@ -386,9 +400,10 @@
                             if (typeof APL.prayerPage.openWeather === "function") APL.prayerPage.openWeather();
                         }
                     }, APL.t("Opens detailed 7-day forecast, humidity, wind, and live conditions."), "sun"),
-                    choice(APL.t("Weather Place"), "weatherPlace", weatherOptions(),
-                        APL.t("Uses Open-Meteo. The screen's location is never requested."),
-                        function () { if (APL.weather) APL.weather.refresh(); }),
+                    info(APL.t("City"), function () { return curCityText(); },
+                        APL.t("The weather always follows the city of the prayer times. Source: Open-Meteo.")),
+                    action(APL.t("Choose Country and City"), openCityPicker,
+                        APL.t("One city for the prayer times and the weather. Pick the country first, then the city."), "sparkle"),
                     choice(APL.t("Temperature Unit"), "weatherUnit",
                         [["C", APL.t("Celsius (\u00b0C), km/h")], ["F", APL.t("Fahrenheit (\u00b0F), mph")]],
                         APL.t("Choose the unit of the temperature and the wind."),
@@ -410,9 +425,9 @@
                         APL.t("Apps with their own artwork keep it (YouTube, Netflix, Steam…). For the others: soft sheets of light in their colors, or their logo on a halo of their color. Black: plain dark behind every app, artwork included."),
                         function () { if (APL.restyleArt) APL.restyleArt(); })
                 ], APL.t("No online source: the shelf always uses the look chosen here.")),
-                toggle(APL.t("Visual Effects"), "visualEffects", APL.t("Blur and glass. Prettier but slower: off by default so the screen stays smooth.")),
+                toggle(APL.t("Visual Effects"), "visualEffects", APL.t("Blur and glass. Prettier but slower: turn it off if the screen feels slow.")),
                 toggle(APL.t("Enhanced Glass & Motion"), "richFx",
-                    APL.t("Apple TV-style depth, fluid spring motion and real frosted glass blur. Off by default for maximum speed; recommended for fast processors.")),
+                    APL.t("Apple TV-style depth, fluid spring motion and real frosted glass blur. Turn it off if the screen feels slow.")),
                 toggle(APL.t("Dynamic Backdrops"), "cleanFrameBackdrops",
                     APL.t("Off by default. On: apps with nothing of their own to show get a poster of a popular title from JustWatch (needs the internet, no key). Off: nothing is downloaded.")),
                 toggle(APL.t("Slow Background Motion"), "bgMotion", APL.t("A slow camera move over the Home Screen images. Pretty, but it keeps the screen very busy and slows everything else down.")),
@@ -483,14 +498,14 @@
                 action(APL.t("Prayer Times"), openPrayer,
                     APL.t("Today's six times, the next prayer, the radio and the black screen."), "moon"),
                 toggle(APL.t("Detect Location Automatically"), "prayerAuto",
-                    APL.t("Finds the city from the screen's settings and the Internet address. Choosing a city by hand turns this off.")),
+                    APL.t("Off by default. When on, the screen asks public IP-location services (ipwho.is and others) for an approximate position, every 12 hours. When off, nothing is sent. Choosing a city by hand turns this off.")),
                 info(APL.t("Detected Location"), function () { return APL.autoLocation ? APL.autoLocation.describe() : ""; },
                     APL.t("The city used for the prayer times, the weather and the Hijri calendar.")),
                 action(APL.t("Detect Location Now"), function () {
                     if (!APL.autoLocation) return;
                     APL.toast(APL.t("Detecting the location…"), true);
                     APL.autoLocation.detect(true);
-                }, APL.t("Needs internet for the Internet address; without it the screen's own country and time zone are used. Turns automatic detection on."), "sparkle"),
+                }, APL.t("One check now: sends your Internet address to public IP-location services (needs internet; without it the screen's own country and time zone are used). Does not turn automatic detection on."), "sparkle"),
                 action(APL.t("Update Prayer Times & Islamic Calendar"), function () {
                     APL.toast(APL.t("Updating prayer times & calendar…"), true);
                     if (APL.prayer) {
@@ -548,9 +563,10 @@
                     if (!n) return APL.t("Loading…");
                     return n.name + " " + APL.prayer.hhmm(n.time) + " · " + APL.prayer.left(n.ms);
                 }, (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."))),
-                choice(APL.t("City"), "prayerCity", cityOptions(),
-                    (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo.")),
-                    function (v) { if (APL.prayer) APL.prayer.setCity(v); }),
+                info(APL.t("City"), function () { return curCityText(); },
+                    (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."))),
+                action(APL.t("Choose Country and City"), openCityPicker,
+                    APL.t("One city for the prayer times and the weather. Pick the country first, then the city."), "sparkle"),
                 action(APL.t("Search for a city anywhere"), searchCity,
                     APL.t("Needs internet. Finds any city in the world for the prayer times and the weather."), "sparkle"),
                 choice(APL.t("Calculation Method"), "prayerMethod", methodOptions(),
@@ -720,6 +736,8 @@
                     APL.t("Idle time on the Home Screen before the screen saver starts.")),
                 choice(APL.t("Type"), "screensaverStyle", [["wallpaper", APL.t("Wallpapers")], ["mihrab", "\u0627\u0644\u0645\u062d\u0631\u0627\u0628 \u0627\u0644\u062d\u064a"], ["art", APL.t("App artwork")], ["clock", APL.t("Large clock over the artwork")], ["dark", APL.t("Clock on black")]],
                     APL.t("Wallpapers: the pictures of the Home Screen (local, plus the online ones if you chose them in Appearance › Home Wallpapers), crossfading every 20 seconds. The Apple Aerial videos are gone.")),
+                toggle(APL.t("Radio Button in the Screen Saver"), "mihrabRadio",
+                    APL.t("In the Living Mihrab screen saver, OK starts or stops the Quran radio and the screen saver stays. Any other key leaves it. Off: every key leaves it.")),
                 choice(APL.t("Move the Clock"), "screensaverClockMove",
                     [[0, APL.t("Off")], [1, APL.t("Every minute")], [2, APL.t("Every 2 minutes")], [3, APL.t("Every 3 minutes")], [4, APL.t("Every 4 minutes")], [5, APL.t("Every 5 minutes")]],
                     APL.t("For OLED screens: the clock goes round the four corners, a few pixels off each time, so no spot stays lit for hours.") +
@@ -1157,7 +1175,7 @@
                     toggle(APL.t("Light Mode"), "lightMode",
                         APL.t("Fewer background jobs: no artwork search, no content cards, no heavy effects. The wallpapers, the prayer times and the radio stay.")),
                     toggle(APL.t("Auto Light Effects"), "autoPerf",
-                        APL.t("If the remote feels slow, the heavy effects turn off by themselves until the next restart.")),
+                        APL.t("Off by default. When on, if the remote feels slow, the heavy effects turn off by themselves until the next restart.")),
                     toggle("\u0648\u064a\u062f\u062c\u062a \u0627\u0644\u0635\u0644\u0627\u0629 \u0641\u064a \u0635\u0641\u062d\u0629 \u0627\u0644\u0627\u0633\u062a\u0645\u0627\u0639", "qaPrayerWidget",
                         "\u064a\u0638\u0647\u0631 \u0648\u064a\u062f\u062c\u062a \u0627\u0644\u0635\u0644\u0627\u0629 \u0627\u0644\u0643\u0627\u0645\u0644 (\u0627\u0644\u0645\u0648\u0627\u0642\u064a\u062a \u0648\u0627\u0644\u0637\u0642\u0633 \u0648\u0627\u0644\u0645\u0647\u0627\u0645 \u0648\u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0627\u062a) \u0623\u0633\u0641\u0644 \u0645\u0634\u063a\u0644 \u0627\u0644\u0642\u0631\u0622\u0646. \u0645\u0641\u0639\u0651\u0644 \u0627\u0641\u062a\u0631\u0627\u0636\u064a\u0627\u064b."),
                     toggle("\u0645\u0624\u0642\u062a\u0627\u062a \u062e\u0641\u064a\u0641\u0629", "liteTimers",

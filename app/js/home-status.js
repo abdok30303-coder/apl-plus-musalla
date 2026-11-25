@@ -267,6 +267,27 @@
         hb.innerHTML = '<div class="hekam-w__inner">' +
             '<div class="hekam-w__text">' + esc(it.text) + '</div>' +
         '</div>';
+        fitHekam(hb, scale, pos, ssActive);
+    }
+    /* v8.7.28: the font follows the length of the wisdom and the room of the window. A short wisdom keeps the big font in a small window;
+       a long one widens the window (up to a share of the screen) and then makes the font a little smaller, until the whole text is inside
+       a window no taller than about a third of the screen. Nothing is cut. */
+    function fitHekam(hb, scale, pos, ssActive) {
+        try {
+            var txt = hb.querySelector(".hekam-w__text");
+            if (!txt) return;
+            var vw = global.innerWidth || 1920, vh = global.innerHeight || 1080;
+            var centered = ssActive || pos === "above-dock" || pos === "top-center" || pos === "bottom-center";
+            hb.style.maxWidth = Math.round(vw * (centered ? 0.6 : 0.42)) + "px";
+            hb.style.maxHeight = "";
+            var maxH = Math.round(vh * 0.33);
+            var fs = Math.round(24 * (scale / 100)), min = Math.max(14, Math.round(vh / 60));
+            txt.style.fontSize = fs + "px";
+            while (fs > min && hb.offsetHeight > maxH) {
+                fs -= 1;
+                txt.style.fontSize = fs + "px";
+            }
+        } catch (e) {}
     }
     function rotateHekam() {
         hekamPick();

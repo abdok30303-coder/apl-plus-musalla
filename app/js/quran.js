@@ -559,20 +559,27 @@
         else focusID(view === "tafsir" ? "tafsir-body" : "reading");
     }
 
-    function updateActiveAyahHighlight() {
+    /* v8.7.28: the verse frame is hidden by default; it shows only while the viewer moves down verse by verse and hides again about 2.5 s after the last move.
+       It is fast now: only the old and the new verse change (it used to visit every verse of the page, measure each one, and fade a box-shadow). */
+    var hlEl = null, hlTimer = 0, HL_MS = 2500;
+    function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (readBody) readBody.classList.remove("hl-on"); }
+    function showHighlight() {
         if (!readBody) return;
-        var list = readBody.querySelectorAll(".mq__ayah");
-        for (var i = 0; i < list.length; i++) {
-            var idx = parseInt(list[i].getAttribute("data-ayah-index"), 10);
-            var active = (idx === activeVerseIdx);
-            list[i].classList.toggle("is-active-ayah", active);
-            if (active && prefs.fit === false) {
-                var r = list[i].getBoundingClientRect(), b = readBody.getBoundingClientRect();
-                if (r.top < b.top || r.bottom > b.bottom) {
-                    readBody.scrollTop += (r.top - b.top - 40);
-                }
-            }
+        readBody.classList.add("hl-on");
+        clearTimeout(hlTimer);
+        hlTimer = setTimeout(hideHighlight, HL_MS);
+    }
+    function updateActiveAyahHighlight(show) {
+        if (!readBody) return;
+        var elA = readBody.querySelector('.mq__ayah[data-ayah-index="' + activeVerseIdx + '"]');
+        if (hlEl && hlEl !== elA) hlEl.classList.remove("is-active-ayah");
+        if (elA) elA.classList.add("is-active-ayah");
+        hlEl = elA;
+        if (elA && prefs.fit === false) {
+            var r = elA.getBoundingClientRect(), b = readBody.getBoundingClientRect();
+            if (r.top < b.top || r.bottom > b.bottom) readBody.scrollTop += (r.top - b.top - 40);
         }
+        if (show) showHighlight();
     }
 
     function renderReader() {
@@ -591,6 +598,7 @@
             activeVerseIdx = from;
         }
 
+        clearTimeout(hlTimer); hlTimer = 0; hlEl = null;
         readBody = el("article", "mq__paper mq__focus"); readBody._qid = "reading";
         readBody._run = function () {
             var v = meta(activeVerseIdx);
@@ -611,13 +619,14 @@
             }
             var isActive = (i === activeVerseIdx);
             var verse = el("span", "mq__ayah" + (i === target ? " is-target" : "") + (isActive ? " is-active-ayah" : ""));
+            if (isActive) hlEl = verse;
             verse.setAttribute("data-ayah-index", String(i));
             verse.style.cursor = "pointer";
             (function (ayahIdx, sNum, aNum, sName, aText) {
                 verse.onclick = function (e) {
                     if (e) { e.stopPropagation(); e.preventDefault(); }
                     activeVerseIdx = ayahIdx;
-                    updateActiveAyahHighlight();
+                    updateActiveAyahHighlight(true);
                     openAyahTafsir(sNum, aNum, sName, aText);
                 };
             })(i, info.surah, info.ayah, info.name, split.body);
@@ -629,7 +638,7 @@
         var progress = el("div", "mq__progress"), fill = el("i", ""); fill.style.width = (page/604*100).toFixed(2) + "%"; progress.appendChild(fill); main.appendChild(progress);
         var stat = el("div", "mq__reading-stat");
         stat.appendChild(el("span", "mq__stat-main", Q("سورة ", "Surah ") + SN(m.name) + Q(" · صفحة ", " · Page ") + dg(page) + Q(" من ", " of ") + dg(604) + Q(" · الجزء ", " · Juz ") + dg(m.juz)));
-        stat.appendChild(el("span", "mq__stat-hint", Q("▲▼ تنقّل بين الآيات · OK تفسير السعدي · ◄ التالية · ► القائمة", "▲▼ move between verses · OK tafsir · ◄ Next · ► Menu")));
+        stat.appendChild(el("span", "mq__stat-hint", Q("▼ تحديد آية · OK تفسير السعدي · ◄ الصفحة التالية · ▲ السابقة · ► القائمة", "▼ pick a verse · OK tafsir · ◄ Next page · ▲ Previous page · ► Menu")));
         main.appendChild(stat);
         applyLook();      /* needs the text and the final size of the area: auto-fit happens here */
         var token = generation, currentBody = readBody;
@@ -1156,7 +1165,7 @@
                     return;
                 }
             }
-            updateActiveAyahHighlight();
+            updateActiveAyahHighlight(true);
             focusID("reading");
         }
     }
@@ -1288,42 +1297,26 @@
             }
             if (code === K.LEFT) { changePage(1); return true; }
             if (code === K.RIGHT) { setSide(true); return true; }
-            if (code === K.UP || code === K.DOWN) {
-                var p = APL.khatma.state().page;
-                var pFrom = data.pages[p - 1], pEnd = data.pages[p];
-                if (code === K.DOWN) {
-                    if (activeVerseIdx + 1 < pEnd) {
-                        activeVerseIdx++;
-                        updateActiveAyahHighlight();
-                    } else {
-                        if (p < 604) {
-                            if (Date.now() - lastFlip > 350) {
-                                lastFlip = Date.now();
-                                changePage(1);
-                            }
-                        } else if (APL.sound && APL.sound.edge) {
-                            APL.sound.edge();
-                        }
-                    }
-                } else if (code === K.UP) {
-                    if (activeVerseIdx - 1 >= pFrom) {
-                        activeVerseIdx--;
-                        updateActiveAyahHighlight();
-                    } else {
-                        if (p > 1) {
-                            if (Date.now() - lastFlip > 350) {
-                                lastFlip = Date.now();
-                                changePage(-1);
-                                setTimeout(function () {
-                                    var prevP = APL.khatma.state().page;
-                                    activeVerseIdx = data.pages[prevP] - 1;
-                                    updateActiveAyahHighlight();
-                                }, 50);
-                            }
-                        } else if (APL.sound && APL.sound.edge) {
-                            APL.sound.edge();
-                        }
-                    }
+            /* v8.7.28: LEFT = next page, UP = previous page. DOWN shows the verse frame (first press) and then moves it to the next verse;
+               on the last verse it turns to the next page. The frame hides by itself a moment after the last press. */
+            if (code === K.UP) {
+                if (APL.khatma.state().page > 1) {
+                    if (Date.now() - lastFlip > 350) { lastFlip = Date.now(); changePage(-1); }
+                } else if (APL.sound && APL.sound.edge) APL.sound.edge();
+                return true;
+            }
+            if (code === K.DOWN) {
+                var p = APL.khatma.state().page, pEnd = data.pages[p];
+                var shown = !!(readBody && readBody.classList.contains("hl-on"));
+                if (!shown) {
+                    updateActiveAyahHighlight(true);
+                } else if (activeVerseIdx + 1 < pEnd) {
+                    activeVerseIdx++;
+                    updateActiveAyahHighlight(true);
+                } else if (p < 604) {
+                    if (Date.now() - lastFlip > 350) { lastFlip = Date.now(); changePage(1); }
+                } else if (APL.sound && APL.sound.edge) {
+                    APL.sound.edge();
                 }
                 return true;
             }

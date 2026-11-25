@@ -60,9 +60,8 @@
     }
 
     function place() {
-        var key = sys.pref("weatherPlace") || CFG.place || "cairo";
-        /* v8.7.21: the weather follows the prayer city unless a weather place was chosen on purpose ("same" = always the prayer city). */
-        if (key === "same" || !userChoseWeather()) key = sys.pref("prayerCity") || CFG.city || key;
+        /* v8.7.28: ONE city for the prayer times and the weather: the weather always follows the prayer city (the separate weather place is gone). */
+        var key = sys.pref("prayerCity") || CFG.city || CFG.place || "cairo";
         return global.APL_CITY ? global.APL_CITY(key) : { key: "cairo", ar: "القاهرة", en: "Cairo", lat: 30.0444, lon: 31.2357 };
     }
 
@@ -260,7 +259,7 @@
 
     sys.onPref("weatherPlace", function () { fetchNow(); });
     sys.onPref("weatherUnit", function () { fetchNow(); });
-    sys.onPref("prayerCity", function () { if (sys.pref("weatherPlace") === "same" || !userChoseWeather()) fetchNow(); });
+    sys.onPref("prayerCity", function () { fetchNow(); });
     sys.onPref("clockFormat", function () { render(); });
     sys.onPref("digitStyle", function () { render(); });
 

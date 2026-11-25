@@ -1,6 +1,6 @@
 #!/bin/sh
 # ============================================================
-# APL Vetro Background Audio & Alert Supervisor Daemon (v4.9)
+# APL Vetro Background Audio & Alert Supervisor Daemon (v4.10)
 #   - Runs independently of the launcher UI through Vetro's root agent.
 #   - Keeps the alert schedule and a detached root keeper alive across apps,
 #     YouTube, Samsung TV+, IPTV and HDMI inputs.
@@ -9,7 +9,7 @@
 #   - Records compact, on-device diagnostics at each foreground audio handoff.
 # ============================================================
 
-DAEMON_VER="4.9"
+DAEMON_VER="4.10"
 trap '' HUP 2>/dev/null || true
 
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
@@ -1088,6 +1088,9 @@ run_alert_worker() {
         if [ -n "$cfile" ] && [ -f "$cfile" ]; then
             log_msg "playing Ramadan cannon before Maghrib Adhan: $cfile"
             repair_pulse_streams
+            # v4.10: play_file_blocking picks its wav from $key. While the key was still "maghrib_ramadan" it matched no
+            # case and fell back to the task chime, so the cannon was never heard (the task alert sounded instead).
+            key="ramadan-cannon"
             play_file_blocking "$cfile" "$vol"
             sleep 1
         fi

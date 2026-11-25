@@ -25,6 +25,7 @@
 
     var root, titleEl, subEl, bodyEl, hintEl, nav, tiles = [];
     var mode = "main", openFlag = false, blackout = null, blackoutArmed = false, blackoutHint = null, tickTimer = null;
+    var cityCC = null;   // v8.7.28: the country whose cities are listed (null = the list of countries)
     var focusIndex = 0, mainReturn = 0;      // v1.2.108: the tile to come back to from the City and Auto Off lists
     var wxDay = 0, wxReturn = 0;      // v1.2.99: the day opened in the hour-by-hour page, and the row to come back to
 
@@ -763,7 +764,7 @@
             }));
         }
 
-        row.appendChild(pwBtn(p().cityName(), "pin", false, false, function () { mainReturn = focusIndex; mode = "city"; render(); }));
+        row.appendChild(pwBtn(p().cityName(), "pin", false, false, function () { openCity(); }));
         row.appendChild(pwBtn(weatherText() === "\u2014" ? L("\u0627\u0644\u0637\u0642\u0633", "Weather") : weatherText(), weatherText() === "\u2014" ? "cloud" : "", false, false, function () { openWeather(); }));
 
         return row;
@@ -1215,13 +1216,54 @@
         return w.icon + " " + APL.deg(w.temp) + " " + (APL.lang === "ar" ? w.textAr : w.textEn);
     }
 
-    function buildCity() {
+    /* v8.7.28: the city for the prayer times AND the weather: first the country, then its cities. */
+    function openCity() {
+        mainReturn = focusIndex;
+        mode = "city";
+        cityCC = null;
+        focusIndex = 0;
+        render();
+    }
+    function countryLabel(cc) { return (global.APL_COUNTRY_NAME && global.APL_COUNTRY_NAME(cc)) || cc; }
+    function buildCountries() {
         bodyEl.innerHTML = "";
         tiles = [];
-        titleEl.textContent = APL.t("Choose City");
+        titleEl.textContent = APL.t("Choose Country");
+        subEl.textContent = p().cityName();
+        var list = el("div", "aplx-list"), seen = {}, groups = [], curKey = p().cityKey(), curCc = (global.APL_CITY(curKey) || {}).cc, cu = global.APL_CITY_CUSTOM && global.APL_CITY_CUSTOM();
+        (global.APL_CITIES || []).forEach(function (c) {
+            if (!seen[c.cc]) { seen[c.cc] = { cc: c.cc, n: 0, name: countryLabel(c.cc) }; groups.push(seen[c.cc]); }
+            seen[c.cc].n++;
+        });
+        groups.sort(function (a, b) {
+            if (a.cc === "EG") return -1;
+            if (b.cc === "EG") return 1;
+            return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+        });
+        function add(label, sub, on, run) {
+            var row = el("div", "aplx-row",
+                '<div class="aplx-row__main"><span class="aplx-row__label">' + label + "</span>" +
+                '<span class="aplx-row__sub">' + sub + "</span></div>" +
+                (on ? '<span class="aplx-badge aplx-badge--on">' + APL.t("On") + "</span>" : ""));
+            row.addEventListener("click", run);
+            tiles.push({ el: row, run: run });
+            list.appendChild(row);
+        }
+        if (cu) add("\u2605 " + (cu.en || cu.ar), APL.t("Your searched city") + (cu.cc ? " \u00b7 " + countryLabel(cu.cc) : ""), curKey === "custom", function () { choose("custom"); });
+        groups.forEach(function (g) {
+            add(g.name, APL.t("{n} cities", { n: g.n }), g.cc === curCc && curKey !== "custom", function () { cityCC = g.cc; focusIndex = 0; render(); });
+        });
+        bodyEl.appendChild(list);
+        hintEl.textContent = APL.t("OK to choose · Back to cancel");
+    }
+    function buildCity() {
+        if (!cityCC) { buildCountries(); return; }
+        bodyEl.innerHTML = "";
+        tiles = [];
+        titleEl.textContent = countryLabel(cityCC);
         subEl.textContent = (APL.prayer && APL.prayer.methodNote ? APL.prayer.methodNote() : APL.t("Times from AlAdhan, Egyptian General Authority of Survey. Timezone Africa/Cairo."));
         var list = el("div", "aplx-list");
-        (global.APL_CITIES || []).forEach(function (c) {
+        (global.APL_CITIES || []).filter(function (c) { return c.cc === cityCC; }).forEach(function (c) {
             var on = c.key === p().cityKey();
             var row = el("div", "aplx-row",
                 '<div class="aplx-row__main"><span class="aplx-row__label">' + (APL.lang === "ar" ? c.ar : c.en) + "</span>" +
@@ -1237,6 +1279,7 @@
 
     function choose(key) {
         p().setCity(key);
+        cityCC = null;
         mode = "main"; focusIndex = mainReturn;
         render();
         if (APL.toast) APL.toast(p().cityName(), true);
@@ -1509,6 +1552,7 @@
                 if (mode === "hekam-items") { mode = "hekam"; focusIndex = hekamReturn; render(); return; }
                 if (mode === "hekam-random") { mode = "hekam"; focusIndex = 0; render(); return; }
                 if (mode === "hekam") { focusIndex = mainReturn; mode = "main"; render(); return; }
+                if (mode === "city" && cityCC) { cityCC = null; focusIndex = 0; render(); return; }      // v8.7.28: back from a country's cities to the countries
                 if (mode === "city" || mode === "events" || mode === "weather" || mode === "adjust" || mode === "sleep" || mode === "adhkar") {
                     focusIndex = mainReturn;
                     mode = "main";
@@ -1578,6 +1622,7 @@
         openAdhkar: openAdhkar,
         openHekam: openHekam,
         openWeather: openWeather,
+        openCity: openCity,
         blackout: enterBlackout,
         isBlackout: function () { return blackoutArmed; },
         leaveBlackout: leaveBlackout

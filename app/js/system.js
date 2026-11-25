@@ -40,12 +40,13 @@
         numberKeys: true,           // v1.2.92: 1-6 jump to the dock icons
         qaPrayerWidget: true,       // v8.7.14: full prayer widget under the Quran listening player
         liteTimers: true,           // v8.7.13: Mihrab ambient jobs run on the shared timer and pause while the launcher is not in front
-        autoPerf: true,             // v1.2.91: heavy effects off by themselves when the remote lags (js/smart-perf.js)
+        autoPerf: false,            // v8.7.28: OFF by default (was on). v1.2.91: heavy effects off by themselves when the remote lags (js/smart-perf.js)
         dnd: false,
         sleepTimer: 0,              // minutes, 0 = off
         sleepAt: 0,                 // timestamp of the scheduled sleep
         screensaverDelay: 5,        // minutes, 0 = never
-        screensaverStyle: "wallpaper", // "wallpaper" (local pictures) | "art" (app artwork) | "clock" | "dark"
+        screensaverStyle: "mihrab",    // v8.7.28: default is the Living Mihrab (was "wallpaper"). "wallpaper" (local pictures) | "mihrab" | "art" (app artwork) | "clock" | "dark"
+        mihrabRadio: true,          // v8.7.28: in the Living Mihrab screen saver, OK starts / stops the radio (other keys leave the screen saver)
         screensaverClockMove: 0,    // minutes between two corners of the screen saver's clock, 0 = it stays put
         uiSounds: true,             // small navigation clicks, like on Apple TV
         hiddenApps: [],
@@ -81,8 +82,8 @@
         quran_bg_playback: false,   // v8.7.0: Allow Quran audio to continue playing when TV switches apps (default: off)
         hubShelf: true,             // Top Shelf: the apps' own Smart Hub rows first (liveshelf.js)
         liveShelf: false,           // v3.4.2: heavy feature, closed by default (was true)   //   then the content of the moment (TMDB / YouTube…), then shelfArt
-        visualEffects: PREVIEW,     // blur / glass: costly on the screen, off by default
-        richFx: false,              // Enhanced glass blur and motion: off by default
+        visualEffects: true,        // v8.7.28: blur / glass: ON by default (was off)
+        richFx: true,               // v8.7.28: Enhanced glass blur and motion: ON by default (was off)
         cleanFrameBackdrops: false, // a poster only where an app shows nothing of its own (app-art.js)
         gameWanted: false,          // Game Mode requested (applied when switching to an input)
         hdmiViaHome: false,         // experiment (did not fix the HDMI picture): Samsung's home first, then the source request
@@ -113,13 +114,13 @@
         onlineWallpaperSource: "both", // "both" | "bing" | "nasa"
         onlineIcons: false,         // v1.2.108: real icons from the App Store catalogue for apps with no tile of their own (autoart.js)
         prayerCity: "cairo",       // key in js/cities.js (prayer.js)
-        prayerAuto: true,           // v8.7.27: the city is found from the screen's settings and the Internet address (js/auto-location.js); choosing a city by hand turns it off
+        prayerAuto: false,          // v8.7.28: OFF by default (opt-in). v8.7.27: the city is found from the screen's settings and the Internet address (js/auto-location.js); choosing a city by hand turns it off
         hijriSource: "auto",        // v8.7.27: "auto" (by the country of the city) | "egypt" | "HJCoSA" | "UAQ" | "DIYANET" (js/islamic.js, js/prayer.js)
         hijriFix: {},               // v8.7.27: Ramadan / Eid corrected by hand: { "1448-9": 1 } = month 9 of 1448 starts 1 day later (js/islamic.js setFix)
         prayerAlerts: true,         // a short spoken alert at each prayer time
         prayerAlertVolume: 0.92,
         prayerWidgetShow: "occ",    // v7.2.1/v8.5.0: "occ" | "ayah" | "tafsir" | "hekam" | "pers"
-        hekamWidget: false,         // v8.5.0: separate Home Screen widget for Hekam, rotating every 5 min (off by default)
+        hekamWidget: true,          // v8.7.28: ON by default (was off). v8.5.0: separate Home Screen widget for Hekam, rotating every 5 min
         hekamPos: "top-right",      // v8.5.0: "top-right" | "top-center" | "top-left" | "bottom-right" | "bottom-center" | "bottom-left" | "inline"
         hekamScale: 150,            // v8.5.0: 100 | 125 | 150 | 175 | 200
         personalRemindDays: 3,      // v8.1.0: toast days before a personal occasion: 0 (off) | 1 | 3 | 7

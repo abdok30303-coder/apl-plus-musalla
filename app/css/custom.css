@@ -1328,8 +1328,12 @@ html[dir="rtl"] .aplpage--glass .occ { padding: 12px 14px 12px 24px; }
 }
 .rich-fx .tile.is-focused .tile__card {
     transform: scale(1.08) translateY(-4px);
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.85);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
     transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* v8.7.28: the white ring around the focused icon is drawn only when Settings > Focus Highlight is on (off by default) */
+body.rich-fx:not(.no-focus-fx) .tile.is-focused .tile__card {
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.85);
 }
 .rich-fx .aplx-card.is-focused,
 .rich-fx .aplpage--glass .aplx-row.is-focused {
@@ -2040,17 +2044,14 @@ body.mihrab-active .hekam-w__text {
     cursor: pointer;
     border-radius: 8px;
     padding: 2px 4px;
-    transition: background 180ms ease, box-shadow 180ms ease;
 }
-.mq__ayah:hover,
-.mq__ayah.is-active-ayah {
-    background: rgba(166, 242, 74, 0.22);
-    box-shadow: 0 0 0 2px rgba(166, 242, 74, 0.5);
+/* v8.7.28: the verse frame is hidden by default (js/quran.js adds .hl-on while the viewer moves down verse by verse); a soft fill only: no
+   box-shadow ring, no transition, no hover, so moving it costs one cheap repaint. */
+.mq__paper.hl-on .mq__ayah.is-active-ayah {
+    background: rgba(166, 242, 74, 0.11);
 }
-.theme-light .mq__ayah:hover,
-.theme-light .mq__ayah.is-active-ayah {
-    background: rgba(48, 209, 88, 0.2);
-    box-shadow: 0 0 0 2px rgba(48, 209, 88, 0.5);
+.theme-light .mq__paper.hl-on .mq__ayah.is-active-ayah {
+    background: rgba(48, 209, 88, 0.12);
 }
 
 /* Tafsir Modal Overlay */
@@ -3693,3 +3694,35 @@ body.quran-audio-active .qa-widget-slot .statusx--qa {
 .mq--read { padding: var(--mq-safe-y, 14px) var(--mq-safe-x, 24px); }
 .mq--read .mq__side { top: var(--mq-safe-y, 14px); bottom: var(--mq-safe-y, 14px); right: var(--mq-safe-x, 24px); }
 .mq--read .mq__handle { right: var(--mq-safe-x, 24px); }
+
+/* v8.7.28: no light rectangle (sheen) and no ring over an icon-only tile while it is selected; the ring is drawn only with Focus Highlight on */
+.tile__card--icon::after { display: none !important; }
+
+/* v8.7.28: the radio button of the Living Mihrab screen saver */
+.amb__radio {
+    position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 6;
+    padding: 10px 26px; border-radius: 999px; font-size: 22px; font-weight: 700; direction: rtl;
+    color: #fff; background: rgba(20, 24, 36, 0.55); border: 1px solid rgba(255, 255, 255, 0.28);
+    pointer-events: none; opacity: 0.85;
+}
+
+
+/* v8.7.28: the general ".is-focused" rule (scale 1.055 + a white 2 px ring, both !important) drew a bordered rectangle around the whole app tile
+   behind its card, and made the Mushaf side panel buttons jump (scale with a spring, inside a scrolling panel). Tiles and Mushaf controls
+   keep their own focus looks; the ring on tiles is drawn by Settings > Focus Highlight only (on the card, see above). */
+.tile.is-focused { box-shadow: none !important; }
+.mq .is-focused,
+.mq .mq__button.is-focused,
+.mq .mq__menu.is-focused { transform: none !important; transition: background-color 90ms linear, color 90ms linear, border-color 90ms linear !important; box-shadow: none !important; }
+.mq .mq__focus.is-focused { box-shadow: inset 0 0 0 1px var(--mq-green, #a6e22e) !important; }
+/* no backdrop blur on the Mushaf panels: the side panel is nearly opaque anyway and the blur made every move slow */
+.rich-fx:not(.perf):not(.auto-perf) .mq__pane,
+.rich-fx:not(.perf):not(.auto-perf) .mq__side { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* v8.7.28: the Mushaf side panel is 50 % bigger (width and text; it scrolls if it is taller than the screen) */
+.mq--read .mq__side { width: 348px; }
+.mq--read .mq__menu { padding: 12px 13px; font-size: 24px; }
+.mq--read .mq__menu svg { width: 28px; height: 28px; margin-left: 12px; }
+.mq--read .mq__menus { grid-row-gap: 4px; }
+.mq--read .mq__tools { grid-gap: 8px; margin-top: 12px; padding-top: 12px; }
+.mq--read .mq__tools .mq__button { padding: 10px 6px; font-size: 22px; border-radius: 16px; }
