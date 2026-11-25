@@ -1283,7 +1283,7 @@
                         return u ? (u.fromBundle() ? APL.t("{v} (auto-update)", { v: u.running() }) : u.running()) : sys.version;
                     }, APL.t("The version running. “auto-update”: downloaded on its own from GitHub.")),
                     toggle(APL.t("Automatic updates"), "autoUpdate",
-                        APL.t("The launcher checks GitHub every 6 hours and tells you when a new version is out. It never installs on its own.")),
+                        APL.t("The launcher checks GitHub once every 24 hours and tells you when a new version is out. It never installs on its own.")),
                     info(APL.t("Latest on GitHub"), function () {
                         var u = APL.updater, v = u && u.latest ? u.latest() : "";
                         return v || "-";

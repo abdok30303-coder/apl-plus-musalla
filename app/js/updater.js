@@ -164,17 +164,23 @@
 
     function reset() { try { global.localStorage.removeItem("apl.bundle"); } catch (e) {} return Promise.resolve(false); }
 
-    /* A quiet check shortly after start-up and every 6 hours (only when "Automatic updates" is on).
-       It only tells you; it never installs by itself. */
+    /* v8.7.33: a quiet check shortly after start-up, then at most ONE check every 24 hours (only when
+       "Automatic updates" is on). The last check's time is kept in localStorage, so a TV that restarts
+       often still gets one check a day, not one per start. It only tells you; it never installs by itself. */
+    var CHECK_KEY = "apl.upd.lastAuto";
     function auto() {
         try { if (APL.sys && APL.sys.pref("autoUpdate") === false) return; } catch (e) {}
-        if (Date.now() - lastCheck < 3600000) return;
+        var now = Date.now(), last = 0;
+        try { last = parseInt(global.localStorage.getItem(CHECK_KEY), 10) || 0; } catch (e) {}
+        if (now - last < 24 * 3600000) return;
+        try { global.localStorage.setItem(CHECK_KEY, String(now)); } catch (e) {}
         check(false).then(function (r) {
             if (r.ok && r.newer) toast(tr("فيه نسخة جديدة من اللانشر: " + r.version + ". الإعدادات ثم الدعم ثم تحديث اللانشر.", "New launcher version " + r.version + ". Settings > Support > Launcher Update."), true);
         });
     }
     global.setTimeout(auto, 60000);
-    global.setInterval(auto, 6 * 3600000);
+    global.setInterval(auto, 3600000);   /* an hourly look; the 24-hour stamp above decides */
+
 
     APL.updater = {
         check: check, install: install, reset: reset,

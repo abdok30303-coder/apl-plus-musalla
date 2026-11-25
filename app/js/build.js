@@ -1,6 +1,6 @@
-/* Build manifest for Salah Launcher v8.7.32 */
+/* Build manifest for Salah Launcher v8.7.33 */
 window.APL_BUILD = {
-  "version": "8.7.32",
+  "version": "8.7.33",
   "custom": true,
   "scripts": [
     "js/errlog.js",

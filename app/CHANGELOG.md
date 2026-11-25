@@ -1,3 +1,9 @@
+## 8.7.33
+
+- Wisdom widget: the whole wisdom always shows. The four-line cut with "..." is removed on the Home Screen and in the live mihrab; the window widens first, then the font shrinks to a readable minimum, and if a wisdom still needs room the window grows taller. Long wisdoms in the prayer-bar row take a smaller font instead of being cut.
+- Automatic update check: once every 24 hours (was every 6 hours).
+- Ramadan cannon test starts faster: the background player (4.12) no longer searches the whole filesystem twice before playing (that cost about 14 s on the TV), remembers where the sound was found, and waits 8 s for the 7.7 s cannon instead of 10, so the adhan after it starts sooner.
+
 ## 8.7.32
 
 - Ramadan cannon: the background player (4.11) looks for the sound in more places, never plays the task sound in its place, waits for the whole cannon, and the cannon status page shows what the player logged.

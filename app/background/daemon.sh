@@ -1,6 +1,6 @@
 #!/bin/sh
 # ============================================================
-# APL Vetro Background Audio & Alert Supervisor Daemon (v4.11)
+# APL Vetro Background Audio & Alert Supervisor Daemon (v4.12)
 #   - Runs independently of the launcher UI through Vetro's root agent.
 #   - Keeps the alert schedule and a detached root keeper alive across apps,
 #     YouTube, Samsung TV+, IPTV and HDMI inputs.
@@ -9,7 +9,7 @@
 #   - Records compact, on-device diagnostics at each foreground audio handoff.
 # ============================================================
 
-DAEMON_VER="4.11"
+DAEMON_VER="4.12"
 trap '' HUP 2>/dev/null || true
 
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
@@ -869,16 +869,31 @@ find_sound_file() {
             ;;
         ramadan-cannon|cannon)
             rel="sounds/ramadan-cannon.wav"
-            if [ -f "$DATADIR/$rel" ]; then echo "$DATADIR/$rel"; return 0; fi
-            root=$(find_wgt_root)
-            if [ -n "$root" ] && [ -f "$root/$rel" ]; then echo "$root/$rel"; return 0; fi
+            # v4.12: the place that worked last time is tried first - the slow filesystem search below
+            # took about 7 s on a real TV, and it ran twice per cannon (worker + player).
+            cache="$DATADIR/cannon.path"
+            cp=$(cat "$cache" 2>/dev/null)
+            if [ -n "$cp" ] && [ -f "$cp" ]; then echo "$cp"; return 0; fi
+            found=""
+            if [ -f "$DATADIR/$rel" ]; then found="$DATADIR/$rel"; fi
+            if [ -z "$found" ]; then
+                root=$(find_wgt_root)
+                if [ -n "$root" ] && [ -f "$root/$rel" ]; then found="$root/$rel"; fi
+            fi
             # v4.11: the exact package folder the launcher wrote down, then the real package folders, then a search by name
-            root=$(cat "$DATADIR/wgt-root" 2>/dev/null)
-            if [ -n "$root" ] && [ -f "$root/$rel" ]; then echo "$root/$rel"; return 0; fi
-            root=$(find_real_wgt_root)
-            if [ -n "$root" ] && [ -f "$root/$rel" ]; then echo "$root/$rel"; return 0; fi
-            found=$(find /opt /usr /home -maxdepth 14 -name ramadan-cannon.wav -path "*/sounds/*" 2>/dev/null | grep -v "$DATADIR" | head -n 1)
-            if [ -n "$found" ] && [ -f "$found" ]; then echo "$found"; return 0; fi
+            if [ -z "$found" ]; then
+                root=$(cat "$DATADIR/wgt-root" 2>/dev/null)
+                if [ -n "$root" ] && [ -f "$root/$rel" ]; then found="$root/$rel"; fi
+            fi
+            if [ -z "$found" ]; then
+                root=$(find_real_wgt_root)
+                if [ -n "$root" ] && [ -f "$root/$rel" ]; then found="$root/$rel"; fi
+            fi
+            if [ -z "$found" ]; then
+                f=$(find /opt /usr /home -maxdepth 14 -name ramadan-cannon.wav -path "*/sounds/*" 2>/dev/null | grep -v "$DATADIR" | head -n 1)
+                if [ -n "$f" ] && [ -f "$f" ]; then found="$f"; fi
+            fi
+            if [ -n "$found" ]; then echo "$found" > "$cache" 2>/dev/null; echo "$found"; return 0; fi
             ;;
         task)
             rel="sounds/task-alert.wav"
@@ -951,9 +966,10 @@ play_pulse_sample() {
             return 1
         }
     fi
-    # v4.11: wait for the whole sound (16-bit mono 22050 Hz is about 44100 bytes a second), not a fixed 6 s that cut the cannon
+    # v4.12: wait for the whole sound from the real PCM rate (16-bit mono 22050 Hz = 44100 bytes a second):
+    # the cannon is 7.7 s, so it waits 8 s now (v4.11 waited 10), the adhan after it starts ~2 s sooner.
     bytes=$(wc -c < "$wav" 2>/dev/null | tr -dc '0-9'); [ -n "$bytes" ] || bytes=0
-    secs=$((bytes / 40000 + 2)); [ "$secs" -lt 6 ] && secs=6; [ "$secs" -gt 25 ] && secs=25
+    secs=$((bytes / 44100 + 1)); [ "$secs" -lt 6 ] && secs=6; [ "$secs" -gt 25 ] && secs=25
     sleep "$secs"
     sh -c "$penv pactl remove-sample '$sample'" >/dev/null 2>&1 || true
     return 0
@@ -980,9 +996,15 @@ play_file_blocking() {
                 fi
                 ;;
             ramadan-cannon|cannon)
-                # v4.11: the same lookup as the worker (find_sound_file), and NEVER the task chime for the cannon:
+                # v4.12: the worker already found the file and passes it in $sfile - use it instead of
+                # searching the whole filesystem a second time (that second search cost ~7 s on the TV).
+                # A lookup only runs when nothing usable was passed. NEVER the task chime for the cannon:
                 # if the file cannot be found, say so in the log and stay silent instead of playing the wrong sound.
-                wav="$(find_sound_file ramadan-cannon)"
+                if [ -n "$sfile" ] && [ -f "$sfile" ]; then
+                    wav="$sfile"
+                else
+                    wav="$(find_sound_file ramadan-cannon)"
+                fi
                 if [ -z "$wav" ] || [ ! -f "$wav" ]; then
                     log_msg "cannon wav NOT FOUND (DATADIR=$DATADIR wgt-root=$(cat "$DATADIR/wgt-root" 2>/dev/null))"
                     return 1

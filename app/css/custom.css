@@ -1889,7 +1889,10 @@ body.big-text .mq--read .mq__paper { line-height: inherit; }
 .statusx .hc__row--hekam { min-width: 280px; max-width: 480px; }
 .statusx .hc__label--hekam { color: #f5c518; }
 .statusx .hc__date--hekam { display: flex; flex-direction: column; overflow: hidden; }
-.statusx .hc__greg--hekam { font-size: 19px; line-height: 1.4; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; opacity: .95; font-family: inherit; }
+.statusx .hc__greg--hekam { font-size: 19px; line-height: 1.4; white-space: normal; opacity: .95; font-family: inherit; }
+.statusx .hc__greg--hekam.hk-mid { font-size: calc(17px * var(--hekam-s, 1)) !important; }
+.statusx .hc__greg--hekam.hk-long { font-size: calc(14px * var(--hekam-s, 1)) !important; }
+.statusx .hc__row--hekam.hk-wide { max-width: 640px; }
 
 /* In-page Hekam list & cards */
 .hekam-row { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 18px 24px; text-align: right; }
@@ -2001,10 +2004,7 @@ body.screensaver-active .hekam-widget {
     padding: 12px 32px !important;
     text-align: center !important;
 }
-body.screensaver-active .hekam-w__text {
-    font-size: 23px !important;
-    line-height: 1.5 !important;
-}
+/* v8.7.33: no fixed font size here - fitHekam sets it (base 23px) so long wisdoms always fit whole. */
 
 /* In Live Mihrab mode */
 body.mihrab-active .hekam-widget {
@@ -2029,8 +2029,6 @@ body.mihrab-active .hekam-widget {
     text-align: center !important;
 }
 body.mihrab-active .hekam-w__text {
-    font-size: 24px !important;
-    line-height: 1.5 !important;
     color: #ffe9b8 !important;
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8) !important;
 }
@@ -2151,9 +2149,9 @@ body.mihrab-active .hekam-w__text {
 .evt-strip { gap: 12px; }
 .pw-night { font-size: 18px; padding: 4px 8px; }
 
-/* ===== v8.6.4: the Home wisdom widget: a long wisdom (up to ~260 letters, picked at random now) is cut at 4 lines, so it can never grow
-   over the apps row, whatever the size chosen. Not applied in the screen saver / live mihrab, which have their own room. ===== */
-body:not(.screensaver-active):not(.mihrab-active) .hekam-widget .hekam-w__text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+/* ===== v8.7.33: the wisdom widget NEVER cuts a wisdom. The v8.6.4 four-line clamp (which showed "...")
+   is removed: js/home-status.js fitHekam widens the window first, then shrinks the font down to a readable
+   minimum, and as a last resort lets the window grow taller. The whole text always shows. ===== */
 
 /* ===== v8.6.6: Control Center backdrop. The dim layer was a gradient (62% on the right, 25% on the left) while every glass tile carries ONE even shade
    (js/glass.js), so the tiles looked like slices that do not belong to the picture. Now: one even dim; the panel has no slab of its own
@@ -2317,8 +2315,7 @@ body.mihrab-active .hekam-widget {
     padding: 14px 44px !important;
     box-shadow: 0 10px 34px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,217,138,0.08) !important;
 }
-body.mihrab-active .hekam-w__text { font-size: 28px !important; line-height: 1.55 !important; }
-body.mihrab-active .hekam-w__text { display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+/* v8.7.33: no fixed size and no four-line cut in the live mihrab either - fitHekam sizes the text (base 28px) and nothing is clamped. */
 
 
 /* ============================================================

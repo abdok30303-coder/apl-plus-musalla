@@ -812,7 +812,7 @@ window.APL_LANG_AR = {
     "Install Update": "تثبيت التحديث",
     "Downloads the newest version from GitHub and installs it here, then restarts the launcher.": "ينزّل أحدث نسخة من GitHub ويثبتها هنا ثم يعيد تشغيل اللانشر.",
     "Updates come from the Salah Launcher repository on GitHub: abdok30303-coder/apl-plus-musalla.": "التحديثات من مستودع Salah Launcher على GitHub: abdok30303-coder/apl-plus-musalla.",
-    "The launcher checks GitHub every 6 hours and tells you when a new version is out. It never installs on its own.": "اللانشر يفحص GitHub كل 6 ساعات وينبهك لما تنزل نسخة جديدة. ما بيثبتش لوحده.",
+    "The launcher checks GitHub once every 24 hours and tells you when a new version is out. It never installs on its own.": "اللانشر يفحص GitHub مرة كل 24 ساعة وينبهك لما تنزل نسخة جديدة. ما بيثبتش لوحده.",
     "Check for Update": "التحقق من التحديث",
     "Go Back to the Installed Version": "العودة إلى النسخة المثبّتة",
     "About This Screen": "عن هذا التلفاز",
@@ -1143,7 +1143,7 @@ window.APL_LANG_AR_EXTRA = {
     "Version": "الإصدار",
     "{v} (auto-update)": "{v} (تحديث تلقائي)",
     "The version running. “auto-update”: downloaded on its own from GitHub.": "الإصدار العامل. «تحديث تلقائي»: نُزّل من GitHub بنفسه.",
-    "The launcher checks GitHub every 6 hours and installs the new version on its own. Nothing to do on the PC.": "يفحص اللانشر GitHub كل 6 ساعات ويثبّت الإصدار الجديد بنفسه. لا شيء تفعله على الكمبيوتر.",
+    "The launcher checks GitHub every 24 hours and installs the new version on its own. Nothing to do on the PC.": "يفحص اللانشر GitHub كل 24 ساعة ويثبّت الإصدار الجديد بنفسه. لا شيء تفعله على الكمبيوتر.",
     "This Build": "هذه النسخة",
     "automatic updates off": "التحديث التلقائي مغلق",
     "This is a custom build: the original project's automatic updates are off, so they cannot replace these changes.": "هذه نسخة مخصصة: التحديث التلقائي للمشروع الأصلي مغلق حتى لا يستبدل هذه التعديلات.",
@@ -1152,6 +1152,7 @@ window.APL_LANG_AR_EXTRA = {
     "Forgets the downloaded updates and goes back to the version installed by APL Launcher Setup.": "ينسى التحديثات المنزّلة ويعود إلى الإصدار المثبّت من APL Launcher Setup.",
     "Automatic updates from GitHub.": "تحديثات تلقائية من GitHub.",
     "Support Salah Launcher": "ادعم Salah Launcher",
+    "Support link is not set": "رابط الدعم غير مضبوط",
     "Scan the code with your phone's camera. Thank you!": "امسح الرمز بكاميرا هاتفك. شكرًا لك!",
     "Salah Launcher is free and open source. If it is useful to you, you can support its development: OK shows a code to scan with your phone.": "Salah Launcher مجاني ومفتوح المصدر. إن أفادك يمكنك دعم تطويره: اضغط OK لعرض رمز تمسحه بهاتفك.",
     "Link to Vetro": "الاتصال بـ Vetro",
@@ -5907,13 +5908,17 @@ window.APL_CATALOG = [
 
         if (pos === "inline" && !ssActive) {
             if (hekamBox && hekamBox.parentNode) { hekamBox.parentNode.removeChild(hekamBox); hekamBox = null; }
-            var html = '<div class="statusx__card hc__row hc__row--hekam" style="--hekam-s:' + (scale / 100) + '">' +
+            /* v8.7.33: the whole wisdom shows here too - a longer wisdom takes a smaller font and a wider
+               row instead of the old two-line cut with "..." */
+            var tlen = String(it.text || "").length;
+            var sizeCls = tlen > 220 ? " hk-long" : tlen > 150 ? " hk-mid" : "";
+            var html = '<div class="statusx__card hc__row hc__row--hekam' + (sizeCls ? " hk-wide" : "") + '" style="--hekam-s:' + (scale / 100) + '">' +
                 '<div class="hc__cell">' +
                     '<span class="hc__time"><span class="hc__t">💎</span></span>' +
                     '<span class="hc__label hc__label--hekam">' + APL.enx("حكمة اليوم") + '</span>' +
                 '</div>' +
                 '<div class="hc__date hc__date--hekam">' +
-                    '<span class="hc__greg hc__greg--hekam hc__text--green">' + esc(it.text) + '</span>' +
+                    '<span class="hc__greg hc__greg--hekam hc__text--green' + sizeCls + '">' + esc(it.text) + '</span>' +
                 '</div>' +
             '</div>';
             rows.hekam = { html: html, order: 25 };
@@ -5933,24 +5938,34 @@ window.APL_CATALOG = [
         '</div>';
         fitHekam(hb, scale, pos, ssActive);
     }
-    /* v8.7.28: the font follows the length of the wisdom and the room of the window. A short wisdom keeps the big font in a small window;
-       a long one widens the window (up to a share of the screen) and then makes the font a little smaller, until the whole text is inside
-       a window no taller than about a third of the screen. Nothing is cut. */
+    /* v8.7.33: the whole wisdom ALWAYS shows - the four-line "..." clamp is gone from custom.css.
+       A long wisdom first widens the window (up to nearly the whole screen), then makes the font smaller,
+       down to a readable minimum; if a wisdom still needs more room the window grows taller instead of
+       cutting the text. The same fit now also runs in the screen saver and the live mihrab, where a fixed
+       font size used to override it. */
     function fitHekam(hb, scale, pos, ssActive) {
         try {
             var txt = hb.querySelector(".hekam-w__text");
             if (!txt) return;
             var vw = global.innerWidth || 1920, vh = global.innerHeight || 1080;
+            var mihrab = !!(document.body && document.body.classList.contains("mihrab-active"));
             var centered = ssActive || pos === "above-dock" || pos === "top-center" || pos === "bottom-center";
-            hb.style.maxWidth = Math.round(vw * (centered ? 0.6 : 0.42)) + "px";
+            var fs = mihrab ? 28 : ssActive ? 23 : Math.round(24 * (scale / 100));
+            var min = Math.max(15, Math.round(vh / 72));
+            var maxH = Math.round(vh * (ssActive ? 0.5 : 0.33));
+            var wNorm = Math.round(vw * (centered ? 0.6 : 0.42));
+            var wWide = Math.round(vw * (centered ? 0.92 : 0.8));
             hb.style.maxHeight = "";
-            var maxH = Math.round(vh * 0.33);
-            var fs = Math.round(24 * (scale / 100)), min = Math.max(14, Math.round(vh / 60));
+            hb.style.maxWidth = wNorm + "px";
             txt.style.fontSize = fs + "px";
+            /* 1) widen the window before touching the font */
+            if (hb.offsetHeight > maxH && wWide > wNorm) hb.style.maxWidth = wWide + "px";
+            /* 2) shrink the font, never below the readable minimum */
             while (fs > min && hb.offsetHeight > maxH) {
                 fs -= 1;
                 txt.style.fontSize = fs + "px";
             }
+            /* 3) fallback: still tall at the minimum font - the window stays tall; nothing is ever cut */
         } catch (e) {}
     }
     function rotateHekam() {
@@ -6035,6 +6050,7 @@ window.APL_CATALOG = [
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { build(); armHekamWidget(); });
     else { build(); armHekamWidget(); }
 })(window);
+
 /* === js/weather.js === */
 /* ============================================================
    weather.js — the weather on the Home Screen, from Open-Meteo.
@@ -6565,7 +6581,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     var PERSIST_SCRIPT = PERSIST_DIR + "/bg-daemon.sh";
     var RUN_SCRIPT = "/run/apl-bg/bg-daemon.sh";
     var DATA_DIR = PERSIST_DIR + "/bg";
-    var DAEMON_VERSION = "4.11";
+    var DAEMON_VERSION = "4.12";
 
     var installed = false, installing = null, checking = null, queues = {};
     var soundsChecked = false, soundsSyncing = null, soundsFallbackTried = false;
@@ -7174,6 +7190,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         log: function () { return runExec(runner("log") + " 2>/dev/null | tail -12"); }
     };
 })(window);
+
 /* === js/radio.js === */
 /* ============================================================
    radio.js — Qur'an Cairo (Egyptian Quran Radio), foreground playback.
@@ -17537,7 +17554,7 @@ window.APL_KEYS = {
                         return u ? (u.fromBundle() ? APL.t("{v} (auto-update)", { v: u.running() }) : u.running()) : sys.version;
                     }, APL.t("The version running. “auto-update”: downloaded on its own from GitHub.")),
                     toggle(APL.t("Automatic updates"), "autoUpdate",
-                        APL.t("The launcher checks GitHub every 6 hours and tells you when a new version is out. It never installs on its own.")),
+                        APL.t("The launcher checks GitHub once every 24 hours and tells you when a new version is out. It never installs on its own.")),
                     info(APL.t("Latest on GitHub"), function () {
                         var u = APL.updater, v = u && u.latest ? u.latest() : "";
                         return v || "-";
@@ -17650,6 +17667,7 @@ window.APL_KEYS = {
 
     APL.settingsTree = build;
 })(window);
+
 /* === js/settings.js === */
 /* ============================================================
    settings.js — the Settings app, Apple TV–style split view:
@@ -20774,17 +20792,23 @@ window.APL_DEVICES = [
 
     function reset() { try { global.localStorage.removeItem("apl.bundle"); } catch (e) {} return Promise.resolve(false); }
 
-    /* A quiet check shortly after start-up and every 6 hours (only when "Automatic updates" is on).
-       It only tells you; it never installs by itself. */
+    /* v8.7.33: a quiet check shortly after start-up, then at most ONE check every 24 hours (only when
+       "Automatic updates" is on). The last check's time is kept in localStorage, so a TV that restarts
+       often still gets one check a day, not one per start. It only tells you; it never installs by itself. */
+    var CHECK_KEY = "apl.upd.lastAuto";
     function auto() {
         try { if (APL.sys && APL.sys.pref("autoUpdate") === false) return; } catch (e) {}
-        if (Date.now() - lastCheck < 3600000) return;
+        var now = Date.now(), last = 0;
+        try { last = parseInt(global.localStorage.getItem(CHECK_KEY), 10) || 0; } catch (e) {}
+        if (now - last < 24 * 3600000) return;
+        try { global.localStorage.setItem(CHECK_KEY, String(now)); } catch (e) {}
         check(false).then(function (r) {
             if (r.ok && r.newer) toast(tr("فيه نسخة جديدة من اللانشر: " + r.version + ". الإعدادات ثم الدعم ثم تحديث اللانشر.", "New launcher version " + r.version + ". Settings > Support > Launcher Update."), true);
         });
     }
     global.setTimeout(auto, 60000);
-    global.setInterval(auto, 6 * 3600000);
+    global.setInterval(auto, 3600000);   /* an hourly look; the 24-hour stamp above decides */
+
 
     APL.updater = {
         check: check, install: install, reset: reset,
@@ -20796,6 +20820,7 @@ window.APL_DEVICES = [
         custom: true
     };
 })(window);
+
 /* === js/launcher.js === */
 /* ============================================================
    launcher.js — tvOS Home Screen.

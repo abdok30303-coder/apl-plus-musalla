@@ -243,13 +243,17 @@
 
         if (pos === "inline" && !ssActive) {
             if (hekamBox && hekamBox.parentNode) { hekamBox.parentNode.removeChild(hekamBox); hekamBox = null; }
-            var html = '<div class="statusx__card hc__row hc__row--hekam" style="--hekam-s:' + (scale / 100) + '">' +
+            /* v8.7.33: the whole wisdom shows here too - a longer wisdom takes a smaller font and a wider
+               row instead of the old two-line cut with "..." */
+            var tlen = String(it.text || "").length;
+            var sizeCls = tlen > 220 ? " hk-long" : tlen > 150 ? " hk-mid" : "";
+            var html = '<div class="statusx__card hc__row hc__row--hekam' + (sizeCls ? " hk-wide" : "") + '" style="--hekam-s:' + (scale / 100) + '">' +
                 '<div class="hc__cell">' +
                     '<span class="hc__time"><span class="hc__t">💎</span></span>' +
                     '<span class="hc__label hc__label--hekam">' + APL.enx("حكمة اليوم") + '</span>' +
                 '</div>' +
                 '<div class="hc__date hc__date--hekam">' +
-                    '<span class="hc__greg hc__greg--hekam hc__text--green">' + esc(it.text) + '</span>' +
+                    '<span class="hc__greg hc__greg--hekam hc__text--green' + sizeCls + '">' + esc(it.text) + '</span>' +
                 '</div>' +
             '</div>';
             rows.hekam = { html: html, order: 25 };
@@ -269,24 +273,34 @@
         '</div>';
         fitHekam(hb, scale, pos, ssActive);
     }
-    /* v8.7.28: the font follows the length of the wisdom and the room of the window. A short wisdom keeps the big font in a small window;
-       a long one widens the window (up to a share of the screen) and then makes the font a little smaller, until the whole text is inside
-       a window no taller than about a third of the screen. Nothing is cut. */
+    /* v8.7.33: the whole wisdom ALWAYS shows - the four-line "..." clamp is gone from custom.css.
+       A long wisdom first widens the window (up to nearly the whole screen), then makes the font smaller,
+       down to a readable minimum; if a wisdom still needs more room the window grows taller instead of
+       cutting the text. The same fit now also runs in the screen saver and the live mihrab, where a fixed
+       font size used to override it. */
     function fitHekam(hb, scale, pos, ssActive) {
         try {
             var txt = hb.querySelector(".hekam-w__text");
             if (!txt) return;
             var vw = global.innerWidth || 1920, vh = global.innerHeight || 1080;
+            var mihrab = !!(document.body && document.body.classList.contains("mihrab-active"));
             var centered = ssActive || pos === "above-dock" || pos === "top-center" || pos === "bottom-center";
-            hb.style.maxWidth = Math.round(vw * (centered ? 0.6 : 0.42)) + "px";
+            var fs = mihrab ? 28 : ssActive ? 23 : Math.round(24 * (scale / 100));
+            var min = Math.max(15, Math.round(vh / 72));
+            var maxH = Math.round(vh * (ssActive ? 0.5 : 0.33));
+            var wNorm = Math.round(vw * (centered ? 0.6 : 0.42));
+            var wWide = Math.round(vw * (centered ? 0.92 : 0.8));
             hb.style.maxHeight = "";
-            var maxH = Math.round(vh * 0.33);
-            var fs = Math.round(24 * (scale / 100)), min = Math.max(14, Math.round(vh / 60));
+            hb.style.maxWidth = wNorm + "px";
             txt.style.fontSize = fs + "px";
+            /* 1) widen the window before touching the font */
+            if (hb.offsetHeight > maxH && wWide > wNorm) hb.style.maxWidth = wWide + "px";
+            /* 2) shrink the font, never below the readable minimum */
             while (fs > min && hb.offsetHeight > maxH) {
                 fs -= 1;
                 txt.style.fontSize = fs + "px";
             }
+            /* 3) fallback: still tall at the minimum font - the window stays tall; nothing is ever cut */
         } catch (e) {}
     }
     function rotateHekam() {
