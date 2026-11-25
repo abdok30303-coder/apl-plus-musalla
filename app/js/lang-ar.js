@@ -819,6 +819,8 @@ window.APL_LANG_AR_EXTRA = {
     "Syncs Azan prayer and task audio files to persistent root storage (/opt/usr/home/owner/APL/bg/sounds/).": "يتحقق من وجود ملفات الأذان والمهام وينسخها لذاكرة الروت الدائمة.",
     "Sound files verified and synchronized": "تم فحص ملفات الصوت ومزامنتها بنجاح",
     "Play a Test Alert": "تشغيل تنبيه تجريبي بالخلفية",
+    "✗ Alert Sound Files: Not on the TV yet": "✗ ملفات صوت التنبيه: لسه مش على التلفزيون",
+    "Why: {w}": "السبب: {w}",
     "Plays the short alert sound through the root supervisor daemon even outside the launcher.": "يشغل تنبيهاً تجريبياً عبر ديمون الروت حتى أثناء فتح تطبيقات أخرى.",
     "Test alert sent to background daemon": "تم إرسال التنبيه التجريبي للديمون",
     "Checking Vetro, daemon and Pulse…": "جارٍ فحص الروت والديمون وخادم الصوت…",

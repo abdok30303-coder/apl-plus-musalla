@@ -213,6 +213,12 @@
     APL.prayerAlert = {
         play: play,
         test: function (key) { play(key || "isha"); },
+        /* v8.7.35: the Background Test. The TV's root daemon waits and plays, so it works with another app in front. */
+        testLater: function (key, seconds) {
+            var k = FILES[key] ? key : "dhuhr";
+            if (!APL.bgAudio || !APL.bgAudio.playAlertIn) return Promise.resolve(false);
+            return APL.bgAudio.playAlertIn(k, seconds || 8, volume(), sys.pref("radioDuringAlert") !== false);
+        },
         isPlaying: function () { return !!playingKey; },
         filesPresent: function () {
             var ok = {};

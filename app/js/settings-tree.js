@@ -1070,16 +1070,13 @@
                                 }
                             } },
                             { label: APL.t("Play in 8s (Background Test)"), run: function () {
-                                APL.toast(APL.t("Open YouTube or an HDMI input now… alert will play in 8 seconds"), true);
-                                setTimeout(function () {
-                                    if (APL.bgAudio && APL.bgAudio.playAlert) {
-                                        APL.bgAudio.playAlert("dhuhr").then(function (ok) {
-                                            if (APL.toast) APL.toast(ok ? APL.t("Background alert played successfully") : APL.t("Daemon could not play alert"), ok);
-                                        }).catch(function (e) {
-                                            if (APL.toast) APL.toast((e && e.message) || APL.t("Alert failed"));
-                                        });
-                                    }
-                                }, 8000);
+                                /* v8.7.35: the TV's root daemon waits and plays, so it works while another app is in front */
+                                if (!APL.prayerAlert || !APL.prayerAlert.testLater) { APL.toast(APL.t("Daemon could not play alert")); return; }
+                                APL.prayerAlert.testLater("dhuhr", 8).then(function (ok) {
+                                    if (APL.toast) APL.toast(ok ? APL.t("Open YouTube or an HDMI input now… alert will play in 8 seconds") : APL.t("Daemon could not play alert"), ok);
+                                }, function (e) {
+                                    if (APL.toast) APL.toast((e && e.message) || APL.t("Alert failed"));
+                                });
                             } }
                         ]
                     });
@@ -1088,11 +1085,13 @@
                 vetro(action(APL.t("Alert Readiness Check"), function () {
                     APL.toast(APL.t("Checking Vetro, daemon and Pulse…"), true);
                     if (APL.bgAudio && APL.bgAudio.health) {
-                        APL.bgAudio.health().then(function (st) {
+                        Promise.all([APL.bgAudio.health(), APL.bgAudio.soundsOk ? APL.bgAudio.soundsOk() : Promise.resolve(true)]).then(function (both) {
+                            var st = both[0], soundsGood = !!both[1];
                             var msg = (st.keeper ? APL.t("✓ Root Alert Keeper: Running & Ready") : APL.t("✗ Root Alert Keeper: Stopped")) + "\n" +
                                       (st.supervisor ? APL.t("✓ Audio Supervisor: Connected") : APL.t("✗ Audio Supervisor: Disconnected")) + "\n" +
                                       (st.pulse ? APL.t("✓ PulseAudio Sound Socket: {p}", { p: st.pulse }) : APL.t("✗ PulseAudio Sound Socket: Missing")) + "\n" +
-                                      APL.t("✓ Alert Sound Files: Verified & Synced") + "\n" +
+                                      (soundsGood ? APL.t("✓ Alert Sound Files: Verified & Synced") : APL.t("✗ Alert Sound Files: Not on the TV yet")) + "\n" +
+                                      (st.why ? APL.t("Why: {w}", { w: String(st.why).slice(0, 120) }) + "\n" : "") +
                                       APL.t("• Alert Engine Status: Standby (Active 24/7)") + "\n" +
                                       APL.t("• HDMI Audio Route: Recovers automatically on switch");
                             APL.alert({ title: APL.t("Alert Readiness Check"), message: msg, buttons: [{ label: APL.t("OK") }] });

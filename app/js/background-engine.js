@@ -15,7 +15,7 @@
     var PERSIST_SCRIPT = PERSIST_DIR + "/bg-daemon.sh";
     var RUN_SCRIPT = "/run/apl-bg/bg-daemon.sh";
     var DATA_DIR = PERSIST_DIR + "/bg";
-    var DAEMON_VERSION = "4.12";
+    var DAEMON_VERSION = "4.13";
 
     var installed = false, installing = null, checking = null, queues = {};
     var soundsChecked = false, soundsSyncing = null, soundsFallbackTried = false;
@@ -217,14 +217,18 @@
         });
     }
 
+    var availOkAt = 0;
     function available() {
         if (preview()) return Promise.resolve(false);
+        /* v8.7.35: a good answer is reused for 5 minutes, so a test alert does not wait for one more round trip to Vetro */
+        if (availOkAt && Date.now() - availOkAt < 300000) return Promise.resolve(true);
         if (checking) return checking;
         checking = sys.exec("command -v gst-launch-1.0 >/dev/null 2>&1 || command -v gst-launch >/dev/null 2>&1").then(function (r) {
             checking = null;
             if (!r || typeof r.ok !== "boolean" || r.exit_code === undefined) { state.why = "vetro unreachable (port 8099)"; return false; }
             if (r.ok !== true || Number(r.exit_code) !== 0) { state.why = "no gstreamer"; return false; }
             state.why = "";
+            availOkAt = Date.now();
             return true;
         }, function (e) {
             checking = null;
@@ -448,6 +452,26 @@
         });
     }
 
+    /* v8.7.35: this TV's root relay can drop the text a command prints, which made every line of the readiness check
+       show a red X even when the keeper was running. When the daemon's reply is empty the same facts are read with
+       yes/no probes (process id files and the Pulse socket), which do not depend on printed text. */
+    function healthByProbes() {
+        var out = { keeper: false, supervisor: false, alert: false, hdmi: false, pulse: "", probed: true };
+        return execCheck("p=$(cat '" + DATA_DIR + "/alert-keeper.pid' 2>/dev/null | head -1); test -n \"$p\" && kill -0 \"$p\" 2>/dev/null").then(function (k) {
+            out.keeper = k;
+            return execCheck("p=$(cat /run/apl-bg/audio.sup /tmp/apl-bg/audio.sup 2>/dev/null | head -1); test -n \"$p\" && kill -0 \"$p\" 2>/dev/null");
+        }).then(function (s) {
+            out.supervisor = s;
+            return execCheck("p=$(cat /run/apl-bg/alert.pid /tmp/apl-bg/alert.pid 2>/dev/null | head -1); test -n \"$p\" && kill -0 \"$p\" 2>/dev/null");
+        }).then(function (a) {
+            out.alert = a;
+            return execCheck("find /run /var/run /tmp -type s -path '*/pulse*/native' -print -quit 2>/dev/null | grep -q .");
+        }).then(function (pl) {
+            out.pulse = pl ? "found" : "";
+            return out;
+        });
+    }
+
     function health() {
         if (preview()) return Promise.resolve({ keeper: false, supervisor: false, alert: false });
         return install().then(function () {
@@ -455,8 +479,33 @@
         }).then(function (line) {
             var out = {}, re = /([a-z]+)=([^\s]+)/g, m;
             while ((m = re.exec(line || ""))) out[m[1]] = m[2];
-            return { keeper: out.keeper === "1", supervisor: out.supervisor === "1", alert: out.alert === "1", hdmi: out.hdmi === "1", pulse: out.pulse || "" };
-        }, function () { return { keeper: false, supervisor: false, alert: false, pulse: "" }; });
+            if (out.keeper === undefined) return healthByProbes();
+            return { keeper: out.keeper === "1", supervisor: out.supervisor === "1", alert: out.alert === "1", hdmi: out.hdmi === "1", pulse: (out.pulse && out.pulse !== "none") ? out.pulse : "" };
+        }).then(null, function (e) {
+            return healthByProbes().then(function (h) { h.why = (e && e.message) || "daemon not installed"; return h; }, function () {
+                return { keeper: false, supervisor: false, alert: false, pulse: "", why: (e && e.message) || "vetro" };
+            });
+        });
+    }
+
+    function soundsOk() {
+        if (preview()) return Promise.resolve(false);
+        return install().then(function () { return execCheck(runner("sounds-ok") + " >/dev/null 2>&1"); }, function () { return false; });
+    }
+
+    /* v8.7.35: play a test alert after N seconds. The wait runs in the root daemon, because the launcher's own timer
+       stops as soon as another app (YouTube, an HDMI input) comes in front, so a timer here never fired there. */
+    function playAlertIn(key, seconds, volume, pauseRadio) {
+        if (preview()) return Promise.reject(new Error("preview"));
+        var vol = isFinite(volume) ? String(Math.max(0.1, Math.min(1.5, Number(volume))).toFixed(2)) : cachedCfg.alertVol;
+        var pr = pauseRadio === false ? "0" : "1";
+        var secs = Math.max(1, Math.min(120, Math.floor(Number(seconds) || 8)));
+        queues["alert-in"] = null;
+        return install().then(ensureSounds).then(function () {
+            return command("alert-in", secs + " " + safeArg(key || "dhuhr") + " " + safeArg(vol) + " " + safeArg(pr));
+        }).then(function (out) {
+            return !out || /^SCHEDULED/.test(out || "");
+        });
     }
 
     function repairAudio() { return command("repair"); }
@@ -617,6 +666,8 @@
         status: status,
         state: function () { return state; },
         playAlert: playAlert,
+        playAlertIn: playAlertIn,
+        soundsOk: soundsOk,
         test: function (key) { return playAlert(key || "dhuhr"); },
         syncPrayerSchedule: syncPrayerSchedule,
         syncTaskSchedule: syncTaskSchedule,

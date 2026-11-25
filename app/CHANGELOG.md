@@ -1,3 +1,11 @@
+## 8.7.35
+
+- Prayer alerts and the test alert behind other apps: in 8.7.33 and 8.7.34 the background player could not install on the TV (the copy inside the launcher was 4.11 while the launcher required 4.12), so the keeper and the supervisor never started and the alert only played from the launcher after a long wait. The embedded player is now 4.13, and tools/check-daemon-embed.py stops a release when the two differ.
+- Background Test (8 s): the wait now runs inside the TV's root daemon, so the sound plays with YouTube or an HDMI input in front (the launcher's own timer stops behind another app).
+- The alert starts sooner: no sound-route repair before the sound, the working Pulse folder is remembered, and a pactl call that waits on a dead socket is cut after 5 s.
+- Alert Readiness Check: when the TV's root relay drops printed text, the keeper, supervisor and Pulse lines are read with yes/no probes instead of showing red marks; the sound-files line is checked for real and no longer always shows a tick.
+- Untested on a physical TV.
+
 ## 8.7.34
 
 - Install Update: every failure now names the step (1 Vetro, 2 launcher folder, 3 tools on the TV, 4 download, 5 file check, 6 unpack, 7 copy) and the reason, with the technical detail under it, and keeps the last result in Settings > Support > Launcher Update. It checks the TV first, finds the launcher folder by itself, sends no multi-line command or backslash through Vetro, tries curl, wget and busybox, unpacks with unzip, busybox, bsdtar or python, works in the flash folder instead of RAM, and checks the file against its published SHA-256.

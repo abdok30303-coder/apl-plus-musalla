@@ -1,6 +1,6 @@
 #!/bin/sh
 # ============================================================
-# APL Vetro Background Audio & Alert Supervisor Daemon (v4.12)
+# APL Vetro Background Audio & Alert Supervisor Daemon (v4.13)
 #   - Runs independently of the launcher UI through Vetro's root agent.
 #   - Keeps the alert schedule and a detached root keeper alive across apps,
 #     YouTube, Samsung TV+, IPTV and HDMI inputs.
@@ -9,7 +9,7 @@
 #   - Records compact, on-device diagnostics at each foreground audio handoff.
 # ============================================================
 
-DAEMON_VER="4.12"
+DAEMON_VER="4.13"
 trap '' HUP 2>/dev/null || true
 
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
@@ -103,6 +103,7 @@ find_pulse_dir() {
     for pdir in /run/user/*/pulse /var/run/user/*/pulse /run/pulse /var/run/pulse /tmp/pulse-* /home/*/.config/pulse; do
         if pulse_socket_usable "$pdir"; then
             APL_PULSE_DIR="$pdir"
+            echo "$pdir" > "$RUNDIR/pulse.dir" 2>/dev/null
             echo "$pdir"
             return 0
         fi
@@ -111,12 +112,31 @@ find_pulse_dir() {
         pdir=${sock%/native}
         if pulse_socket_usable "$pdir"; then
             APL_PULSE_DIR="$pdir"
+            echo "$pdir" > "$RUNDIR/pulse.dir" 2>/dev/null
             echo "$pdir"
             return 0
         fi
     done
     APL_PULSE_DIR=""
+    rm -f "$RUNDIR/pulse.dir" 2>/dev/null
     return 1
+}
+
+# v4.13: the alert must start fast. The full search above runs "pactl info" against every candidate folder and
+# can wait on a dead socket; this one trusts the folder that worked last time (its socket must still exist).
+# If playing through it fails, the slower full search is used by the fallback routes.
+find_pulse_dir_fast() {
+    fp=$(cat "$RUNDIR/pulse.dir" 2>/dev/null)
+    if [ -n "$fp" ] && [ -S "$fp/native" ]; then echo "$fp"; return 0; fi
+    find_pulse_dir
+}
+
+# v4.13: a pactl that waits on a dead Pulse socket must not freeze the alert (old busybox: "timeout -t N").
+PTMO=""
+pick_timeout() {
+    if command -v timeout >/dev/null 2>&1; then
+        if timeout 1 true >/dev/null 2>&1; then PTMO="timeout 5"; elif timeout -t 1 true >/dev/null 2>&1; then PTMO="timeout -t 5"; fi
+    fi
 }
 
 # Keep our APL-owned event stream audible when a foreground app or HDMI transition
@@ -943,25 +963,26 @@ run_single_alert_cmd() {
 
 play_pulse_sample() {
     wav="$1"
-    pdir=$(find_pulse_dir 2>/dev/null || echo "")
+    pdir=$(find_pulse_dir_fast 2>/dev/null || echo "")
+    pick_timeout
     [ -n "$pdir" ] && [ -f "$wav" ] || return 1
     sample="apl-alert-$$"
     penv="PULSE_RUNTIME_PATH='$pdir' PULSE_SERVER='unix:$pdir/native'"
     # Unmute and set default sink volume if possible
-    sink=$(PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" pactl get-default-sink 2>/dev/null)
-    [ -n "$sink" ] || sink=$(PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" pactl info 2>/dev/null | awk -F': ' '/Default Sink:/{print $2; exit}')
+    sink=$(PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" $PTMO pactl get-default-sink 2>/dev/null)
+    [ -n "$sink" ] || sink=$(PULSE_RUNTIME_PATH="$pdir" PULSE_SERVER="unix:$pdir/native" $PTMO pactl info 2>/dev/null | awk -F': ' '/Default Sink:/{print $2; exit}')
     if [ -n "$sink" ]; then
-        sh -c "$penv pactl set-sink-mute '$sink' 0" >/dev/null 2>&1 || true
-        sh -c "$penv pactl set-sink-volume '$sink' 100%" >/dev/null 2>&1 || true
+        sh -c "$penv $PTMO pactl set-sink-mute '$sink' 0" >/dev/null 2>&1 || true
+        sh -c "$penv $PTMO pactl set-sink-volume '$sink' 100%" >/dev/null 2>&1 || true
     fi
-    sh -c "$penv pactl upload-sample '$wav' '$sample'" >>"$LOGFILE" 2>&1 || return 1
+    sh -c "$penv $PTMO pactl upload-sample '$wav' '$sample'" >>"$LOGFILE" 2>&1 || return 1
     if [ -n "$sink" ]; then
-        sh -c "$penv pactl play-sample '$sample' '$sink'" >>"$LOGFILE" 2>&1 || sh -c "$penv pactl play-sample '$sample'" >>"$LOGFILE" 2>&1 || {
+        sh -c "$penv $PTMO pactl play-sample '$sample' '$sink'" >>"$LOGFILE" 2>&1 || sh -c "$penv $PTMO pactl play-sample '$sample'" >>"$LOGFILE" 2>&1 || {
             sh -c "$penv pactl remove-sample '$sample'" >/dev/null 2>&1
             return 1
         }
     else
-        sh -c "$penv pactl play-sample '$sample'" >>"$LOGFILE" 2>&1 || {
+        sh -c "$penv $PTMO pactl play-sample '$sample'" >>"$LOGFILE" 2>&1 || {
             sh -c "$penv pactl remove-sample '$sample'" >/dev/null 2>&1
             return 1
         }
@@ -1047,7 +1068,6 @@ play_file_blocking() {
                         fi
                         ;;
                 esac
-                repair_pulse_streams
                 if run_single_alert_cmd "$cmd"; then
                     repair_pulse_streams
                     return 0
@@ -1122,7 +1142,6 @@ run_alert_worker() {
         cfile=$(find_sound_file "ramadan-cannon")
         if [ -n "$cfile" ] && [ -f "$cfile" ]; then
             log_msg "playing Ramadan cannon before Maghrib Adhan: $cfile"
-            repair_pulse_streams
             # v4.10: play_file_blocking picks its wav from $key. While the key was still "maghrib_ramadan" it matched no
             # case and fell back to the task chime, so the cannon was never heard (the task alert sounded instead).
             key="ramadan-cannon"
@@ -1134,7 +1153,6 @@ run_alert_worker() {
 
     sfile=$(find_sound_file "$key")
     log_msg "playing alert key=$key file=${sfile:-tone} paused_radio=$did_pause"
-    repair_pulse_streams
     played=0
     if play_file_blocking "$sfile" "$vol"; then
         played=1
@@ -1159,6 +1177,22 @@ run_alert_worker() {
     cleanup_alert_worker
     trap - HUP INT TERM
     exit 0
+}
+
+# v4.13: a test that must play a few seconds later, while another app is in front. The wait happens here, in the
+# root process, because the launcher's own timer stops when the launcher goes behind another app.
+run_alert_later() {
+    secs="$1"; key="$2"; vol="$3"; pause_rad="$4"
+    case "$secs" in ''|*[!0-9]*) secs=8 ;; esac
+    [ "$secs" -gt 120 ] && secs=120
+    log_msg "delayed test alert key=$key in ${secs}s"
+    sleep "$secs"
+    run_alert_worker "$key" "$vol" "$pause_rad"
+}
+
+trigger_alert_later() {
+    daemon_spawn _alert_later "$1" "$2" "$3" "$4"
+    echo "SCHEDULED $2 in $1"
 }
 
 trigger_alert_bg() {
@@ -1547,7 +1581,8 @@ case "$1" in
     hdmi-recover)  do_hdmi_recover ;;
     status)        do_status ;;
     tick|heartbeat) do_tick ;;
-    alert)           start_keeper; trigger_alert_bg "$2" "$3" "$4" ;;
+    alert)           trigger_alert_bg "$2" "$3" "$4"; start_keeper ;;
+    alert-in)        trigger_alert_later "$2" "$3" "$4" "$5"; start_keeper ;;
     repair)           repair_pulse_streams; echo REPAIRED ;;
     health)           do_health ;;
     diagnostic)       do_diagnostic ;;
@@ -1564,6 +1599,7 @@ case "$1" in
     _keeper)         keeper_loop ;;
     _remap_watcher)  remap_loop ;;
     _alert_worker)   run_alert_worker "$2" "$3" "$4" ;;
+    _alert_later)    run_alert_later "$2" "$3" "$4" "$5" ;;
     *)
         echo "USAGE start|stop|pause|resume|ensure|hdmi-recover|status|tick|heartbeat|alert|repair|health|diagnostic|sounds-ok|sounds-sync|last-fired|version|log"
         ;;
