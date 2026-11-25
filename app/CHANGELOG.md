@@ -1,3 +1,9 @@
+## 8.7.38
+
+- Hijri date a day ahead (16 Jumada al-Akhira instead of 15): for Egypt the calendar follows its own crescent rule, which only checks the moon's age at sunset. On the evening of 9 November 2026 the moon set BEFORE the sun, so no sighting was possible anywhere, but the rule counted it and started Jumada al-Akhira on 10 November; Dar al-Ifta announced Wednesday 11 November. The same kind of miss had shifted Dhu al-Qa'da 1447 (19 April; the rule said 18) and Rabi al-Thani 1448 (13 September; the rule said 12).
+- The month starts announced by Dar al-Ifta are now written into the calendar (Ramadan 1447 through Jumada al-Akhira 1448, each checked against the announcements) and always win over the estimate. Months not announced yet stay on the crescent estimate, marked "≈" until the announcement. The Hijri Date Adjustment setting and the hand corrections still work on top.
+- Checked in code against every announced Egyptian month start from 19 February to 25 November 2026: all match. Untested on a physical TV.
+
 ## 8.7.37
 
 - Ramadan cannon test starts right away: the cannon script looked for the Pulse sound route with pactl probes that could each wait on a dead socket (about 8 s before the sound on the TV). The Pulse folder the background player last verified (pulse.dir) is tried first, and every pactl probe is cut after 5 s. The automatic iftar cannon is unchanged (it still gives the adhan priority).

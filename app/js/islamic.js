@@ -1,5 +1,5 @@
 /* ============================================================
-   islamic.js — the Hijri date and the Islamic occasions (v1.2.50).
+   islamic.js — the Hijri date and the Islamic occasions (v1.2.51).
 
    What it gives the rest of the launcher:
      APL.islamic.hijriToday()      today's Hijri date { y, m, d, exact }
@@ -16,8 +16,9 @@
    Where the dates come from (Settings > Hijri Calendar Source: Automatic by country, or one picked):
      0. A month corrected by hand (Settings > Correct Ramadan & Eid dates): that start date, shifted
         by the days given. Always exact.
-     1. Egypt (the Automatic choice for Egypt): the crescent rule below, from a firm anchor
-        (1 Ramadan 1447 = 19 February 2026, announced by Dar al-Ifta).
+     1. Egypt (the Automatic choice for Egypt): the month starts announced by Dar al-Ifta once they
+        are published (ANNOUNCED below), then the crescent rule below for the months not announced
+        yet, from a firm anchor (1 Ramadan 1447 = 19 February 2026, announced by Dar al-Ifta).
         Other countries: the Hijri date AlAdhan sends with the prayer times (calendarMethod HJCoSA =
         Saudi announcements, UAQ, or DIYANET for Turkey; saved on the screen for this month and the next
         one, see js/prayer.js), renewed weekly and every 12 hours around a month change.
@@ -200,6 +201,22 @@
     /* The months by the crescent rule, one after the other from the anchor: [{ y, m, start, len, firm, endFirm }].
        firm = the start of this month was decided with the moon clearly on one side of the limit (the anchor is announced). */
     var ANCHOR = { y: 1447, m: 9, start: jdn(2026, 2, 19) };
+
+    /* Egyptian month starts announced by Dar al-Ifta, added as they are published: "y-m" -> first day (JDN).
+       The crescent rule alone missed Dhu al-Qa'da 1447, Rabi al-Thani 1448 and Jumada al-Akhira 1448
+       (it only checks the moon's age at sunset; on 9 November 2026 the moon even set before the sun),
+       so an announced start wins over the rule and is exact. */
+    var ANNOUNCED = {
+        "1447-10": jdn(2026, 3, 20),
+        "1447-11": jdn(2026, 4, 19),
+        "1447-12": jdn(2026, 5, 18),
+        "1448-1": jdn(2026, 6, 16),
+        "1448-2": jdn(2026, 7, 15),
+        "1448-3": jdn(2026, 8, 14),
+        "1448-4": jdn(2026, 9, 13),
+        "1448-5": jdn(2026, 10, 12),
+        "1448-6": jdn(2026, 11, 11)
+    };
     var rule = { sig: "", list: [] };
     function ruleList(w, upto) {
         var sig = w.lat.toFixed(2) + "," + w.lon.toFixed(2);
@@ -231,15 +248,17 @@
 
     /* The months from the one that holds day j, `count` of them: { y, m, start, len, exact }, with the corrections applied:
          1. a month corrected by hand: shifted by that many days, exact;
-         2. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
-         3. the crescent rule: exact once the month has begun and its start was firm. */
+         2. an Egyptian month start announced by Dar al-Ifta (ANNOUNCED above): exact;
+         3. the AlAdhan Hijri dates saved on the screen (every source but Egypt's own rule): exact;
+         4. the crescent rule: exact once the month has begun and its start was firm. */
     function monthsFrom(j, count) {
         var w = where(), src = source(), saved = src === "egypt" ? { known: {} } : savedMonths(), fx = fixes(), i;
         if (j < ANCHOR.start - 2) return tabularMonths(j, count, w);
         var L = ruleList(w, j + (count + 3) * 31), eff = [];
         for (i = 0; i < L.length - 1; i++) {
             var r = L[i], key = r.y + "-" + r.m, s = r.start, ex = !!(r.firm && r.start <= j), d = parseInt(fx[key], 10);
-            if (saved.known[key] !== undefined && Math.abs(saved.known[key] - r.start) <= 3) { s = saved.known[key]; ex = true; }
+            if (ANNOUNCED[key] !== undefined) { s = ANNOUNCED[key]; ex = true; }
+            if (saved.known[key] !== undefined && Math.abs(saved.known[key] - s) <= 3) { s = saved.known[key]; ex = true; }
             if (d) { s += Math.max(-2, Math.min(2, d)); ex = true; }
             eff.push({ y: r.y, m: r.m, start: s, exact: ex });
         }
