@@ -5981,7 +5981,31 @@ window.APL_CATALOG = [
     function hekamFullMode() {
         return APL.sys.pref("prayerWidgetFull") === true && APL.sys.pref("prayerWidgetShow") === "hekam";
     }
+    /* v8.7.55: English UI: the wisdom pool is data/hekam/en.json (English only, read on demand); the Kalem Tayeb library stays Arabic-only.
+       If the file cannot be read the Arabic library is the fallback. */
+    var hkEnLoading = false;
+    function hkTxt(it) { return String(it.text || "") + (APL.lang === "en" && it.ref ? " \u2014 " + it.ref : ""); }
     function loadHekam() {
+        if (hekamLoading || hekamCache || hkIndex || hkIndexLoading || hkEnLoading) return;
+        if (APL.lang === "en") {
+            hkEnLoading = true;
+            getJ("data/hekam/en.json", function (e, d) {
+                hkEnLoading = false;
+                if (!e && d && d.items && d.items.length) {
+                    hekamCache = { day: dayKey(), items: d.items };
+                    hekamPick();
+                    lastSig = null;
+                    if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                    paint();
+                    return;
+                }
+                loadHekamAr();
+            });
+            return;
+        }
+        loadHekamAr();
+    }
+    function loadHekamAr() {
         if (hekamLoading || hekamCache || hkIndex || hkIndexLoading) return;
         hkIndexLoading = true;
         getJ("data/hekam/sections.json", function (e, d) {
@@ -6073,7 +6097,7 @@ window.APL_CATALOG = [
             if (hekamBox && hekamBox.parentNode) { hekamBox.parentNode.removeChild(hekamBox); hekamBox = null; }
             /* v8.7.33: the whole wisdom shows here too - a longer wisdom takes a smaller font and a wider
                row instead of the old two-line cut with "..." */
-            var tlen = String(it.text || "").length;
+            var tlen = hkTxt(it).length;
             var sizeCls = tlen > 220 ? " hk-long" : tlen > 150 ? " hk-mid" : "";
             var html = '<div class="statusx__card hc__row hc__row--hekam' + (sizeCls ? " hk-wide" : "") + '" style="--hekam-s:' + (scale / 100) + '">' +
                 '<div class="hc__cell">' +
@@ -6081,7 +6105,7 @@ window.APL_CATALOG = [
                     '<span class="hc__label hc__label--hekam">' + APL.enx("حكمة اليوم") + '</span>' +
                 '</div>' +
                 '<div class="hc__date hc__date--hekam">' +
-                    '<span class="hc__greg hc__greg--hekam hc__text--green' + sizeCls + '">' + esc(it.text) + '</span>' +
+                    '<span class="hc__greg hc__greg--hekam hc__text--green' + sizeCls + '"' + (APL.lang === "en" ? ' dir="ltr"' : '') + '>' + esc(hkTxt(it)) + '</span>' +
                 '</div>' +
             '</div>';
             rows.hekam = { html: html, order: 25 };
@@ -6097,7 +6121,7 @@ window.APL_CATALOG = [
         hb.className = "hekam-widget" + (ssActive ? "" : " hekam-widget--" + pos) + " hekam-widget--color-" + color;
         hb.style.setProperty("--hekam-scale", String(scale / 100));
         hb.innerHTML = '<div class="hekam-w__inner">' +
-            '<div class="hekam-w__text">' + esc(it.text) + '</div>' +
+            '<div class="hekam-w__text"' + (APL.lang === "en" ? ' dir="ltr" style="text-align:left"' : '') + '>' + esc(hkTxt(it)) + '</div>' +
         '</div>';
         fitHekam(hb, scale, pos, ssActive);
     }
@@ -25383,6 +25407,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.55: واجهة إنجليزي: ودجت رمضان بالإنجليزي بالكامل، وودجت الحكمة بيسحب من مجموعة إنجليزي جديدة (٤٥٤ حكمة). العربي زي ما هو.",
         "✔ 8.7.54: لما تكون على أول صف في الرئيسية، زر الرجوع مرة واحدة يفتح مركز التحكم.",
         "✔ 8.7.54: لوحة مركز التحكم بقت زجاج شفاف (الخلفية بتتغبّش ورا اللوحة زي ستارة الموبايل)، بحواف مدوّرة، وكل الأزرار بتظهر كاملة من غير ما الصف الأخير يتقطع.",
         "✔ 8.7.53: تصحيح رمضان أو العيد بالإيد بقى أقوى من التواريخ اللي بتيجي أونلاين، وتحديث أونلاين جاي مبيحركوش.",
@@ -25428,6 +25453,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.55: English UI: the Ramadan widget is fully English and the wisdom widget uses a new English pool (454 items). Arabic is unchanged.",
         "✔ 8.7.54: on the first row of the Home Screen, Back opens the Control Center in one press.",
         "✔ 8.7.54: Control Center is now frosted glass over a blurred Home Screen, with rounded corners, and every tile fits on screen (the last row is no longer cut off).",
         "✔ 8.7.53: a Ramadan or Eid date you correct by hand now wins over the online dates; a later online update does not move it.",
@@ -26272,13 +26298,14 @@ window.APL_DEVICES = [
     function status(now) {
         var t = times();
         if (!t.fajr || !t.maghrib) return "";
-        if (now < t.fajr) return "السحور ينتهي بعد " + hm(t.fajr - now);
-        if (now < t.maghrib) return "الإفطار بعد " + hm(t.maghrib - now);
-        if (t.isha && now < t.isha) return "العشاء بعد " + hm(t.isha - now);
-        if (t.isha && now < t.isha + 90 * 60000) return "وقت التراويح";
+        var A = APL.lang === "ar";
+        if (now < t.fajr) return (A ? "السحور ينتهي بعد " : "Suhoor ends in ") + hm(t.fajr - now);
+        if (now < t.maghrib) return (A ? "الإفطار بعد " : "Iftar in ") + hm(t.maghrib - now);
+        if (t.isha && now < t.isha) return (A ? "العشاء بعد " : "Isha in ") + hm(t.isha - now);
+        if (t.isha && now < t.isha + 90 * 60000) return A ? "وقت التراويح" : "Taraweeh time";
         var n = null;
         try { n = APL.prayer.next(); } catch (e) { n = null; }
-        return n && n.ms ? "الفجر بعد " + hm(n.ms) : "";
+        return n && n.ms ? (A ? "الفجر بعد " : "Fajr in ") + hm(n.ms) : "";
     }
 
     function ensureUi() {
@@ -26374,9 +26401,9 @@ window.APL_DEVICES = [
         if (global.document.hidden) return;
         var t = times();
         if (!t.fajr || !t.maghrib) return;
-        if (S.sehri && now >= t.fajr - 45 * 60000 && now < t.fajr - 5 * 60000) once("sehri", function () { say("🌙 باقي " + hm(t.fajr - now) + " على الفجر: وقت السحور"); });
-        if (now >= t.maghrib && now < t.maghrib + 5 * 60000) once("iftar", function () { say("🌙 حان موعد الإفطار، تقبّل الله صيامكم"); });
-        if (S.tar && t.isha && now >= t.isha + 15 * 60000 && now < t.isha + 60 * 60000) once("tar", function () { say("🌙 حان وقت صلاة التراويح"); });
+        if (S.sehri && now >= t.fajr - 45 * 60000 && now < t.fajr - 5 * 60000) once("sehri", function () { say(APL.lang === "ar" ? "🌙 باقي " + hm(t.fajr - now) + " على الفجر: وقت السحور" : "🌙 " + hm(t.fajr - now) + " until Fajr: time for suhoor"); });
+        if (now >= t.maghrib && now < t.maghrib + 5 * 60000) once("iftar", function () { say(APL.lang === "ar" ? "🌙 حان موعد الإفطار، تقبّل الله صيامكم" : "🌙 Time to break your fast. May Allah accept your fasting"); });
+        if (S.tar && t.isha && now >= t.isha + 15 * 60000 && now < t.isha + 60 * 60000) once("tar", function () { say(APL.lang === "ar" ? "🌙 حان وقت صلاة التراويح" : "🌙 Time for Taraweeh prayer"); });
     }
 
     function tick() {
@@ -26406,7 +26433,7 @@ window.APL_DEVICES = [
                 { label: "تنبيه التراويح: " + (S.tar ? "شغّال" : "مقفول"), run: function () { S.tar = !S.tar; save(); panel(3); } },
                 { label: "ختمة رمضان (٣٠ يوم)", run: function () { if (kh) { kh.setPlan(21); say("هدف الختمة: ٢١ صفحة في اليوم"); } panel(4); } },
                 { label: "جرّبه دلوقتي (مدفع + تنبيه)", run: function () {
-                    say("🌙 حان موعد الإفطار، تقبّل الله صيامكم");
+                    say(APL.lang === "ar" ? "🌙 حان موعد الإفطار، تقبّل الله صيامكم" : "🌙 Time to break your fast. May Allah accept your fasting");
                     if (APL.prayerAlert && APL.prayerAlert.play) {
                         APL.prayerAlert.play("maghrib_ramadan");
                     } else {
@@ -26570,9 +26597,9 @@ window.APL_DEVICES = [
         el.querySelector(".rw__kind").textContent = kindTxt;
         el.querySelector(".rw__day").textContent = dayTxt;
         var tx = el.querySelector(".rw__text"), tr = el.querySelector(".rw__tr");
-        tx.textContent = it.ar; tx.setAttribute("dir", "rtl");
-        if (ar) { tr.textContent = ""; tr.style.display = "none"; }
-        else { tr.textContent = it.en; tr.style.display = "block"; tr.setAttribute("dir", "ltr"); }
+        /* v8.7.55: English UI: the widget is fully English (the English text is the main text, no Arabic, same phase rules) */
+        tx.textContent = ar ? it.ar : (it.en || it.ar); tx.setAttribute("dir", ar ? "rtl" : "ltr");
+        tr.textContent = ""; tr.style.display = "none";
         el.querySelector(".rw__src").textContent = ar ? it.sar : it.sen;
         rwGap(); rwFit();
         global.setTimeout(function () { rwGap(); rwFit(); }, 400);

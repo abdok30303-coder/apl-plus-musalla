@@ -220,7 +220,31 @@
     function hekamFullMode() {
         return APL.sys.pref("prayerWidgetFull") === true && APL.sys.pref("prayerWidgetShow") === "hekam";
     }
+    /* v8.7.55: English UI: the wisdom pool is data/hekam/en.json (English only, read on demand); the Kalem Tayeb library stays Arabic-only.
+       If the file cannot be read the Arabic library is the fallback. */
+    var hkEnLoading = false;
+    function hkTxt(it) { return String(it.text || "") + (APL.lang === "en" && it.ref ? " \u2014 " + it.ref : ""); }
     function loadHekam() {
+        if (hekamLoading || hekamCache || hkIndex || hkIndexLoading || hkEnLoading) return;
+        if (APL.lang === "en") {
+            hkEnLoading = true;
+            getJ("data/hekam/en.json", function (e, d) {
+                hkEnLoading = false;
+                if (!e && d && d.items && d.items.length) {
+                    hekamCache = { day: dayKey(), items: d.items };
+                    hekamPick();
+                    lastSig = null;
+                    if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                    paint();
+                    return;
+                }
+                loadHekamAr();
+            });
+            return;
+        }
+        loadHekamAr();
+    }
+    function loadHekamAr() {
         if (hekamLoading || hekamCache || hkIndex || hkIndexLoading) return;
         hkIndexLoading = true;
         getJ("data/hekam/sections.json", function (e, d) {
@@ -312,7 +336,7 @@
             if (hekamBox && hekamBox.parentNode) { hekamBox.parentNode.removeChild(hekamBox); hekamBox = null; }
             /* v8.7.33: the whole wisdom shows here too - a longer wisdom takes a smaller font and a wider
                row instead of the old two-line cut with "..." */
-            var tlen = String(it.text || "").length;
+            var tlen = hkTxt(it).length;
             var sizeCls = tlen > 220 ? " hk-long" : tlen > 150 ? " hk-mid" : "";
             var html = '<div class="statusx__card hc__row hc__row--hekam' + (sizeCls ? " hk-wide" : "") + '" style="--hekam-s:' + (scale / 100) + '">' +
                 '<div class="hc__cell">' +
@@ -320,7 +344,7 @@
                     '<span class="hc__label hc__label--hekam">' + APL.enx("حكمة اليوم") + '</span>' +
                 '</div>' +
                 '<div class="hc__date hc__date--hekam">' +
-                    '<span class="hc__greg hc__greg--hekam hc__text--green' + sizeCls + '">' + esc(it.text) + '</span>' +
+                    '<span class="hc__greg hc__greg--hekam hc__text--green' + sizeCls + '"' + (APL.lang === "en" ? ' dir="ltr"' : '') + '>' + esc(hkTxt(it)) + '</span>' +
                 '</div>' +
             '</div>';
             rows.hekam = { html: html, order: 25 };
@@ -336,7 +360,7 @@
         hb.className = "hekam-widget" + (ssActive ? "" : " hekam-widget--" + pos) + " hekam-widget--color-" + color;
         hb.style.setProperty("--hekam-scale", String(scale / 100));
         hb.innerHTML = '<div class="hekam-w__inner">' +
-            '<div class="hekam-w__text">' + esc(it.text) + '</div>' +
+            '<div class="hekam-w__text"' + (APL.lang === "en" ? ' dir="ltr" style="text-align:left"' : '') + '>' + esc(hkTxt(it)) + '</div>' +
         '</div>';
         fitHekam(hb, scale, pos, ssActive);
     }

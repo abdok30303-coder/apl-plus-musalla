@@ -1,3 +1,9 @@
+## 8.7.55
+
+- English UI only: the Ramadan widget is fully English (main text, source line, suhoor/iftar chip and reminders). The same phase rules apply. Arabic is unchanged.
+- English UI only: the wisdom widget draws from a new English pool (data/hekam/en.json, 454 items, read only when needed): 213 Quran meanings, 111 hadith attributed to their collection, 7 sayings attributed to early scholars, 123 short reflections. Nothing was copied from a printed source; scholarly review is advised. If the file cannot be read, the Arabic library is the fallback.
+- The Ramadan Mode settings panel is still Arabic only.
+
 ## 8.7.54
 
 - Control Center: the panel is frosted glass now. The Home Screen behind it is blurred and dimmed (like a phone notification shade), the panel has rounded corners and no hard border.

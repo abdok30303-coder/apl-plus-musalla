@@ -50,13 +50,14 @@
     function status(now) {
         var t = times();
         if (!t.fajr || !t.maghrib) return "";
-        if (now < t.fajr) return "السحور ينتهي بعد " + hm(t.fajr - now);
-        if (now < t.maghrib) return "الإفطار بعد " + hm(t.maghrib - now);
-        if (t.isha && now < t.isha) return "العشاء بعد " + hm(t.isha - now);
-        if (t.isha && now < t.isha + 90 * 60000) return "وقت التراويح";
+        var A = APL.lang === "ar";
+        if (now < t.fajr) return (A ? "السحور ينتهي بعد " : "Suhoor ends in ") + hm(t.fajr - now);
+        if (now < t.maghrib) return (A ? "الإفطار بعد " : "Iftar in ") + hm(t.maghrib - now);
+        if (t.isha && now < t.isha) return (A ? "العشاء بعد " : "Isha in ") + hm(t.isha - now);
+        if (t.isha && now < t.isha + 90 * 60000) return A ? "وقت التراويح" : "Taraweeh time";
         var n = null;
         try { n = APL.prayer.next(); } catch (e) { n = null; }
-        return n && n.ms ? "الفجر بعد " + hm(n.ms) : "";
+        return n && n.ms ? (A ? "الفجر بعد " : "Fajr in ") + hm(n.ms) : "";
     }
 
     function ensureUi() {
@@ -152,9 +153,9 @@
         if (global.document.hidden) return;
         var t = times();
         if (!t.fajr || !t.maghrib) return;
-        if (S.sehri && now >= t.fajr - 45 * 60000 && now < t.fajr - 5 * 60000) once("sehri", function () { say("🌙 باقي " + hm(t.fajr - now) + " على الفجر: وقت السحور"); });
-        if (now >= t.maghrib && now < t.maghrib + 5 * 60000) once("iftar", function () { say("🌙 حان موعد الإفطار، تقبّل الله صيامكم"); });
-        if (S.tar && t.isha && now >= t.isha + 15 * 60000 && now < t.isha + 60 * 60000) once("tar", function () { say("🌙 حان وقت صلاة التراويح"); });
+        if (S.sehri && now >= t.fajr - 45 * 60000 && now < t.fajr - 5 * 60000) once("sehri", function () { say(APL.lang === "ar" ? "🌙 باقي " + hm(t.fajr - now) + " على الفجر: وقت السحور" : "🌙 " + hm(t.fajr - now) + " until Fajr: time for suhoor"); });
+        if (now >= t.maghrib && now < t.maghrib + 5 * 60000) once("iftar", function () { say(APL.lang === "ar" ? "🌙 حان موعد الإفطار، تقبّل الله صيامكم" : "🌙 Time to break your fast. May Allah accept your fasting"); });
+        if (S.tar && t.isha && now >= t.isha + 15 * 60000 && now < t.isha + 60 * 60000) once("tar", function () { say(APL.lang === "ar" ? "🌙 حان وقت صلاة التراويح" : "🌙 Time for Taraweeh prayer"); });
     }
 
     function tick() {
@@ -184,7 +185,7 @@
                 { label: "تنبيه التراويح: " + (S.tar ? "شغّال" : "مقفول"), run: function () { S.tar = !S.tar; save(); panel(3); } },
                 { label: "ختمة رمضان (٣٠ يوم)", run: function () { if (kh) { kh.setPlan(21); say("هدف الختمة: ٢١ صفحة في اليوم"); } panel(4); } },
                 { label: "جرّبه دلوقتي (مدفع + تنبيه)", run: function () {
-                    say("🌙 حان موعد الإفطار، تقبّل الله صيامكم");
+                    say(APL.lang === "ar" ? "🌙 حان موعد الإفطار، تقبّل الله صيامكم" : "🌙 Time to break your fast. May Allah accept your fasting");
                     if (APL.prayerAlert && APL.prayerAlert.play) {
                         APL.prayerAlert.play("maghrib_ramadan");
                     } else {
@@ -348,9 +349,9 @@
         el.querySelector(".rw__kind").textContent = kindTxt;
         el.querySelector(".rw__day").textContent = dayTxt;
         var tx = el.querySelector(".rw__text"), tr = el.querySelector(".rw__tr");
-        tx.textContent = it.ar; tx.setAttribute("dir", "rtl");
-        if (ar) { tr.textContent = ""; tr.style.display = "none"; }
-        else { tr.textContent = it.en; tr.style.display = "block"; tr.setAttribute("dir", "ltr"); }
+        /* v8.7.55: English UI: the widget is fully English (the English text is the main text, no Arabic, same phase rules) */
+        tx.textContent = ar ? it.ar : (it.en || it.ar); tx.setAttribute("dir", ar ? "rtl" : "ltr");
+        tr.textContent = ""; tr.style.display = "none";
         el.querySelector(".rw__src").textContent = ar ? it.sar : it.sen;
         rwGap(); rwFit();
         global.setTimeout(function () { rwGap(); rwFit(); }, 400);
