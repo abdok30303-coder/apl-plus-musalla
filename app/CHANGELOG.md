@@ -1,3 +1,9 @@
+## 8.7.39
+
+- Living Mihrab screen saver: the on-screen "OK · تشغيل/إيقاف الراديو" chip is removed (it looked and sat badly). OK still starts / stops the radio (Settings > Screen Saver > Radio Button in the Screen Saver), and a short toast now says what happened: "Radio turned on" / "Radio turned off" (Arabic and English, the two languages the launcher ships). A failed start keeps the existing "The radio needs the internet." wording.
+- Wisdom widget: it drew from a 1,000-item sample (data/hekam/excerpts.json) of the Kalem Tayeb library, so wisdoms repeated quickly. It now draws from the whole offline library: 35,219 wisdoms in 53 sections, choosing a section at random weighted by its size and loading only that file (at most 3 section files in memory, the same budget the Hekam reader uses). Wisdoms over 500 letters (about 7% of the library) are too long for a Home-screen widget and are skipped here; every one of them is still readable in the full reader (Prayer & Quran > Hekam). Real pool: 1,000 before, 32,724 after. If the section index cannot be read, the 1,000-item excerpts file is the fallback. The "random wisdom" inside the Prayer & Quran page still uses the curated excerpts sample.
+- Checked in Node against the real data files: 400 picks gave 395 distinct wisdoms from 28 of the 31 non-empty sections, nothing over the length limit, memory cap held; Arabic strings added for both new toasts. Untested on a physical TV.
+
 ## 8.7.38
 
 - Hijri date a day ahead (16 Jumada al-Akhira instead of 15): for Egypt the calendar follows its own crescent rule, which only checks the moon's age at sunset. On the evening of 9 November 2026 the moon set BEFORE the sun, so no sighting was possible anywhere, but the rule counted it and started Jumada al-Akhira on 10 November; Dar al-Ifta announced Wednesday 11 November. The same kind of miss had shifted Dhu al-Qa'da 1447 (19 April; the rule said 18) and Rabi al-Thani 1448 (13 September; the rule said 12).

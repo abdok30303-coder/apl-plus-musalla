@@ -703,6 +703,8 @@ window.APL_LANG_AR = {
     "Radio resumed": "استُئنف الراديو",
     "Opening the radio…": "جارٍ تشغيل الراديو…",
     "Radio stopped": "تم إيقاف الراديو",
+    "Radio turned on": "تم تشغيل الراديو",
+    "Radio turned off": "تم إيقاف الراديو",
     "The radio needs the internet.": "الراديو يحتاج اتصالًا بالإنترنت.",
     "Playing in the background through Vetro": "يعمل في الخلفية عبر Vetro",
     "Playing in the launcher only": "يعمل داخل اللانشر فقط",
@@ -5868,15 +5870,65 @@ window.APL_CATALOG = [
     /* v8.5.0: wisdom from Kalem Tayeb (data/hekam/excerpts.json)
        v8.6.4: the wisdom shown is picked AT RANDOM (never the same one twice in a row): when the data is first read, every time the
        launcher comes back to the Home Screen (APL.hekamOnHome, called from APL.refreshWidgets) and on every 5-minute rotation.
-       Before, the widget always started from the first item of the file and then walked through the list in order. */
+       Before, the widget always started from the first item of the file and then walked through the list in order.
+       v8.7.39: the pool is the WHOLE Kalem Tayeb library - 35,219 wisdoms over 53 sections (data/hekam/sec_*.json,
+       indexed by data/hekam/sections.json) - not only the 1,000-item excerpts sample. A pick chooses a section at
+       random, weighted by how many wisdoms it holds (so every wisdom has the same chance), loads just that one file
+       (at most 3 stay in memory; a section file can reach ~1.8 MB) and takes one wisdom from it. Wisdoms over 500
+       letters (about 7% of the library) are too long for a Home-screen widget and are skipped here; every one of
+       them is still readable in the full reader (Prayer & Quran > Hekam). If the index cannot be read, the old
+       excerpts file stays the fallback. */
     var hekamCache = null, hekamLoading = false, hekamCur = null, hekamLastPick = 0;
+    var hkIndex = null, hkIndexLoading = false, hkTotal = 0;
+    var hkSecCache = {}, hkSecOrder = [], hkSecLoading = {};
+    var HK_MAXLEN = 500;
     function esc(v) { return String(v === null || v === undefined ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function pickFromSection(sec, d) {
+        var items = d && d.items;
+        if (!items || !items.length) return null;
+        for (var t = 0; t < 15; t++) {
+            var x = items[Math.floor(Math.random() * items.length)];
+            if (!x || !x.text) continue;
+            var tx = String(x.text);
+            if (tx.length > HK_MAXLEN) continue;
+            if (hekamCur && (x.id === hekamCur.id || tx === hekamCur.text)) continue;
+            hekamCur = { id: x.id, text: tx, ref: x.ref || "", sec: sec.name || "" };
+            hekamLastPick = Date.now();
+            return hekamCur;
+        }
+        return null;
+    }
+    function loadHekamSection(sec) {
+        if (hkSecLoading[sec.id]) return;
+        hkSecLoading[sec.id] = true;
+        getJ("data/hekam/" + sec.file, function (e, d) {
+            delete hkSecLoading[sec.id];
+            if (e || !d || !d.items || !d.items.length) return;
+            hkSecCache[sec.id] = d;
+            hkSecOrder.push(sec.id);
+            while (hkSecOrder.length > 3) delete hkSecCache[hkSecOrder.shift()];
+            if (pickFromSection(sec, d)) {
+                lastSig = null;
+                if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                paint();
+            }
+        });
+    }
     function hekamPick() {
+        if (hkIndex && hkIndex.length && hkTotal > 0) {
+            var r = Math.floor(Math.random() * hkTotal), sec = hkIndex[hkIndex.length - 1];
+            for (var i = 0; i < hkIndex.length; i++) { r -= hkIndex[i].count; if (r < 0) { sec = hkIndex[i]; break; } }
+            var d = hkSecCache[sec.id];
+            if (!d) { hekamLastPick = Date.now(); loadHekamSection(sec); return hekamCur; }
+            var oi = hkSecOrder.indexOf(sec.id);
+            if (oi !== -1) { hkSecOrder.splice(oi, 1); hkSecOrder.push(sec.id); }
+            return pickFromSection(sec, d) || hekamCur;
+        }
         var items = hekamCache && hekamCache.items;
         if (!items || !items.length) return null;
-        var i = Math.floor(Math.random() * items.length);
-        if (items.length > 1 && items[i] === hekamCur) i = (i + 1 + Math.floor(Math.random() * (items.length - 1))) % items.length;
-        hekamCur = items[i];
+        var j = Math.floor(Math.random() * items.length);
+        if (items.length > 1 && items[j] === hekamCur) j = (j + 1 + Math.floor(Math.random() * (items.length - 1))) % items.length;
+        hekamCur = items[j];
         hekamLastPick = Date.now();
         return hekamCur;
     }
@@ -5887,16 +5939,35 @@ window.APL_CATALOG = [
         return APL.sys.pref("prayerWidgetFull") === true && APL.sys.pref("prayerWidgetShow") === "hekam";
     }
     function loadHekam() {
-        if (hekamLoading || hekamCache) return;
-        hekamLoading = true;
-        getJ("data/hekam/excerpts.json", function (e, d) {
-            hekamLoading = false;
-            if (e || !d || !d.length) return;
-            hekamCache = { day: dayKey(), items: d };
-            hekamPick();
-            lastSig = null;
-            if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
-            paint();
+        if (hekamLoading || hekamCache || hkIndex || hkIndexLoading) return;
+        hkIndexLoading = true;
+        getJ("data/hekam/sections.json", function (e, d) {
+            hkIndexLoading = false;
+            if (!e && d && d.length) {
+                hkIndex = [];
+                var i;
+                for (i = 0; i < d.length; i++) if (d[i] && d[i].count > 0 && d[i].file) hkIndex.push(d[i]);
+                hkTotal = 0;
+                for (i = 0; i < hkIndex.length; i++) hkTotal += hkIndex[i].count;
+                if (hkIndex.length) {
+                    hekamPick();
+                    lastSig = null;
+                    if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                    paint();
+                    return;
+                }
+            }
+            /* the section index could not be read: the old 1,000-wisdom excerpts file is the fallback */
+            hekamLoading = true;
+            getJ("data/hekam/excerpts.json", function (e2, d2) {
+                hekamLoading = false;
+                if (e2 || !d2 || !d2.length) return;
+                hekamCache = { day: dayKey(), items: d2 };
+                hekamPick();
+                lastSig = null;
+                if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                paint();
+            });
         });
     }
     function hekamHtml() {
@@ -5914,7 +5985,7 @@ window.APL_CATALOG = [
             if (cl.contains("has-aplpage") || cl.contains("has-settings") || cl.contains("has-cc") || cl.contains("has-search") || cl.contains("blackout-active") || cl.contains("has-blackout")) return;
             var widgetOn = APL.sys.pref("hekamWidget") === true, fullOn = hekamFullMode();
             if (!widgetOn && !fullOn) return;
-            if (!hekamCache) { loadHekam(); return; }
+            if (!hkIndex && !hekamCache) { loadHekam(); return; }
             if (!force && Date.now() - hekamLastPick < 4000) return;
             hekamPick();
             if (widgetOn) updateHekamWidget();
@@ -5949,9 +6020,7 @@ window.APL_CATALOG = [
             if (APL.timers && APL.timers.cancel) APL.timers.cancel("hekamWidget");
             return;
         }
-        if (!hekamCache) { loadHekam(); return; }
-        var items = hekamCache.items;
-        if (!items || !items.length) return;
+        if (!hkIndex && !hekamCache) { loadHekam(); return; }
         var it = hekamCur || hekamPick();
         if (!it) return;
         var pos = (APL.sys.pref("hekamPos") || "above-dock");
@@ -24929,6 +24998,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.39: شارة «OK · تشغيل الراديو» اللي على شاشة توقف المحراب الحي اتحذفت خالص — دلوقتي لما تضغط OK بيظهر تنبيه صغير إن الراديو اتشغّل أو اتوقف؛ وودجت الحكمة بقى بيختار من مكتبة الكلم الطيب كلها (أكتر من ٣٢ ألف حكمة) مش من عيّنة ألف بس",
         "✔ 8.7.38: التاريخ الهجري اتصلح (كان متقدّم يوم كامل: بدايات الشهور الهجرية المعلنة من دار الإفتاء المصرية بقت هي المعتمدة، لحد جمادى الآخرة 1448)",
         "✔ 8.7.37: تجربة المدفع بتشتغل فوراً (كانت بتاخد حوالي 8 ثواني وهي بتدوّر على مخرج الصوت)؛ وأزرار الريموت المربوطة بتطبيقات بترجع لوحدها لو Vetro فقد قائمة الأزرار كلها",
         "✔ 8.7.36: أزرار الريموت المربوطة بتطبيقات ما بتضيعش لو خرجت من اللانشر وانت بتربط زر؛ القائمة بتتحفظ قبل ما Vetro تتفضى وبترجع لما اللانشر يرجع",
@@ -24957,6 +25027,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.39: the on-screen “OK · radio” chip on the Living Mihrab screen saver is gone for good - pressing OK now shows a short toast that the radio turned on or off; the wisdom widget draws from the whole Kalem Tayeb library (32,000+ wisdoms) instead of a 1,000-item sample",
         "✔ 8.7.38: the Hijri date is fixed (it ran one day ahead: the Egyptian month starts announced by Dar al-Ifta are now the ones used, through Jumada al-Akhira 1448)",
         "✔ 8.7.37: the cannon test plays right away (it used to spend about 8 s finding the sound route); remote buttons bound to apps are put back by the launcher whenever Vetro loses the whole button list",
         "✔ 8.7.36: remote buttons bound to apps are no longer lost if you leave the launcher while binding a button; the list is saved before Vetro is emptied and put back when the launcher returns",
@@ -25404,26 +25475,22 @@ window.APL_DEVICES = [
         elInner.style.transform = "translate(" + (Math.round(Math.random() * 30) - 15) + "px," + (Math.round(Math.random() * 20) - 10) + "px)";
     }
 
-    /* v8.7.28: the radio button of the Living Mihrab screen saver (OK). It exists only while "Radio Button in the Screen Saver" is on. */
-    var radioChip = null;
+    /* v8.7.28: OK in the Living Mihrab screen saver starts / stops the radio while "Radio Button in the Screen Saver" is on.
+       v8.7.39: the on-screen OK chip is gone for good (it looked and sat badly); a short toast says what OK did instead. */
     function radioOn() { try { return !!(APL.radio && APL.radio.isPlaying && APL.radio.isPlaying()); } catch (e) { return false; } }
-    function paintRadio() {
-        if (!radioChip) return;
-        var show = APL.sys.pref("mihrabRadio") !== false && !!APL.radio;
-        radioChip.style.display = show ? "block" : "none";
-        radioChip.textContent = radioOn() ? "OK \u00B7 \u0625\u064A\u0642\u0627\u0641 \u0627\u0644\u0631\u0627\u062F\u064A\u0648" : "OK \u00B7 \u062A\u0634\u063A\u064A\u0644 \u0627\u0644\u0631\u0627\u062F\u064A\u0648";
-    }
+    function toast(m, ok) { try { if (APL.toast) APL.toast(m, ok); } catch (e) {} }
     function toggleRadio() {
         try {
+            var wasOn = radioOn();
             var r = APL.radio && APL.radio.toggle ? APL.radio.toggle() : null;
-            if (r && r.then) r.then(function () { setTimeout(paintRadio, 400); }, function () { paintRadio(); });
-            setTimeout(paintRadio, 1500);
+            if (r && r.then) r.then(function () {
+                var on = radioOn();
+                if (on !== wasOn) toast(APL.t(on ? "Radio turned on" : "Radio turned off"), true);
+            }, function () { toast(APL.t("The radio needs the internet."), false); });
         } catch (e) {}
     }
     function start(root) {
         if (!box) build(root);
-        if (!radioChip) { radioChip = div("amb__radio"); box.appendChild(radioChip); }
-        paintRadio();
         noMotion = !!APL.sys.pref("reduceMotion") || !APL.sys.pref("ambientFx");   // glow pulse / tint fade follow "Living Mihrab motion"
         box.classList.toggle("no-motion", noMotion);
         box.classList.toggle("no-pan", !!APL.sys.pref("reduceMotion"));

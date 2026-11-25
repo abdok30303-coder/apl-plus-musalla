@@ -148,6 +148,8 @@ window.APL_LANG_AR = {
     "Radio resumed": "استُئنف الراديو",
     "Opening the radio…": "جارٍ تشغيل الراديو…",
     "Radio stopped": "تم إيقاف الراديو",
+    "Radio turned on": "تم تشغيل الراديو",
+    "Radio turned off": "تم إيقاف الراديو",
     "The radio needs the internet.": "الراديو يحتاج اتصالًا بالإنترنت.",
     "Playing in the background through Vetro": "يعمل في الخلفية عبر Vetro",
     "Playing in the launcher only": "يعمل داخل اللانشر فقط",

@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.39: شارة «OK · تشغيل الراديو» اللي على شاشة توقف المحراب الحي اتحذفت خالص — دلوقتي لما تضغط OK بيظهر تنبيه صغير إن الراديو اتشغّل أو اتوقف؛ وودجت الحكمة بقى بيختار من مكتبة الكلم الطيب كلها (أكتر من ٣٢ ألف حكمة) مش من عيّنة ألف بس",
         "✔ 8.7.38: التاريخ الهجري اتصلح (كان متقدّم يوم كامل: بدايات الشهور الهجرية المعلنة من دار الإفتاء المصرية بقت هي المعتمدة، لحد جمادى الآخرة 1448)",
         "✔ 8.7.37: تجربة المدفع بتشتغل فوراً (كانت بتاخد حوالي 8 ثواني وهي بتدوّر على مخرج الصوت)؛ وأزرار الريموت المربوطة بتطبيقات بترجع لوحدها لو Vetro فقد قائمة الأزرار كلها",
         "✔ 8.7.36: أزرار الريموت المربوطة بتطبيقات ما بتضيعش لو خرجت من اللانشر وانت بتربط زر؛ القائمة بتتحفظ قبل ما Vetro تتفضى وبترجع لما اللانشر يرجع",
@@ -67,6 +68,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.39: the on-screen “OK · radio” chip on the Living Mihrab screen saver is gone for good - pressing OK now shows a short toast that the radio turned on or off; the wisdom widget draws from the whole Kalem Tayeb library (32,000+ wisdoms) instead of a 1,000-item sample",
         "✔ 8.7.38: the Hijri date is fixed (it ran one day ahead: the Egyptian month starts announced by Dar al-Ifta are now the ones used, through Jumada al-Akhira 1448)",
         "✔ 8.7.37: the cannon test plays right away (it used to spend about 8 s finding the sound route); remote buttons bound to apps are put back by the launcher whenever Vetro loses the whole button list",
         "✔ 8.7.36: remote buttons bound to apps are no longer lost if you leave the launcher while binding a button; the list is saved before Vetro is emptied and put back when the launcher returns",

@@ -181,26 +181,22 @@
         elInner.style.transform = "translate(" + (Math.round(Math.random() * 30) - 15) + "px," + (Math.round(Math.random() * 20) - 10) + "px)";
     }
 
-    /* v8.7.28: the radio button of the Living Mihrab screen saver (OK). It exists only while "Radio Button in the Screen Saver" is on. */
-    var radioChip = null;
+    /* v8.7.28: OK in the Living Mihrab screen saver starts / stops the radio while "Radio Button in the Screen Saver" is on.
+       v8.7.39: the on-screen OK chip is gone for good (it looked and sat badly); a short toast says what OK did instead. */
     function radioOn() { try { return !!(APL.radio && APL.radio.isPlaying && APL.radio.isPlaying()); } catch (e) { return false; } }
-    function paintRadio() {
-        if (!radioChip) return;
-        var show = APL.sys.pref("mihrabRadio") !== false && !!APL.radio;
-        radioChip.style.display = show ? "block" : "none";
-        radioChip.textContent = radioOn() ? "OK \u00B7 \u0625\u064A\u0642\u0627\u0641 \u0627\u0644\u0631\u0627\u062F\u064A\u0648" : "OK \u00B7 \u062A\u0634\u063A\u064A\u0644 \u0627\u0644\u0631\u0627\u062F\u064A\u0648";
-    }
+    function toast(m, ok) { try { if (APL.toast) APL.toast(m, ok); } catch (e) {} }
     function toggleRadio() {
         try {
+            var wasOn = radioOn();
             var r = APL.radio && APL.radio.toggle ? APL.radio.toggle() : null;
-            if (r && r.then) r.then(function () { setTimeout(paintRadio, 400); }, function () { paintRadio(); });
-            setTimeout(paintRadio, 1500);
+            if (r && r.then) r.then(function () {
+                var on = radioOn();
+                if (on !== wasOn) toast(APL.t(on ? "Radio turned on" : "Radio turned off"), true);
+            }, function () { toast(APL.t("The radio needs the internet."), false); });
         } catch (e) {}
     }
     function start(root) {
         if (!box) build(root);
-        if (!radioChip) { radioChip = div("amb__radio"); box.appendChild(radioChip); }
-        paintRadio();
         noMotion = !!APL.sys.pref("reduceMotion") || !APL.sys.pref("ambientFx");   // glow pulse / tint fade follow "Living Mihrab motion"
         box.classList.toggle("no-motion", noMotion);
         box.classList.toggle("no-pan", !!APL.sys.pref("reduceMotion"));

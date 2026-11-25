@@ -152,15 +152,65 @@
     /* v8.5.0: wisdom from Kalem Tayeb (data/hekam/excerpts.json)
        v8.6.4: the wisdom shown is picked AT RANDOM (never the same one twice in a row): when the data is first read, every time the
        launcher comes back to the Home Screen (APL.hekamOnHome, called from APL.refreshWidgets) and on every 5-minute rotation.
-       Before, the widget always started from the first item of the file and then walked through the list in order. */
+       Before, the widget always started from the first item of the file and then walked through the list in order.
+       v8.7.39: the pool is the WHOLE Kalem Tayeb library - 35,219 wisdoms over 53 sections (data/hekam/sec_*.json,
+       indexed by data/hekam/sections.json) - not only the 1,000-item excerpts sample. A pick chooses a section at
+       random, weighted by how many wisdoms it holds (so every wisdom has the same chance), loads just that one file
+       (at most 3 stay in memory; a section file can reach ~1.8 MB) and takes one wisdom from it. Wisdoms over 500
+       letters (about 7% of the library) are too long for a Home-screen widget and are skipped here; every one of
+       them is still readable in the full reader (Prayer & Quran > Hekam). If the index cannot be read, the old
+       excerpts file stays the fallback. */
     var hekamCache = null, hekamLoading = false, hekamCur = null, hekamLastPick = 0;
+    var hkIndex = null, hkIndexLoading = false, hkTotal = 0;
+    var hkSecCache = {}, hkSecOrder = [], hkSecLoading = {};
+    var HK_MAXLEN = 500;
     function esc(v) { return String(v === null || v === undefined ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function pickFromSection(sec, d) {
+        var items = d && d.items;
+        if (!items || !items.length) return null;
+        for (var t = 0; t < 15; t++) {
+            var x = items[Math.floor(Math.random() * items.length)];
+            if (!x || !x.text) continue;
+            var tx = String(x.text);
+            if (tx.length > HK_MAXLEN) continue;
+            if (hekamCur && (x.id === hekamCur.id || tx === hekamCur.text)) continue;
+            hekamCur = { id: x.id, text: tx, ref: x.ref || "", sec: sec.name || "" };
+            hekamLastPick = Date.now();
+            return hekamCur;
+        }
+        return null;
+    }
+    function loadHekamSection(sec) {
+        if (hkSecLoading[sec.id]) return;
+        hkSecLoading[sec.id] = true;
+        getJ("data/hekam/" + sec.file, function (e, d) {
+            delete hkSecLoading[sec.id];
+            if (e || !d || !d.items || !d.items.length) return;
+            hkSecCache[sec.id] = d;
+            hkSecOrder.push(sec.id);
+            while (hkSecOrder.length > 3) delete hkSecCache[hkSecOrder.shift()];
+            if (pickFromSection(sec, d)) {
+                lastSig = null;
+                if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                paint();
+            }
+        });
+    }
     function hekamPick() {
+        if (hkIndex && hkIndex.length && hkTotal > 0) {
+            var r = Math.floor(Math.random() * hkTotal), sec = hkIndex[hkIndex.length - 1];
+            for (var i = 0; i < hkIndex.length; i++) { r -= hkIndex[i].count; if (r < 0) { sec = hkIndex[i]; break; } }
+            var d = hkSecCache[sec.id];
+            if (!d) { hekamLastPick = Date.now(); loadHekamSection(sec); return hekamCur; }
+            var oi = hkSecOrder.indexOf(sec.id);
+            if (oi !== -1) { hkSecOrder.splice(oi, 1); hkSecOrder.push(sec.id); }
+            return pickFromSection(sec, d) || hekamCur;
+        }
         var items = hekamCache && hekamCache.items;
         if (!items || !items.length) return null;
-        var i = Math.floor(Math.random() * items.length);
-        if (items.length > 1 && items[i] === hekamCur) i = (i + 1 + Math.floor(Math.random() * (items.length - 1))) % items.length;
-        hekamCur = items[i];
+        var j = Math.floor(Math.random() * items.length);
+        if (items.length > 1 && items[j] === hekamCur) j = (j + 1 + Math.floor(Math.random() * (items.length - 1))) % items.length;
+        hekamCur = items[j];
         hekamLastPick = Date.now();
         return hekamCur;
     }
@@ -171,16 +221,35 @@
         return APL.sys.pref("prayerWidgetFull") === true && APL.sys.pref("prayerWidgetShow") === "hekam";
     }
     function loadHekam() {
-        if (hekamLoading || hekamCache) return;
-        hekamLoading = true;
-        getJ("data/hekam/excerpts.json", function (e, d) {
-            hekamLoading = false;
-            if (e || !d || !d.length) return;
-            hekamCache = { day: dayKey(), items: d };
-            hekamPick();
-            lastSig = null;
-            if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
-            paint();
+        if (hekamLoading || hekamCache || hkIndex || hkIndexLoading) return;
+        hkIndexLoading = true;
+        getJ("data/hekam/sections.json", function (e, d) {
+            hkIndexLoading = false;
+            if (!e && d && d.length) {
+                hkIndex = [];
+                var i;
+                for (i = 0; i < d.length; i++) if (d[i] && d[i].count > 0 && d[i].file) hkIndex.push(d[i]);
+                hkTotal = 0;
+                for (i = 0; i < hkIndex.length; i++) hkTotal += hkIndex[i].count;
+                if (hkIndex.length) {
+                    hekamPick();
+                    lastSig = null;
+                    if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                    paint();
+                    return;
+                }
+            }
+            /* the section index could not be read: the old 1,000-wisdom excerpts file is the fallback */
+            hekamLoading = true;
+            getJ("data/hekam/excerpts.json", function (e2, d2) {
+                hekamLoading = false;
+                if (e2 || !d2 || !d2.length) return;
+                hekamCache = { day: dayKey(), items: d2 };
+                hekamPick();
+                lastSig = null;
+                if ((APL.sys && APL.sys.pref("hekamWidget") === true) || hekamActive()) updateHekamWidget();
+                paint();
+            });
         });
     }
     function hekamHtml() {
@@ -198,7 +267,7 @@
             if (cl.contains("has-aplpage") || cl.contains("has-settings") || cl.contains("has-cc") || cl.contains("has-search") || cl.contains("blackout-active") || cl.contains("has-blackout")) return;
             var widgetOn = APL.sys.pref("hekamWidget") === true, fullOn = hekamFullMode();
             if (!widgetOn && !fullOn) return;
-            if (!hekamCache) { loadHekam(); return; }
+            if (!hkIndex && !hekamCache) { loadHekam(); return; }
             if (!force && Date.now() - hekamLastPick < 4000) return;
             hekamPick();
             if (widgetOn) updateHekamWidget();
@@ -233,9 +302,7 @@
             if (APL.timers && APL.timers.cancel) APL.timers.cancel("hekamWidget");
             return;
         }
-        if (!hekamCache) { loadHekam(); return; }
-        var items = hekamCache.items;
-        if (!items || !items.length) return;
+        if (!hkIndex && !hekamCache) { loadHekam(); return; }
         var it = hekamCur || hekamPick();
         if (!it) return;
         var pos = (APL.sys.pref("hekamPos") || "above-dock");

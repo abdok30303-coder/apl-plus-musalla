@@ -3695,14 +3695,6 @@ body.quran-audio-active .qa-widget-slot .statusx--qa {
 /* v8.7.28: no light rectangle (sheen) and no ring over an icon-only tile while it is selected; the ring is drawn only with Focus Highlight on */
 .tile__card--icon::after { display: none !important; }
 
-/* v8.7.28: the radio button of the Living Mihrab screen saver */
-.amb__radio {
-    position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); z-index: 6;
-    padding: 10px 26px; border-radius: 999px; font-size: 22px; font-weight: 700; direction: rtl;
-    color: #fff; background: rgba(20, 24, 36, 0.55); border: 1px solid rgba(255, 255, 255, 0.28);
-    pointer-events: none; opacity: 0.85;
-}
-
 
 /* v8.7.28: the general ".is-focused" rule (scale 1.055 + a white 2 px ring, both !important) drew a bordered rectangle around the whole app tile
    behind its card, and made the Mushaf side panel buttons jump (scale with a spring, inside a scrolling panel). Tiles and Mushaf controls
