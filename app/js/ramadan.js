@@ -114,7 +114,14 @@
                 if (/^CANNON_[A-Z_]+$/.test(status)) cannonLast = status;
             }
             return cannonLast;
-        }, function () { return cannonLast; });
+        }, function () { return cannonLast; }).then(function (st) {
+            /* v8.7.31: also what the background player last logged about the cannon (which file it used, or that it was not found) */
+            if (!APL.bgAudio || !APL.bgAudio.log) return st;
+            return APL.bgAudio.log().then(function (t) {
+                var l = String(t || "").split("\n").filter(function (x) { return /cannon/i.test(x); }).slice(-3).map(function (x) { return x.slice(-150); });
+                return l.length ? st + "\n" + l.join("\n") : st;
+            }, function () { return st; });
+        });
     }
     function cannon(manual) {
         if ((!S.cannon && !manual) || cannonPending) return;

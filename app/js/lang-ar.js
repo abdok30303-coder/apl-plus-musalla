@@ -979,6 +979,7 @@ window.APL_LANG_AR_EXTRA = {
     "Detect Location Now": "حدّد الموقع الآن",
     "Detecting the location…": "جارٍ تحديد الموقع…",
     "Needs internet for the Internet address; without it the screen's own country and time zone are used. Turns automatic detection on.": "محتاج إنترنت لعنوان الـ IP؛ ومن غيره بيعتمد على دولة الشاشة ومنطقتها الزمنية. بيشغّل التحديد التلقائي.",
+    "country only: no location service answered": "الدولة فقط: ولا خدمة موقع ردّت",
     "Location set automatically: {name}": "تم تحديد الموقع تلقائيًا: {name}",
     "Your location: {name}": "موقعك: {name}",
     "The Internet address and the screen's settings disagree, so nothing was changed. Choose the city yourself.": "عنوان الإنترنت وإعدادات الشاشة مش متفقين، فمفيش حاجة اتغيرت. اختار المدينة بنفسك.",

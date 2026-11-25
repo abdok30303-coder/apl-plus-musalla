@@ -139,6 +139,20 @@
             if (!j) return null;
             return { lat: num(j.latitude), lon: num(j.longitude), cc: j.countryCode, city: j.cityName, region: j.regionName,
                      tz: (j.timeZones && j.timeZones[0]) || j.timeZone };
+        } },
+        /* v8.7.31: three more services, so one blocked or limited service no longer leaves the screen with its country only */
+        { name: "ipinfo.io", url: "https://ipinfo.io/json", parse: function (j) {
+            if (!j || j.error || !j.loc) return null;
+            var p = String(j.loc).split(",");
+            return { lat: num(p[0]), lon: num(p[1]), cc: j.country, city: j.city, region: j.region, tz: j.timezone };
+        } },
+        { name: "ip-api.com", url: "http://ip-api.com/json/?fields=status,countryCode,regionName,city,lat,lon,timezone", parse: function (j) {
+            if (!j || j.status !== "success") return null;
+            return { lat: num(j.lat), lon: num(j.lon), cc: j.countryCode, city: j.city, region: j.regionName, tz: j.timezone };
+        } },
+        { name: "bigdatacloud", url: "https://api.bigdatacloud.net/data/reverse-geocode-client", parse: function (j) {
+            if (!j) return null;
+            return { lat: num(j.latitude), lon: num(j.longitude), cc: j.countryCode, city: j.city || j.locality, region: j.principalSubdivision, tz: "" };
         } }
     ];
     function clean(o) {
@@ -148,17 +162,27 @@
         if (!/^[A-Za-z_]+\/[A-Za-z0-9_+\-\/]+$/.test(tz)) tz = "";
         return { lat: o.lat, lon: o.lon, cc: cc, tz: tz, city: String(o.city || "").slice(0, 40), region: String(o.region || "").slice(0, 40) };
     }
+    /* v8.7.31: the first answer that NAMES a city wins. An answer with a position but no city name is kept
+       as a second choice (it used to win at once, and the app then fell back to the country's main city). */
+    var lastTried = [];
     function lookupIP() {
-        var i = 0;
+        var i = 0, spare = null;
+        lastTried = [];
         return new Promise(function (resolve) {
+            function fin() { resolve(spare); }
             (function next() {
-                if (i >= SERVICES.length) { resolve(null); return; }
+                if (i >= SERVICES.length) { fin(); return; }
                 var s = SERVICES[i++];
                 APL.fetchJSON(s.url, 8000).then(function (j) {
                     var r = null;
                     try { r = clean(s.parse(j)); } catch (e) { r = null; }
-                    if (r) { r.via = s.name; resolve(r); } else next();
-                }, next);
+                    if (r) {
+                        r.via = s.name; lastTried.push(s.name + ":ok");
+                        if (r.city) { resolve(r); return; }
+                        if (!spare) spare = r;
+                    } else lastTried.push(s.name + ":none");
+                    next();
+                }, function () { lastTried.push(s.name + ":fail"); next(); });
             })();
         });
     }
@@ -242,6 +266,7 @@
             var rec = load(), cur = curCity(), out = { status: "", changed: false, name: "" };
             var pl = null, source = "", pending = rec.pending || null;
             rec.at = Date.now();
+            rec.tried = lastTried.join(" ");
             rec.dev = { cc: dev.cc, tz: dev.tz, off: dev.off };
 
             if (ip) {
@@ -308,6 +333,7 @@
         if (!rec.at) return s + " — " + T("not detected yet");
         var how = rec.source === "ip" ? T("by Internet address") : rec.source === "tv" ? T("by the screen's settings") : "";
         if (rec.status === "offline" && !rec.source) how = T("no internet: using the screen's settings");
+        if (rec.source === "tv" && rec.tried) how += " (" + T("country only: no location service answered") + ")";
         return s + (how ? " — " + how : "");
     }
 

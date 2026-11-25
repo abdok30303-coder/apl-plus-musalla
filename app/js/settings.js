@@ -64,7 +64,8 @@
             case "choice":
                 var v = sys.pref(item.key);
                 for (var i = 0; i < item.options.length; i++) if (item.options[i][0] === v) return item.options[i][1];
-                return String(v);
+                for (var i2 = 0; i2 < item.options.length; i2++) if (v !== undefined && v !== null && String(item.options[i2][0]) === String(v)) return item.options[i2][1];
+                return (v === undefined || v === null) ? String(item.options[0][1]) : String(v);
             case "volume":
                 var vol = sys.audio.getVolume();
                 return '<span class="srow__bar"><i style="width:' + vol + '%"></i></span>' + vol;

@@ -1,6 +1,6 @@
 #!/bin/sh
 # ============================================================
-# APL Vetro Background Audio & Alert Supervisor Daemon (v4.10)
+# APL Vetro Background Audio & Alert Supervisor Daemon (v4.11)
 #   - Runs independently of the launcher UI through Vetro's root agent.
 #   - Keeps the alert schedule and a detached root keeper alive across apps,
 #     YouTube, Samsung TV+, IPTV and HDMI inputs.
@@ -9,7 +9,7 @@
 #   - Records compact, on-device diagnostics at each foreground audio handoff.
 # ============================================================
 
-DAEMON_VER="4.10"
+DAEMON_VER="4.11"
 trap '' HUP 2>/dev/null || true
 
 export PATH="/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:$PATH"
@@ -872,6 +872,13 @@ find_sound_file() {
             if [ -f "$DATADIR/$rel" ]; then echo "$DATADIR/$rel"; return 0; fi
             root=$(find_wgt_root)
             if [ -n "$root" ] && [ -f "$root/$rel" ]; then echo "$root/$rel"; return 0; fi
+            # v4.11: the exact package folder the launcher wrote down, then the real package folders, then a search by name
+            root=$(cat "$DATADIR/wgt-root" 2>/dev/null)
+            if [ -n "$root" ] && [ -f "$root/$rel" ]; then echo "$root/$rel"; return 0; fi
+            root=$(find_real_wgt_root)
+            if [ -n "$root" ] && [ -f "$root/$rel" ]; then echo "$root/$rel"; return 0; fi
+            found=$(find /opt /usr /home -maxdepth 14 -name ramadan-cannon.wav -path "*/sounds/*" 2>/dev/null | grep -v "$DATADIR" | head -n 1)
+            if [ -n "$found" ] && [ -f "$found" ]; then echo "$found"; return 0; fi
             ;;
         task)
             rel="sounds/task-alert.wav"
@@ -944,7 +951,10 @@ play_pulse_sample() {
             return 1
         }
     fi
-    sleep 6
+    # v4.11: wait for the whole sound (16-bit mono 22050 Hz is about 44100 bytes a second), not a fixed 6 s that cut the cannon
+    bytes=$(wc -c < "$wav" 2>/dev/null | tr -dc '0-9'); [ -n "$bytes" ] || bytes=0
+    secs=$((bytes / 40000 + 2)); [ "$secs" -lt 6 ] && secs=6; [ "$secs" -gt 25 ] && secs=25
+    sleep "$secs"
     sh -c "$penv pactl remove-sample '$sample'" >/dev/null 2>&1 || true
     return 0
 }
@@ -970,11 +980,14 @@ play_file_blocking() {
                 fi
                 ;;
             ramadan-cannon|cannon)
-                wav="$DATADIR/sounds/ramadan-cannon.wav"
-                if [ ! -f "$wav" ]; then
-                    wroot=$(find_real_wgt_root)
-                    if [ -n "$wroot" ] && [ -f "$wroot/sounds/ramadan-cannon.wav" ]; then wav="$wroot/sounds/ramadan-cannon.wav"; else wav=""; fi
+                # v4.11: the same lookup as the worker (find_sound_file), and NEVER the task chime for the cannon:
+                # if the file cannot be found, say so in the log and stay silent instead of playing the wrong sound.
+                wav="$(find_sound_file ramadan-cannon)"
+                if [ -z "$wav" ] || [ ! -f "$wav" ]; then
+                    log_msg "cannon wav NOT FOUND (DATADIR=$DATADIR wgt-root=$(cat "$DATADIR/wgt-root" 2>/dev/null))"
+                    return 1
                 fi
+                log_msg "cannon wav: $wav ($(wc -c < "$wav" 2>/dev/null) bytes)"
                 ;;
         esac
         if [ -z "$wav" ]; then

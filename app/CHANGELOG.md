@@ -1,3 +1,9 @@
+## 8.7.32
+
+- Ramadan cannon: the background player (4.11) looks for the sound in more places, never plays the task sound in its place, waits for the whole cannon, and the cannon status page shows what the player logged.
+- Hijri Date Adjustment no longer shows "undefined".
+- Automatic location asks three more services and takes the first answer that names a city; if none answers it says the result is the country only.
+
 ## 8.7.31
 
 - The update page is linked to our own GitHub repository (not the old APL Launcher). Check for Update reads the newest version; Install Update downloads the package from GitHub, installs it from inside the launcher and restarts.

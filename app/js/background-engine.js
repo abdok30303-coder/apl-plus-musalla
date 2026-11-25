@@ -15,7 +15,7 @@
     var PERSIST_SCRIPT = PERSIST_DIR + "/bg-daemon.sh";
     var RUN_SCRIPT = "/run/apl-bg/bg-daemon.sh";
     var DATA_DIR = PERSIST_DIR + "/bg";
-    var DAEMON_VERSION = "4.10";
+    var DAEMON_VERSION = "4.11";
 
     var installed = false, installing = null, checking = null, queues = {};
     var soundsChecked = false, soundsSyncing = null, soundsFallbackTried = false;
