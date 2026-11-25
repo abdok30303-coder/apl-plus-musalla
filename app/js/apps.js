@@ -447,7 +447,7 @@
         closeSongPlayer();
         function fallback() {
             closeSongPlayer();
-            if (A.toast) A.toast(A.t("Couldn't stream the song, opening YouTube"), false);
+            if (A.toast) A.toast(A.t(song.yt ? "Couldn't stream the song, opening YouTube" : "Couldn't play the song"), false);
             if (song.yt && A.openYouTube) A.openYouTube(song.yt).catch(function () {});
         }
         try { if (A.quranAudio && A.quranAudio.pause) A.quranAudio.pause(); } catch (e) {}
@@ -480,15 +480,28 @@
         au.src = song.url;
         try { var pr = au.play(); if (pr && pr.catch) pr.catch(function () { if (SONG_PLAYER === p && au.error) fallback(); }); } catch (e) { fallback(); }
     }
-    if (global.APL && global.APL.addHotkey) global.APL.addHotkey(function (code) {
+    /* v8.7.46: the player's keys are caught in the capture phase of the window, before the launcher's own key handling, so Back (10009,
+       Esc, Backspace, XF86Back) always closes it and stops the sound, whatever else the launcher thinks is in front. The handler is also on
+       the TV's hardware-key event, and the sound stops when the page is hidden. */
+    function songKey(code, key) {
         var p = SONG_PLAYER; if (!p) return false;
         var au = p.audio;
+        if (code === 10009 || code === 27 || code === 8 || code === 413 || code === 38 || code === 40 || code === 10182 || key === "XF86Back" || key === "GoBack" || key === "BrowserBack") { closeSongPlayer(); return true; }
         if (code === 13 || code === 415 || code === 19 || code === 10252) { if (au.paused) { var q = au.play(); if (q && q.catch) q.catch(function () {}); } else au.pause(); return true; }
         if (code === 37 || code === 412) { try { au.currentTime = Math.max(0, au.currentTime - 10); } catch (e) {} return true; }
         if (code === 39 || code === 417) { try { au.currentTime = au.currentTime + 10; } catch (e) {} return true; }
-        if (code === 10009 || code === 27 || code === 8 || code === 413 || code === 38 || code === 40) { closeSongPlayer(); return true; }
         return false;
-    });
+    }
+    if (global.addEventListener) {
+        global.addEventListener("keydown", function (e) {
+            if (SONG_PLAYER && songKey(e.keyCode, e.key)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); else if (e.stopPropagation) e.stopPropagation(); }
+        }, true);
+        global.addEventListener("keyup", function (e) {
+            if (SONG_PLAYER && (e.keyCode === 10009 || e.keyCode === 27 || e.keyCode === 13)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
+        }, true);
+        global.addEventListener("tizenhwkey", function (e) { if (SONG_PLAYER && e && e.keyName === "back") closeSongPlayer(); }, true);
+        if (global.document && global.document.addEventListener) global.document.addEventListener("visibilitychange", function () { if (SONG_PLAYER && global.document.hidden) closeSongPlayer(); });
+    }
 
     /* Is the app still installed? (checks an uninstall done through Vetro) */
     function isInstalled(id) {

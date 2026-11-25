@@ -1,3 +1,10 @@
+## 8.7.47
+
+- Seven more audio files stream from the user's archive.org item 20261125_20261125_1248 (direct WAV links, 10 to 27 MB, range requests supported): Humood - Kun Anta; Maher Zain & Harris J - Qalbi Fil Madinah; Maher Zain - A'marona A'malona (Acapella); Maher Zain - Ya Nabi Salam Alayka; and three poems (الأرجوزة السنية، لامية ابن الوردي، مثلث قطرب). They are listed first. They have no YouTube fallback: if one cannot start in 15 seconds, a toast says so.
+- The menu "Ramadan & Eid Songs" is now "Nasheeds & Songs" (الأناشيد والأغاني). The two earlier songs keep their YouTube fallback.
+- Back now always closes the song player and stops the sound. The player's keys are caught in the capture phase of the window, before the launcher's own handling, and on the TV's hardware-key event; the sound also stops if the page is hidden. Checked in headless Chrome: Back closes the player, the audio is paused, and the launcher's own key handler sees nothing.
+- Not verified on the TV: why Back did not close the player on his set (I could not reproduce it; the likely cause is the launcher's own handling taking the key first, which the new handler bypasses), and smooth playback of the 27 MB file.
+
 ## 8.7.46
 
 - Ramadan & Eid Songs now stream from the two WAV links the user supplied (archive.org; 10.8 MB and 7.9 MB, 22,050 Hz mono PCM, 4:06 and 3:00). A small in-app player shows the title, a progress bar and the time. OK pauses or plays, Left / Right move 10 seconds, Back or Stop closes it and the sound stops. Radio and Quran audio are paused when a song starts.

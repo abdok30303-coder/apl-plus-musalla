@@ -262,13 +262,20 @@
     /* v8.7.42: the Ramadan & Eid songs open on YouTube (online, with picture): Dummy, then TizenTube, then the YouTube app. */
     /* v8.7.46: the songs stream from the links the user supplied (archive.org); YouTube stays as the fallback */
     var SONG_FILES = {
+        "n1": { title: "Humood - Kun Anta", url: "https://archive.org/download/20261125_20261125_1248/Humood%20-%20Kun%20Anta.wav" },
+        "n2": { title: "Maher Zain & Harris J - Qalbi Fil Madinah", url: "https://archive.org/download/20261125_20261125_1248/Maher%20Zain%20&%20Harris%20J%20-%20Qalbi%20Fil%20Madinah.wav" },
+        "n3": { title: "Maher Zain - A'marona A'malona (Acapella)", url: "https://archive.org/download/20261125_20261125_1248/Maher%20Zain%20-%20A'marona%20A'malona%20(Acapella).wav" },
+        "n4": { title: "Maher Zain - Ya Nabi Salam Alayka", url: "https://archive.org/download/20261125_20261125_1248/Maher%20Zain%20-%20Ya%20Nabi%20Salam%20Alayka.wav" },
+        "n5": { title: "\u0627\u0644\u0623\u0631\u062c\u0648\u0632\u0629 \u0627\u0644\u0633\u0646\u064a\u0629 - \u0638\u0641\u0631 \u0627\u0644\u0646\u062a\u064a\u0641\u0627\u062a", url: "https://archive.org/download/20261125_20261125_1248/%D8%A7%D9%84%D8%A3%D8%B1%D8%AC%D9%88%D8%B2%D8%A9%20%D8%A7%D9%84%D8%B3%D9%86%D9%8A%D8%A9%20-%20%D8%B8%D9%81%D8%B1%20%D8%A7%D9%84%D9%86%D8%AA%D9%8A%D9%81%D8%A7%D8%AA.wav" },
+        "n6": { title: "\u0644\u0627\u0645\u064a\u0629 \u0627\u0628\u0646 \u0627\u0644\u0648\u0631\u062f\u064a - \u0638\u0641\u0631 \u0627\u0644\u0646\u062a\u064a\u0641\u0627\u062a", url: "https://archive.org/download/20261125_20261125_1248/%D9%84%D8%A7%D9%85%D9%8A%D8%A9%20%D8%A7%D8%A8%D9%86%20%D8%A7%D9%84%D9%88%D8%B1%D8%AF%D9%8A%20-%20%D8%B8%D9%81%D8%B1%20%D8%A7%D9%84%D9%86%D8%AA%D9%8A%D9%81%D8%A7%D8%AA.wav" },
+        "n7": { title: "\u0645\u062b\u0644\u062b \u0642\u0637\u0631\u0628 - \u0623\u0633\u0627\u0645\u0629 \u0627\u0644\u0648\u0627\u0639\u0638", url: "https://archive.org/download/20261125_20261125_1248/%D9%85%D8%AB%D9%84%D8%AB%20%D9%82%D8%B7%D8%B1%D8%A8%20-%20%D8%A3%D8%B3%D8%A7%D9%85%D8%A9%20%D8%A7%D9%84%D9%88%D8%A7%D8%B9%D8%B8.wav" },
         "3EYDurKhcDs": { title: "\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", url: "https://archive.org/download/20261125_20261125_1151/%D8%A3%D9%87%D9%84%D8%A7%D9%8B%20%D8%A8%D8%A7%D9%84%D8%B9%D9%8A%D8%AF%20-%20%D8%B5%D9%81%D8%A7%D8%A1%20%D8%A3%D8%A8%D9%88%20%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF.wav" },
         "cAXU7ZqgUDE": { title: "\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629", url: "https://archive.org/download/20261125_20261125_1151/%D8%B1%D9%85%D8%B6%D8%A7%D9%86%20%D8%AC%D8%A7%D9%86%D8%A7%20-%20%D8%A7%D9%84%D8%A3%D8%B5%D9%84%D9%8A%D8%A9.wav" }
     };
     function playSong(id) {
         APL.settings.close();
         var S = SONG_FILES[id];
-        if (S && APL.playSongStream) { APL.playSongStream({ title: S.title, url: S.url, yt: id }); return; }
+        if (S && APL.playSongStream) { APL.playSongStream({ title: S.title, url: S.url, yt: /^n\d+$/.test(id) ? "" : id }); return; }
         if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
         if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
     }
@@ -558,12 +565,20 @@
                         if (typeof APL.prayerPage.openOccasions === "function") APL.prayerPage.openOccasions();
                     }
                 }, APL.t("Browse Islamic occasions, Ramadan countdown, and Eid dates."), "calendar"),
-                menu(APL.t("Ramadan & Eid Songs"), "speaker", [
+                menu(APL.t("Nasheeds & Songs"), "speaker", [
+                    action(SONG_FILES["n1"].title, function () { playSong("n1"); }, APL.t("Streams the song from the internet."), "speaker"),
+                    action(SONG_FILES["n2"].title, function () { playSong("n2"); }, APL.t("Streams the song from the internet."), "speaker"),
+                    action(SONG_FILES["n3"].title, function () { playSong("n3"); }, APL.t("Streams the song from the internet."), "speaker"),
+                    action(SONG_FILES["n4"].title, function () { playSong("n4"); }, APL.t("Streams the song from the internet."), "speaker"),
+                    action(SONG_FILES["n5"].title, function () { playSong("n5"); }, APL.t("Streams the song from the internet."), "speaker"),
+                    action(SONG_FILES["n6"].title, function () { playSong("n6"); }, APL.t("Streams the song from the internet."), "speaker"),
+                    action(SONG_FILES["n7"].title, function () { playSong("n7"); }, APL.t("Streams the song from the internet."), "speaker"),
                     action("\u0623\u0647\u0644\u0627 \u0628\u0627\u0644\u0639\u064a\u062f \u00b7 \u0635\u0641\u0627\u0621 \u0623\u0628\u0648 \u0627\u0644\u0633\u0639\u0648\u062f", function () { playSong("3EYDurKhcDs"); },
                         APL.t("Streams the song from the internet (YouTube if it cannot)."), "speaker"),
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
                         APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
-                ], APL.t("Songs that play from the internet. If one cannot start, it opens on YouTube.")),
+                
+                ], APL.t("Nasheeds, Ramadan and Eid songs that play from the internet. Back closes the player.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
