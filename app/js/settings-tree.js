@@ -285,8 +285,9 @@
         "cAXU7ZqgUDE": { title: "\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629", url: "https://archive.org/download/20261125_20261125_1151/%D8%B1%D9%85%D8%B6%D8%A7%D9%86%20%D8%AC%D8%A7%D9%86%D8%A7%20-%20%D8%A7%D9%84%D8%A3%D8%B5%D9%84%D9%8A%D8%A9.wav" }
     };
     function playSong(id) {
-        APL.settings.close();
         var S = SONG_FILES[id];
+        /* v8.7.56: a streamed song plays over the list, which stays open, so Back returns to it on the same song */
+        if (!(S && APL.playSongStream)) APL.settings.close();
         if (S && APL.playSongStream) { APL.playSongStream({ title: S.title, url: S.url, yt: /^n\d+$/.test(id) ? "" : id }); return; }
         if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
         if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
@@ -603,7 +604,7 @@
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
                         APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
                 
-                ], APL.t("Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.")),
+                ], APL.t("Nasheeds that play from the internet. Back closes the player and returns to this list.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();

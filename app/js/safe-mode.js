@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.56: زر الرجوع في مشغل الأناشيد بيقفل المشغل ويرجّعك لقائمة الأناشيد على نفس الأنشودة بدل الشاشة الرئيسية.",
         "✔ 8.7.55: واجهة إنجليزي: ودجت رمضان بالإنجليزي بالكامل، وودجت الحكمة بيسحب من مجموعة إنجليزي جديدة (٤٥٤ حكمة). العربي زي ما هو.",
         "✔ 8.7.54: لما تكون على أول صف في الرئيسية، زر الرجوع مرة واحدة يفتح مركز التحكم.",
         "✔ 8.7.54: لوحة مركز التحكم بقت زجاج شفاف (الخلفية بتتغبّش ورا اللوحة زي ستارة الموبايل)، بحواف مدوّرة، وكل الأزرار بتظهر كاملة من غير ما الصف الأخير يتقطع.",
@@ -85,6 +86,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.56: Back in the nasheed player closes it and returns to the Nasheeds list, on the same song, instead of the Home Screen.",
         "✔ 8.7.55: English UI: the Ramadan widget is fully English and the wisdom widget uses a new English pool (454 items). Arabic is unchanged.",
         "✔ 8.7.54: on the first row of the Home Screen, Back opens the Control Center in one press.",
         "✔ 8.7.54: Control Center is now frosted glass over a blurred Home Screen, with rounded corners, and every tile fits on screen (the last row is no longer cut off).",

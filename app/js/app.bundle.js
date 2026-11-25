@@ -708,7 +708,7 @@ window.APL_LANG_AR = {
     "From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.": "من اليوم اللي قبل رمضان لحد تالت يوم العيد: هلال (وفانوس في الأيام الأولى) مع أدعية ونصايح، وأدعية ليلة القدر في العشر الأواخر، ونصايح العيد، فوق صف التطبيقات. مقفول: مش بيظهر خالص.",
     "Ramadan Widget Preview": "معاينة ويدجت رمضان",
     "Couldn't play the song": "مقدرتش أشغّل الأغنية",
-    "Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.": "أناشيد بتشتغل من الإنترنت. رجوع بيقفل المشغل ويرجّعك للشاشة الرئيسية.",
+    "Nasheeds that play from the internet. Back closes the player and returns to this list.": "أناشيد بتشتغل من الإنترنت. رجوع بيقفل المشغل ويرجّعك للقائمة دي.",
     "Streams the song from the internet.": "بيشغّل من الإنترنت.",
     "Nasheeds": "الأناشيد",
     "OK: pause / play   Left / Right: 10 s   Back: close": "OK: إيقاف / تشغيل   يمين / شمال: ١٠ ثواني   رجوع: إغلاق",
@@ -12392,10 +12392,11 @@ window.APL_KEYS = {
        the release). A small full-screen player: OK = pause / play, Left / Right = 10 s back / forward, Back or Stop = close. If the file
        cannot start within 15 s, or fails, the YouTube route (openYouTube) is used instead. */
     var SONG_PLAYER = null;
-    function closeSongPlayer() {
+    function closeSongPlayer(closeSettings) {
         var p = SONG_PLAYER; if (!p) return; SONG_PLAYER = null;
         songListeners(false);
-        try { if (global.APL && global.APL.settings && global.APL.settings.isOpen && global.APL.settings.isOpen()) global.APL.settings.close(); } catch (e) {}
+        /* v8.7.56: the Settings list stays open behind the player (playSong no longer closes it), so Back and the end of the song return to the nasheeds list; only the YouTube fallback closes Settings */
+        if (closeSettings) { try { if (global.APL && global.APL.settings && global.APL.settings.isOpen && global.APL.settings.isOpen()) global.APL.settings.close(); } catch (e) {} }
         try { clearInterval(p.tick); clearTimeout(p.guard); p.audio.pause(); p.audio.removeAttribute("src"); p.audio.load(); } catch (e) {}
         try { if (p.box && p.box.parentNode) p.box.parentNode.removeChild(p.box); } catch (e) {}
     }
@@ -12403,14 +12404,14 @@ window.APL_KEYS = {
         var doc = global.document, A = global.APL;
         closeSongPlayer();
         function fallback() {
-            closeSongPlayer();
+            closeSongPlayer(true);
             if (A.toast) A.toast(A.t(song.yt ? "Couldn't stream the song, opening YouTube" : "Couldn't play the song"), false);
             if (song.yt && A.openYouTube) A.openYouTube(song.yt).catch(function () {});
         }
         try { if (A.quranAudio && A.quranAudio.pause) A.quranAudio.pause(); } catch (e) {}
         try { if (A.radio && A.radio.isPlaying && A.radio.isPlaying()) A.radio.stop(); } catch (e) {}
         var box = doc.createElement("div");
-        box.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;background:rgba(6,10,20,.94);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center";
+        box.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;background:rgba(6,10,20,.99);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center";
         var ttl = doc.createElement("div"); ttl.style.cssText = "font-size:54px;font-weight:700;color:#ffe2a0;margin:0 80px 30px"; ttl.textContent = song.title;
         var st = doc.createElement("div"); st.style.cssText = "font-size:34px;opacity:.9;margin-bottom:26px"; st.textContent = A.t("Loading…");
         var bar = doc.createElement("div"); bar.style.cssText = "width:1000px;height:10px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden";
@@ -17157,8 +17158,9 @@ window.APL_KEYS = {
         "cAXU7ZqgUDE": { title: "\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629", url: "https://archive.org/download/20261125_20261125_1151/%D8%B1%D9%85%D8%B6%D8%A7%D9%86%20%D8%AC%D8%A7%D9%86%D8%A7%20-%20%D8%A7%D9%84%D8%A3%D8%B5%D9%84%D9%8A%D8%A9.wav" }
     };
     function playSong(id) {
-        APL.settings.close();
         var S = SONG_FILES[id];
+        /* v8.7.56: a streamed song plays over the list, which stays open, so Back returns to it on the same song */
+        if (!(S && APL.playSongStream)) APL.settings.close();
         if (S && APL.playSongStream) { APL.playSongStream({ title: S.title, url: S.url, yt: /^n\d+$/.test(id) ? "" : id }); return; }
         if (APL.toast) APL.toast(APL.t("Opening the song on YouTube…"), true);
         if (APL.openYouTube) APL.openYouTube(id).catch(function (e) { if (APL.toast) APL.toast((e && e.message) || APL.t("Can't open YouTube")); });
@@ -17475,7 +17477,7 @@ window.APL_KEYS = {
                     action("\u0631\u0645\u0636\u0627\u0646 \u062c\u0627\u0646\u0627 \u00b7 \u0627\u0644\u0623\u0635\u0644\u064a\u0629 \u0627\u0644\u0642\u062f\u064a\u0645\u0629", function () { playSong("cAXU7ZqgUDE"); },
                         APL.t("Streams the old Ramadan song from the internet (YouTube if it cannot)."), "speaker")
                 
-                ], APL.t("Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.")),
+                ], APL.t("Nasheeds that play from the internet. Back closes the player and returns to this list.")),
 
                 action(APL.t("Morning & Evening Adhkar"), function () {
                     APL.settings.close();
@@ -25407,6 +25409,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.56: زر الرجوع في مشغل الأناشيد بيقفل المشغل ويرجّعك لقائمة الأناشيد على نفس الأنشودة بدل الشاشة الرئيسية.",
         "✔ 8.7.55: واجهة إنجليزي: ودجت رمضان بالإنجليزي بالكامل، وودجت الحكمة بيسحب من مجموعة إنجليزي جديدة (٤٥٤ حكمة). العربي زي ما هو.",
         "✔ 8.7.54: لما تكون على أول صف في الرئيسية، زر الرجوع مرة واحدة يفتح مركز التحكم.",
         "✔ 8.7.54: لوحة مركز التحكم بقت زجاج شفاف (الخلفية بتتغبّش ورا اللوحة زي ستارة الموبايل)، بحواف مدوّرة، وكل الأزرار بتظهر كاملة من غير ما الصف الأخير يتقطع.",
@@ -25453,6 +25456,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.56: Back in the nasheed player closes it and returns to the Nasheeds list, on the same song, instead of the Home Screen.",
         "✔ 8.7.55: English UI: the Ramadan widget is fully English and the wisdom widget uses a new English pool (454 items). Arabic is unchanged.",
         "✔ 8.7.54: on the first row of the Home Screen, Back opens the Control Center in one press.",
         "✔ 8.7.54: Control Center is now frosted glass over a blurred Home Screen, with rounded corners, and every tile fits on screen (the last row is no longer cut off).",

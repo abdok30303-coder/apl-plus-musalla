@@ -153,7 +153,7 @@ window.APL_LANG_AR = {
     "From the day before Ramadan to the third day of Eid: a crescent (a lantern in the first days) with duas and tips, Laylat al-Qadr duas in the last ten nights, and Eid tips, above the apps row. Off: it never shows.": "من اليوم اللي قبل رمضان لحد تالت يوم العيد: هلال (وفانوس في الأيام الأولى) مع أدعية ونصايح، وأدعية ليلة القدر في العشر الأواخر، ونصايح العيد، فوق صف التطبيقات. مقفول: مش بيظهر خالص.",
     "Ramadan Widget Preview": "معاينة ويدجت رمضان",
     "Couldn't play the song": "مقدرتش أشغّل الأغنية",
-    "Nasheeds that play from the internet. Back closes the player and returns to the Home Screen.": "أناشيد بتشتغل من الإنترنت. رجوع بيقفل المشغل ويرجّعك للشاشة الرئيسية.",
+    "Nasheeds that play from the internet. Back closes the player and returns to this list.": "أناشيد بتشتغل من الإنترنت. رجوع بيقفل المشغل ويرجّعك للقائمة دي.",
     "Streams the song from the internet.": "بيشغّل من الإنترنت.",
     "Nasheeds": "الأناشيد",
     "OK: pause / play   Left / Right: 10 s   Back: close": "OK: إيقاف / تشغيل   يمين / شمال: ١٠ ثواني   رجوع: إغلاق",

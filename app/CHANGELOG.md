@@ -1,3 +1,8 @@
+## 8.7.56
+
+- Nasheed player: Back (or the end of the song) closes the player, stops the sound and returns to the Nasheeds list with the song you played still selected. Back from the list works as before. If a song cannot be streamed and YouTube opens instead, Settings still closes.
+- Untested on the TV.
+
 ## 8.7.55
 
 - English UI only: the Ramadan widget is fully English (main text, source line, suhoor/iftar chip and reminders). The same phase rules apply. Arabic is unchanged.

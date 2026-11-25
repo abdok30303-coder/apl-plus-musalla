@@ -437,10 +437,11 @@
        the release). A small full-screen player: OK = pause / play, Left / Right = 10 s back / forward, Back or Stop = close. If the file
        cannot start within 15 s, or fails, the YouTube route (openYouTube) is used instead. */
     var SONG_PLAYER = null;
-    function closeSongPlayer() {
+    function closeSongPlayer(closeSettings) {
         var p = SONG_PLAYER; if (!p) return; SONG_PLAYER = null;
         songListeners(false);
-        try { if (global.APL && global.APL.settings && global.APL.settings.isOpen && global.APL.settings.isOpen()) global.APL.settings.close(); } catch (e) {}
+        /* v8.7.56: the Settings list stays open behind the player (playSong no longer closes it), so Back and the end of the song return to the nasheeds list; only the YouTube fallback closes Settings */
+        if (closeSettings) { try { if (global.APL && global.APL.settings && global.APL.settings.isOpen && global.APL.settings.isOpen()) global.APL.settings.close(); } catch (e) {} }
         try { clearInterval(p.tick); clearTimeout(p.guard); p.audio.pause(); p.audio.removeAttribute("src"); p.audio.load(); } catch (e) {}
         try { if (p.box && p.box.parentNode) p.box.parentNode.removeChild(p.box); } catch (e) {}
     }
@@ -448,14 +449,14 @@
         var doc = global.document, A = global.APL;
         closeSongPlayer();
         function fallback() {
-            closeSongPlayer();
+            closeSongPlayer(true);
             if (A.toast) A.toast(A.t(song.yt ? "Couldn't stream the song, opening YouTube" : "Couldn't play the song"), false);
             if (song.yt && A.openYouTube) A.openYouTube(song.yt).catch(function () {});
         }
         try { if (A.quranAudio && A.quranAudio.pause) A.quranAudio.pause(); } catch (e) {}
         try { if (A.radio && A.radio.isPlaying && A.radio.isPlaying()) A.radio.stop(); } catch (e) {}
         var box = doc.createElement("div");
-        box.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;background:rgba(6,10,20,.94);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center";
+        box.style.cssText = "position:fixed;left:0;top:0;right:0;bottom:0;z-index:99999;background:rgba(6,10,20,.99);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:inherit;text-align:center";
         var ttl = doc.createElement("div"); ttl.style.cssText = "font-size:54px;font-weight:700;color:#ffe2a0;margin:0 80px 30px"; ttl.textContent = song.title;
         var st = doc.createElement("div"); st.style.cssText = "font-size:34px;opacity:.9;margin-bottom:26px"; st.textContent = A.t("Loading…");
         var bar = doc.createElement("div"); bar.style.cssText = "width:1000px;height:10px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden";
