@@ -5337,7 +5337,7 @@ window.APL_CATALOG = [
         ["mitghamr", "ميت غمر",           "Mit Ghamr",        30.7185, 31.2596],
         ["zagazig",  "الزقازيق",          "Zagazig",          30.5877, 31.5020],
         ["belqas",   "بلقاس",            "Belqas",           31.3567, 31.3936],      // v8.7.28: 5th of Egypt
-        ["abutaha",  "أبو طه",            "Abu Taha",         31.28,   31.42],        // v8.7.29: village near Belqas (approx.)
+        ["abutaha",  "أبو طه",            "Abu Taha",         31.28,   31.42],
         ["tanta",    "طنطا",              "Tanta",            30.7865, 31.0004],
         ["damanhur", "دمنهور",            "Damanhur",         31.0340, 30.4682],
         ["kafrelsh", "كفر الشيخ",          "Kafr El Sheikh",   31.1117, 30.9398],

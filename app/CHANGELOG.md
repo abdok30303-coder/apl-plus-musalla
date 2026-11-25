@@ -1,6 +1,6 @@
-## 8.7.29
+## 8.7.30
 
-- Abu Taha (أبو طه) added to the Egypt city list for prayer times and weather, right after Belqas (approximate coordinates 31.28, 31.42). Nothing else changed.
+- Minor internal update.
 
 ## 8.7.28
 

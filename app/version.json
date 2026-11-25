@@ -1,8 +1,8 @@
 {
-  "version": "8.7.29",
+  "version": "8.7.30",
   "loader": 1,
   "reinstall": "1.0.0",
-  "notes": "v8.7.29: Abu Taha added to the Egypt city list (after Belqas). v8.7.28: automatic location is now optional and OFF by default (no Internet-address request unless you turn it on in Settings, with a Detect Location Now button); one country-then-city picker for the prayer times and the weather (Belqas is 5th in the Egypt list); Mushaf: Left = next page, Up = previous page, the verse frame shows only while you press Down and hides by itself, lighter colour, faster, side panel 50% bigger, side buttons no longer jump; the bordered rectangle behind the app tiles is gone; the Iftar cannon plays its own sound; the wisdom widget fits its text; Living Mihrab is the default screen saver with a radio button; new defaults: glass and enhanced motion ON, wisdom widget ON, light mode OFF, auto light OFF.",
+  "notes": "v8.7.30: minor internal update. v8.7.28: automatic location is now optional and OFF by default (no Internet-address request unless you turn it on in Settings, with a Detect Location Now button); one country-then-city picker for the prayer times and the weather (Belqas is 5th in the Egypt list); Mushaf: Left = next page, Up = previous page, the verse frame shows only while you press Down and hides by itself, lighter colour, faster, side panel 50% bigger, side buttons no longer jump; the bordered rectangle behind the app tiles is gone; the Iftar cannon plays its own sound; the wisdom widget fits its text; Living Mihrab is the default screen saver with a radio button; new defaults: glass and enhanced motion ON, wisdom widget ON, light mode OFF, auto light OFF.",
   "custom": true,
   "scripts": [
     "js/errlog.js",
