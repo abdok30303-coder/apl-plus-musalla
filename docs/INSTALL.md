@@ -2,7 +2,7 @@
 
 **English** · [العربية](#التثبيت-على-شاشة-سامسونج-بواسطة-apps2samsung)
 
-Apps2Samsung is a free tool that installs apps on Samsung TVs from your computer or phone. You do **not** need to know anything about programming. It takes about 10 minutes.
+Apps2Samsung is a free tool that installs apps on Samsung TVs from your computer or phone. You do **not** need to know anything about programming.
 
 ## What you need
 - A Samsung Smart TV from **2022 or newer** (Tizen 6.5+).
@@ -51,7 +51,7 @@ Sideloading is done at your own risk, and enabling Developer Mode can affect sup
 
 # التثبيت على شاشة سامسونج بواسطة Apps2Samsung
 
-أداة **Apps2Samsung** مجانية، بتثبّت التطبيقات على شاشة سامسونج من الكمبيوتر أو الموبايل. مش محتاج أي خبرة برمجة، والعملية بتاخد حوالي 10 دقايق.
+أداة **Apps2Samsung** مجانية، بتثبّت التطبيقات على شاشة سامسونج من الكمبيوتر أو الموبايل. مش محتاج أي خبرة برمجة.
 
 ## المطلوب
 - شاشة سامسونج ذكية موديل **2022 أو أحدث** (Tizen 6.5 فما فوق).
