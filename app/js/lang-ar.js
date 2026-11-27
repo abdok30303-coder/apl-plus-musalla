@@ -1498,5 +1498,5 @@ window.APL_LANG_AR_EXTRA = {
     "Enhanced Glass & Motion": "المؤثرات الحركية والزجاجية المتقدمة",
     "Apple TV-style depth, fluid spring motion and real frosted glass blur. Off by default for maximum speed; recommended for fast processors.": "عمق بصري بأسلوب Apple TV، وانتقالات حركية ناعمة، وتمويه زجاجي فائق. مغلق افتراضياً لضمان أعلى سرعة، ومناسب للمعالجات القوية.",
     "About Vetro": "عن فيترو (Vetro)",
-    "What Vetro is, what it adds to this launcher, how to make Salah Launcher the default screen, how to install it, and what to be careful about.": "يعني إيه فيترو، وإيه اللي بيضيفه للانشر، وإزاي تخلي صلاح لانشر هو الشاشة الافتراضية، وإزاي تثبّته، وإيه اللي لازم تاخد بالك منه."
+    "What Vetro is, what it adds to this launcher, how to make Salah Launcher the default screen, how to install it, and what to be careful about.": "يعني إيه فيترو، وإيه اللي بيضيفه للانشر، وإزاي تخلي صلاة لانشر هو الشاشة الافتراضية، وإزاي تثبّته، وإيه اللي لازم تاخد بالك منه."
 };

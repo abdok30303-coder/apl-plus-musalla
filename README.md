@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <img alt="version" src="https://img.shields.io/badge/version-8.7.58-c9973b?style=for-the-badge">
+  <img alt="version" src="https://img.shields.io/badge/version-8.7.59-c9973b?style=for-the-badge">
   <img alt="platform" src="https://img.shields.io/badge/Samsung%20Tizen-6.5%2B-1b1f4a?style=for-the-badge">
   <img alt="ui" src="https://img.shields.io/badge/UI-Arabic%20%2B%20English-0b6e4f?style=for-the-badge">
   <img alt="offline" src="https://img.shields.io/badge/Mushaf%20%26%20tafsir-offline-8a5cf6?style=for-the-badge">
@@ -116,16 +116,26 @@ A TV is the one screen the whole family gathers around, yet its home screen know
 
 > Requires a Samsung Smart TV from **2022 or newer** (Tizen 6.5+).
 
+Ideal for Samsung TVs running **Tizen 6.5 and newer**. It is built to feel fast and light, with a modern, clean interface free of distractions.
+
 **The easy way: Apps2Samsung** (free, no programming needed)
 
 1. On the TV, turn on **Developer Mode**: **Home › Apps**, type **12345**, switch Developer mode **On**, enter your computer's IP address, then **restart the TV**.
-2. Download `salah-launcher-v8.7.58.wgt` from the [Releases page](../../releases) (or directly: [`releases/salah-launcher-v8.7.58.wgt`](releases/salah-launcher-v8.7.58.wgt)).
+2. Download `salah-launcher-v8.7.59.wgt` from the [Releases page](../../releases) (or directly: [`releases/salah-launcher-v8.7.59.wgt`](releases/salah-launcher-v8.7.59.wgt)).
 3. Open [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung/releases) on your computer, select your TV, choose a **custom `.wgt`**, pick the file and press **Install**.
 4. Open **Salah Launcher** from the TV's **Apps** list.
 
 📖 **[Step-by-step guide with troubleshooting, in English and Arabic →](docs/INSTALL.md)**
 
 You can also sideload with Tizen Studio. Many changes in [`app/CHANGELOG.md`](app/CHANGELOG.md) are marked *Untested on physical TV*; [`app/TV-TEST.md`](app/TV-TEST.md) is the checklist to confirm them. Found something? Please open an issue.
+
+## Updates
+
+After the first install you do not need a USB stick or a computer again.
+
+- **It looks for a new version by itself.** A quiet check about a minute after start-up, then at most once every 24 hours. When there is a new version, a short message names it. It never installs anything without asking.
+- **Installing is one press inside the launcher:** **Settings › Support › Launcher Update › Install Update**. It downloads the package from this repository, tests it, unpacks it, checks that the files carry the new version, copies them over the installed ones and restarts the launcher. Your settings, audio files and radio are kept. If any step fails nothing is replaced: the message names the step that failed, and the `.wgt` from the Releases page still installs by USB or Apps2Samsung.
+- **Two honest limits.** The install step needs **Vetro** installed on the TV, because it writes the files with a root command; without Vetro the automatic check still tells you a new version exists, and you install the `.wgt` the same way as the first time. And the in-launcher updater arrived in 8.7.31, so a copy installed from before that needs one manual update. **Automatic updates** can be switched off on the same settings page.
 
 ## Configure
 
@@ -160,7 +170,9 @@ Salah Launcher uses its own package IDs (`APLMusalla`, `APLMusalla.Home`, `APLMu
 
 ## عربي
 
-**Salah Launcher** مشغّل بشكل Apple TV لشاشات سامسونج (Tizen 6.5 فأحدث)، يحوّل الشاشة الرئيسية لمساحة للصلاة والقرآن: أول ما تفتح الشاشة تشوف الوقت والتاريخ الهجري **والمتبقي على الصلاة القادمة**.
+**صلاة لانشر** (Salah Launcher) مشغّل بشكل Apple TV لشاشات سامسونج (Tizen 6.5 فأحدث)، يحوّل الشاشة الرئيسية لمساحة للصلاة والقرآن: أول ما تفتح الشاشة تشوف الوقت والتاريخ الهجري **والمتبقي على الصلاة القادمة**.
+
+مثالي لشاشات سامسونج اللي شغّالة على **Tizen 6.5 فأحدث**، ومبني ليكون سريع وخفيف، بواجهة حديثة ونظيفة من غير مشتتات.
 
 **اللي هتلاقيه جواه**
 - **مواقيت الصلاة** بتتحسب على الشاشة نفسها، فتظهر حتى من غير إنترنت، مع تنبيهات صوتية عند كل صلاة.
@@ -175,6 +187,11 @@ Salah Launcher uses its own package IDs (`APLMusalla`, `APLMusalla.Home`, `APLMu
 </p>
 
 **للتثبيت:** نزّل ملف `.wgt` من صفحة [Releases](../../releases) وثبّته بأداة **Apps2Samsung** بعد تفعيل وضع المطوّر على الشاشة. الشرح خطوة بخطوة هنا: [دليل التثبيت](docs/INSTALL.md#التثبيت-على-شاشة-سامسونج-بواسطة-apps2samsung). المدينة الافتراضية القاهرة ويمكن تغييرها من الإعدادات.
+
+**التحديث بعد كده تلقائي — مش محتاج فلاشة ولا كمبيوتر تاني:**
+- **اللانشر بيدوّر على نسخة جديدة لوحده:** فحص هادي بعد التشغيل بحوالي دقيقة، وبعد كده مرة كل ٢٤ ساعة على الأكثر، ولما تلاقي نسخة جديدة بتطلع رسالة قصيرة برقمها. ومبينزّلش ولا بيثبّت حاجة من غير ما تسألك.
+- **التثبيت بضغطة واحدة من جوه اللانشر:** الإعدادات › الدعم › تحديث اللانشر › تثبيت التحديث. بينزّل الحزمة من المستودع، ويختبرها، ويفكّها، ويتأكد إن الملفات فيها النسخة الجديدة، وينسخها فوق المثبّت، ويعيد تشغيل اللانشر. إعداداتك وملفات الصوت والراديو بتفضل زي ما هي، ولو أي خطوة فشلت مفيش حاجة بتتغيّر: الرسالة بتقول الخطوة اللي فشلت، وتقدر تثبّت ملف `.wgt` من صفحة Releases بفلاشة أو Apps2Samsung.
+- **حدّين لازم تعرفهم:** خطوة التثبيت محتاجة **فيترو** متنصّب على الشاشة، لأنها بتكتب الملفات بأمر روت؛ من غير فيترو الفحص التلقائي برضه بيقولك فيه نسخة جديدة وتثبتها زي أول مرة. والتحديث من جوه اللانشر اتضاف في 8.7.31، فالنسخة اللي قبل كده محتاجة تحديث يدوي مرة واحدة. وممكن تقفل **التحديث التلقائي** من نفس صفحة الإعدادات.
 
 ## فيترو (Vetro) — الربط الاختياري
 

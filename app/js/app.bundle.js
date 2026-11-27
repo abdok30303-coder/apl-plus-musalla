@@ -2054,7 +2054,7 @@ window.APL_LANG_AR_EXTRA = {
     "Enhanced Glass & Motion": "المؤثرات الحركية والزجاجية المتقدمة",
     "Apple TV-style depth, fluid spring motion and real frosted glass blur. Off by default for maximum speed; recommended for fast processors.": "عمق بصري بأسلوب Apple TV، وانتقالات حركية ناعمة، وتمويه زجاجي فائق. مغلق افتراضياً لضمان أعلى سرعة، ومناسب للمعالجات القوية.",
     "About Vetro": "عن فيترو (Vetro)",
-    "What Vetro is, what it adds to this launcher, how to make Salah Launcher the default screen, how to install it, and what to be careful about.": "يعني إيه فيترو، وإيه اللي بيضيفه للانشر، وإزاي تخلي صلاح لانشر هو الشاشة الافتراضية، وإزاي تثبّته، وإيه اللي لازم تاخد بالك منه."
+    "What Vetro is, what it adds to this launcher, how to make Salah Launcher the default screen, how to install it, and what to be careful about.": "يعني إيه فيترو، وإيه اللي بيضيفه للانشر، وإزاي تخلي صلاة لانشر هو الشاشة الافتراضية، وإزاي تثبّته، وإيه اللي لازم تاخد بالك منه."
 };
 
 /* === js/i18n.js === */
@@ -17111,7 +17111,7 @@ window.APL_KEYS = {
         "• الشاشة نفسها: سطوع حقيقي بأوامر روت، أسماء منافذ HDMI الحقيقية، وGame Mode من غير ما تلمس إعدادات صورتك.",
         "• صحة فيترو: نقطة صغيرة جنب الساعة (أخضر شغال، أحمر واقف)، واللانشر بيحاول يرجّعه لوحده.",
         "",
-        "إزاي تخلي صلاح لانشر هو شاشة التلفزيون الافتراضية؟",
+        "إزاي تخلي صلاة لانشر هو شاشة التلفزيون الافتراضية؟",
         "الخيار موجود جوه اللانشر: الإعدادات › General & Privacy › «Start on Salah Launcher». بيخلي الشاشة تفتح اللانشر أول ما تشتغل بدل مدخل التلفزيون. الخيار ده بيحتاج فيترو متنصّب، لأنه بيكتب إعداد الشاشة بأمر روت.",
         "وزر Home لوحده: الإعدادات › Remote and Devices › «Set Up the Remote Buttons» بيخلي زر Home يفتح اللانشر بدل Smart Hub (محتاج فيترو كمان). للرجوع: «Restore Home to Smart Hub».",
         "",
@@ -25559,6 +25559,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.59: الإعدادات ← Vetro Root Controls بقت بتقفل بشاشة «عن Vetro»: يعني إيه Vetro، وإيه اللي اللانشر بيكسبه منه، وفين خيار «خلي الشاشة دي الافتراضية» أصلاً، وإزاي يتثبّت وإيه اللي تخلي بالك منه. وعدّاد القرّاء بقى ٤١ زي القايمة.",
         "✔ 8.7.58: التحديث من جوه اللانشر بقى بياخد نسخة من الملفات الحالية قبل ما ينسخ الجديدة، ولو النسخ فشل بيرجّعها.",
         "✔ 8.7.57: البداية أسرع: الرئيسية بتظهر فوراً من آخر قايمة تطبيقات وبعدين بتتحدّث، وشاشة بدء بالاسم بدل الشاشة السودا، ونسخة تانية من الإعدادات بترجع لوحدها لو الكهربا اتقطعت وضاعت الإعدادات.",
         "✔ 8.7.56: زر الرجوع في مشغل الأناشيد بيقفل المشغل ويرجّعك لقائمة الأناشيد على نفس الأنشودة بدل الشاشة الرئيسية.",
@@ -28915,8 +28916,8 @@ window.APL_DEVICES = [
     function NM(o) { return (APL.lang === "ar" || !o) ? (o && o.name_ar) : (o.name_en || o.name_ar); }
     /* v8.7.25: English for the Quran player. In English mode every label, tooltip and placeholder inside the player is translated
        (exact texts, surah and reciter names, a few phrases); verse and tafsir text is never touched. */
-    var QA_D = {"تشغيل متواصل": "Continuous play", "تكرار الآية الحالية": "Repeat the current verse", "تكرار السورة كاملة": "Repeat the whole surah", "إيقاف التكرار": "Repeat off", "البحث في الآيات": "Search verses", "إذاعة القرآن الكريم من القاهرة": "Holy Quran Radio from Cairo", "إذاعة القرآن": "Quran Radio", "إذاعة القرآن · مباشر": "Quran Radio · Live", "وضع التكرار": "Repeat mode", "الآية السابقة": "Previous verse", "تشغيل / إيقاف مؤقت": "Play / Pause", "الآية التالية": "Next verse", "سرعة التلاوة": "Recitation speed", "خيارات إضافية": "More options", "جاري تحميل نص الآية الكريمة…": "Loading the verse…", "جاري تحميل التفسير…": "Loading the tafsir…", "جاري الاتصال…": "Connecting…", "اختر سورة من المصحف الشريف": "Choose a surah", "تنقل بالأسهم واضغط OK للاختيار والاستماع": "Move with the arrows and press OK to choose and listen", "السورة المحددة بالريموت:": "Surah selected with the remote:", "اضغط زر [ OK ] لتشغيل السورة والاستماع فوراً ◀": "Press [ OK ] to play the surah now ◀", "اختر القارئ (٤٢ قارئ معتمد)": "Choose a reciter (42 approved reciters)", "القارئ المحدد بالريموت:": "Reciter selected with the remote:", "اضغط زر [ OK ] لتشغيل القارئ والاستماع فوراً ◀": "Press [ OK ] to play with this reciter now ◀", "البحث الفوري في نصوص الآيات": "Instant search in the verses", "اكتب كلمة أو جزءاً من الآية للبحث...": "Type a word or part of a verse to search...", "أدخل كلمتين على الأقل لبدء البحث الفوري": "Enter at least two letters to start the instant search", "جاري تحميل فهرس وبيانات البحث…": "Loading the search index and data…", "تعذر تحميل بيانات البحث": "Could not load the search data", "لم يتم العثور على نتائج مطابقة": "No matching results", "خيارات مشغل القرآن الكريم": "Quran player options", "سرعة التلاوة:": "Recitation speed:", "1.0× (عادي)": "1.0× (normal)", "مفعّل": "On", "معطّل": "Off", "إظهار التفسير أسفل الآية:": "Show the tafsir under the verse:", "حفظ وإغلاق": "Save and close"};
-    var QA_FR = {"سورة ": "Surah ", "الآية ": "Verse ", " آية": " verses", "مكية": "Meccan", "مدنية": "Medinan", "القارئ رقم ": "Reciter no. ", "رقم ": "No. ", " من ١١٤ · ": " of 114 · ", " من ٤٢ قارئاً معتمداً": " of 42 approved reciters"};
+    var QA_D = {"تشغيل متواصل": "Continuous play", "تكرار الآية الحالية": "Repeat the current verse", "تكرار السورة كاملة": "Repeat the whole surah", "إيقاف التكرار": "Repeat off", "البحث في الآيات": "Search verses", "إذاعة القرآن الكريم من القاهرة": "Holy Quran Radio from Cairo", "إذاعة القرآن": "Quran Radio", "إذاعة القرآن · مباشر": "Quran Radio · Live", "وضع التكرار": "Repeat mode", "الآية السابقة": "Previous verse", "تشغيل / إيقاف مؤقت": "Play / Pause", "الآية التالية": "Next verse", "سرعة التلاوة": "Recitation speed", "خيارات إضافية": "More options", "جاري تحميل نص الآية الكريمة…": "Loading the verse…", "جاري تحميل التفسير…": "Loading the tafsir…", "جاري الاتصال…": "Connecting…", "اختر سورة من المصحف الشريف": "Choose a surah", "تنقل بالأسهم واضغط OK للاختيار والاستماع": "Move with the arrows and press OK to choose and listen", "السورة المحددة بالريموت:": "Surah selected with the remote:", "اضغط زر [ OK ] لتشغيل السورة والاستماع فوراً ◀": "Press [ OK ] to play the surah now ◀", "اختر القارئ (٤١ قارئ معتمد)": "Choose a reciter (41 approved reciters)", "القارئ المحدد بالريموت:": "Reciter selected with the remote:", "اضغط زر [ OK ] لتشغيل القارئ والاستماع فوراً ◀": "Press [ OK ] to play with this reciter now ◀", "البحث الفوري في نصوص الآيات": "Instant search in the verses", "اكتب كلمة أو جزءاً من الآية للبحث...": "Type a word or part of a verse to search...", "أدخل كلمتين على الأقل لبدء البحث الفوري": "Enter at least two letters to start the instant search", "جاري تحميل فهرس وبيانات البحث…": "Loading the search index and data…", "تعذر تحميل بيانات البحث": "Could not load the search data", "لم يتم العثور على نتائج مطابقة": "No matching results", "خيارات مشغل القرآن الكريم": "Quran player options", "سرعة التلاوة:": "Recitation speed:", "1.0× (عادي)": "1.0× (normal)", "مفعّل": "On", "معطّل": "Off", "إظهار التفسير أسفل الآية:": "Show the tafsir under the verse:", "حفظ وإغلاق": "Save and close"};
+    var QA_FR = {"سورة ": "Surah ", "الآية ": "Verse ", " آية": " verses", "مكية": "Meccan", "مدنية": "Medinan", "القارئ رقم ": "Reciter no. ", "رقم ": "No. ", " من ١١٤ · ": " of 114 · ", " من ٤١ قارئاً معتمداً": " of 41 approved reciters"};
     function qaMaps() {
         if (QA_D._ready) return;
         QA_D._ready = true;
@@ -29771,7 +29772,7 @@ window.APL_DEVICES = [
 
         var head = document.createElement("div");
         head.className = "qa-modal-header";
-        head.innerHTML = '<div><h3>اختر القارئ (٤٢ قارئ معتمد)</h3><div class="qa-modal-subhead">تنقل بالأسهم واضغط OK للاختيار والاستماع</div></div><button type="button" class="qa-modal-x">✕</button>';
+        head.innerHTML = '<div><h3>اختر القارئ (٤١ قارئ معتمد)</h3><div class="qa-modal-subhead">تنقل بالأسهم واضغط OK للاختيار والاستماع</div></div><button type="button" class="qa-modal-x">✕</button>';
         head.querySelector(".qa-modal-x").addEventListener("click", closeModal);
         modalContent.appendChild(head);
 
@@ -30358,7 +30359,7 @@ window.APL_DEVICES = [
                 var rTitle = document.getElementById("qa-rb-title");
                 var rMeta = document.getElementById("qa-rb-meta");
                 if (rTitle) rTitle.textContent = APL.lang === "ar" ? r.name_ar : (r.name_en || r.name_ar);
-                if (rMeta) rMeta.textContent = "القارئ رقم " + toEastern(modalFocusIdx + 1) + " من ٤٢ قارئاً معتمداً";
+                if (rMeta) rMeta.textContent = "القارئ رقم " + toEastern(modalFocusIdx + 1) + " من ٤١ قارئاً معتمداً";
             }
         }
 

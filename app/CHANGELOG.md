@@ -1,3 +1,9 @@
+## 8.7.59
+
+- Settings > Vetro Root Controls now ends with an About Vetro screen: what Vetro is, what this launcher gains from it, where the "make this the default screen" option already lives (it needs Vetro), how Vetro is installed and what to be careful about, in Arabic and English.
+- The reciter picker now says 41 reciters, which is the number the list actually has (it said 42; the unused data file still lists 42).
+- Untested on the TV: the new screen is verified in the local harness only.
+
 ## 8.7.58
 
 - Safer in-launcher update: before the new files are copied over the installed ones, the update keeps a copy of the current files. If the copy fails (for example no space) or the installed files do not match the new version afterwards, the old files are put back and the failure is reported, so the launcher is never left half-updated. The checks before that are unchanged (download, sha256 against the published file, unpack, package contents and version). The update still needs Vetro with root, and it already replaced every file of the package (index.html, css, js), not only the bundle.
