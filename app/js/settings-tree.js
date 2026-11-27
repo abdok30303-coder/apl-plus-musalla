@@ -173,6 +173,76 @@
             if (typeof APL.prayerPage.openCity === "function") APL.prayerPage.openCity();
         }
     }
+
+    /* v8.7.59: the last row of Vetro Root Controls. An info screen, not a control: it says what Vetro is,
+       what this launcher gains from it, where the "make this the default screen" option already lives,
+       how Vetro is installed and what to be careful about. Every claim is taken from Vetro's own page
+       (README, 0.7.2) or from this launcher's code; anything measured on a single TV is left out. */
+    var VETRO_INFO_AR = [
+        "فيتـرو (Vetro) تطبيق مجاني مفتوح المصدر (رخصة MIT) لتلفزيونات سامسونج، بيدّي روت للشاشة وأدوات إدارة. مش من تطويرنا، ومش بينزل مع اللانشر، ومش تابع لسامسونج. بتثبّته وتشيله بنفسك.",
+        "المصدر الرسمي: github.com/andrearicci93/vetro",
+        "",
+        "إيه اللي بيكسبه اللانشر لو فيترو متنصّب؟",
+        "• زر Home وأزرار الريموت: تحويل Home وNetflix وPrime وDisney+ وTV Plus والأزرار الملونة لأي تطبيق (الإعدادات › خيارات روت الشاشة › Remote Button Remapper).",
+        "• إعلانات وتتبّع أقل: إيقاف خدمات الإعلانات وتجميع بيانات المشاهدة، وفلتر DNS للإعلانات.",
+        "• المساعد الصوتي: إيقاف Alexa وGoogle وBixby وغيرهم، وزر المايك في الريموت بيقفل معاهم.",
+        "• ذاكرة أهدى: قفل التطبيقات اللي بتفضل شغالة في الخلفية، وتفريغ الكاش، وإعادة تشغيل الواجهة من غير ريستارت كامل.",
+        "• تحديثات سامسونج: منع تحديثات الفيرموير اللي ممكن تشيل الروت أو تغيّر الشاشة.",
+        "• الشاشة نفسها: سطوع حقيقي بأوامر روت، أسماء منافذ HDMI الحقيقية، وGame Mode من غير ما تلمس إعدادات صورتك.",
+        "• صحة فيترو: نقطة صغيرة جنب الساعة (أخضر شغال، أحمر واقف)، واللانشر بيحاول يرجّعه لوحده.",
+        "",
+        "إزاي تخلي صلاح لانشر هو شاشة التلفزيون الافتراضية؟",
+        "الخيار موجود جوه اللانشر: الإعدادات › General & Privacy › «Start on Salah Launcher». بيخلي الشاشة تفتح اللانشر أول ما تشتغل بدل مدخل التلفزيون. الخيار ده بيحتاج فيترو متنصّب، لأنه بيكتب إعداد الشاشة بأمر روت.",
+        "وزر Home لوحده: الإعدادات › Remote and Devices › «Set Up the Remote Buttons» بيخلي زر Home يفتح اللانشر بدل Smart Hub (محتاج فيترو كمان). للرجوع: «Restore Home to Smart Hub».",
+        "",
+        "التثبيت (من صفحة فيترو): أسرع طريقة Apps2Samsung. بعدها تفتح فيترو مرة على الشاشة، وتحط Host PC IP = 127.0.0.1 في وضع المطوّر، وتعمل ريستارت للتلفزيون. لوحة التحكم بتفتح من الموبايل على نفس الشبكة، والمنفذ 8099 افتراضيًا.",
+        "",
+        "قبل ما تثبّت، اعرف ده:",
+        "• فيترو برنامج تجريبي بيغيّر حاجات على مستوى النظام. أي تغيير ممكن يأثر على وظائف في التلفزيون، فاقرأ كل مفتاح قبل ما تشغّله.",
+        "• تحديث فيرموير من سامسونج ممكن يشيل الروت (فيه مفتاح لمنع التحديثات، ومحتاج روت نفسه).",
+        "• الروت مش مدعوم من سامسونج، وممكن يأثر على الضمان والدعم. القرار قرارك.",
+        "• التوافق (من صفحة فيترو): Tizen 6 (2021) لحد 10 (2025-2026) حسب الموديل والفيرموير. موديلات 2022 محتاجة فيرموير 1720.7 للروت، وفيه تقارير إن الروت اتحيّد على 1722.0 و1722.1. على Tizen 5.5 و4 مفيش خصائص روت.",
+        "• لوحة فيترو بتشتغل HTTP عادي: خليها على شبكة موثوقة، ومتفتحهاش على الإنترنت.",
+        "",
+        "كل اللي فوق متأكدين منه من صفحة فيترو الرسمية (README، إصدار 0.7.2) ومن كود اللانشر. أرقام زي «توفير ٢٤٪ رام» اتقاست على تلفزيون واحد بس، فمش بنكررها هنا."
+    ];
+    var VETRO_INFO_EN = [
+        "Vetro is a free, open-source (MIT) root and TV-management app for Samsung TVs. It is not ours, it does not come with this launcher, and it is not affiliated with Samsung. You install and remove it yourself.",
+        "Official source: github.com/andrearicci93/vetro",
+        "",
+        "What this launcher gains when Vetro is installed",
+        "• Home and the remote buttons: send Home to this launcher, and map Netflix, Prime Video, Disney+, TV Plus and the colour buttons to any app (Settings › Vetro Root Controls › Remote Button Remapper).",
+        "• Fewer ads, less tracking: switch off the advertising and viewing-data services, and block ad domains with Vetro's DNS filter.",
+        "• Voice assistants: turn off Alexa, Google, Bixby and the rest; the remote's microphone button goes with them.",
+        "• Memory: close apps left in the background, clear the caches, restart the interface without a full reboot.",
+        "• Samsung updates: block the firmware updates that can remove root or change the screen.",
+        "• The screen itself: real brightness through root, the real HDMI source names, and Game Mode without touching your picture settings.",
+        "• Vetro health: a small dot beside the clock (green running, red stopped), and the launcher tries to bring it back by itself.",
+        "",
+        "How to make Salah Launcher the screen's default",
+        "The option is already in the launcher: Settings › General & Privacy › “Start on Salah Launcher”. It makes the screen open this launcher at power-on instead of the TV input. It needs Vetro installed, because it writes the screen's own setting with a root command.",
+        "The Home key on its own: Settings › Remote and Devices › “Set Up the Remote Buttons” makes Home open this launcher instead of Smart Hub (also needs Vetro). To undo it: “Restore Home to Smart Hub”.",
+        "",
+        "Install (from Vetro's own page): the fastest way is Apps2Samsung. Then open Vetro once on the TV, set Host PC IP to 127.0.0.1 in Developer Mode, and restart the TV. The dashboard opens from a phone on the same network, port 8099 by default.",
+        "",
+        "Before you install, know this",
+        "• Vetro is experimental software that changes things at system level. Any change can affect TV features, so read what each switch does before turning it on.",
+        "• A Samsung firmware update can remove root (Vetro has a block-updates switch, and that switch needs root itself).",
+        "• Root is not supported by Samsung and may affect your warranty and support. The decision is yours.",
+        "• Compatibility (from Vetro's page): Tizen 6 (2021) through 10 (2025-2026), depending on the model and firmware. 2022 models need firmware 1720.7 for root, and root loss was reported on 1722.0 and 1722.1. No root features on Tizen 5.5 and 4.",
+        "• Vetro's dashboard runs over plain HTTP: keep it on a trusted network and never expose it to the Internet.",
+        "",
+        "Everything above is checked against Vetro's official page (README, version 0.7.2) and this launcher's own code. Figures like “24% more free RAM” were measured on one TV, so they are not repeated here."
+    ];
+    function openVetroInfo() {
+        var lines = (APL.lang === "ar") ? VETRO_INFO_AR : VETRO_INFO_EN;
+        APL.alert({
+            title: APL.t("About Vetro"),
+            message: lines.join("\n"),
+            buttons: [{ label: APL.t("OK") }]
+        });
+    }
+    APL.vetroInfo = { open: openVetroInfo };
     /* v8.7.21: world support for the prayer times and the weather. */
     function weatherOptions() { return [["same", APL.t("Same as prayer city")]].concat(cityOptions()); }
     function methodOptions() {
@@ -1220,7 +1290,11 @@
                             } }
                         ]
                     });
-                }, APL.t("Full reboot of the screen via root."), "power"))
+                }, APL.t("Full reboot of the screen via root."), "power")),
+
+                /* v8.7.59: the last row of this page. An info screen about Vetro itself. */
+                action(APL.t("About Vetro"), function () { openVetroInfo(); },
+                    APL.t("What Vetro is, what it adds to this launcher, how to make Salah Launcher the default screen, how to install it, and what to be careful about."), "info")
             ], APL.t("Vetro root agent, TV reboot, system cache, memory optimization, background daemon, remote button mapping.")),
 
             /* -------- General & Privacy -------- */
