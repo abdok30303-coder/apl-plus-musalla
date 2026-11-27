@@ -1,0 +1,376 @@
+/* ============================================================
+   legacy-grid.css — flex fallbacks for TVs whose browser has no CSS Grid.
+
+   The launcher lays out its screens with CSS Grid, which needs Chromium 57.
+   A 2018 Samsung TV (Tizen 4.0) ships Chromium 56, so every grid would collapse
+   into a plain block column there. This file gives each of those layouts a flex
+   equivalent. It is only loaded by the legacy build (tools/build-legacy.py).
+
+   Everything here sits inside @supports not (display: grid): on any browser that
+   has grid, not one of these rules is applied, so the normal build is unchanged.
+
+   Rules for writing the fallbacks:
+     - gaps are reset to 0 and replaced by margins, because flex gap needs
+       Chromium 84 and would otherwise double the spacing on newer engines
+     - a wrapping container gets an explicit width, because an absolutely
+       positioned flex box shrinks to fit and would never wrap
+   ============================================================ */
+
+@supports not (display: grid) {
+
+    /* ---------- Home Screen: the dock row and the rows below ---------- */
+
+    .row0,
+    .rows {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        column-gap: 0;
+        row-gap: 0;
+        width: calc(var(--cols) * (var(--tile-w) + var(--gap-x)));
+    }
+
+    .row0 {
+        align-items: center;
+        /* .row0 sits inside the dock, which already has the right width: an explicit
+           width here would be a border box and lose the 43 px padding on each side. */
+        width: auto;
+    }
+
+    .row0 > .tile {
+        margin: 0 var(--gap-x) 0 0;
+    }
+
+    .rows > .tile {
+        margin: 0 var(--gap-x) 90px 0;      /* the 90 px row-gap of the grid */
+    }
+
+    .row0 > .tile:last-child,
+    .rows > .tile:last-child {
+        margin-right: 0;
+    }
+
+    /* ---------- Control Center ---------- */
+
+    .cc__body {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: flex-start;
+        width: 534px;                       /* 260 + 14 + 260 */
+        margin: 0 auto;
+        gap: 0;
+    }
+
+    .cc__body > * {
+        margin: 0 14px 14px 0;
+    }
+
+    /* ---------- Search results and the inside of a folder ---------- */
+
+    .search__results,
+    .folder__grid {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        column-gap: 0;
+        row-gap: 0;
+        width: calc(var(--cols) * (var(--tile-w) + var(--gap-x)));
+    }
+
+    .search__results > .tile,
+    .folder__grid > .tile {
+        margin: 0 var(--gap-x) 90px 0;
+    }
+
+    /* ---------- App picker ---------- */
+
+    .apicker__grid {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0;
+        width: 1590px;                      /* 10 × 132 + 9 × 30 */
+    }
+
+    .apicker__grid > * {
+        margin: 0 30px 26px 0;
+    }
+
+    /* ---------- Profiles ---------- */
+
+    .profiles__grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0;
+        width: 420px;                       /* 190 + 40 + 190 */
+    }
+
+    .profiles__grid > * {
+        margin: 0 40px 26px 0;
+    }
+
+    .profiles__recents {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0;
+        width: 392px;                       /* 3 × 120 + 2 × 16 */
+    }
+
+    .profiles__recents > * {
+        margin: 0 16px 16px 0;
+    }
+
+    /* ---------- A folder icon drawn inside a tile (3 × 2 mini icons) ---------- */
+
+    .ftile {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: center;
+        gap: 0;
+    }
+
+    .ftile > * {
+        width: calc((100% - 16px) / 3);
+        height: calc((100% - 8px) / 2);
+        margin: 0 8px 8px 0;
+    }
+
+    .ftile > *:nth-child(3n) {
+        margin-right: 0;
+    }
+
+    /* ---------- Lists that show two items side by side ---------- */
+
+    .aplx-list.evt-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+    }
+
+    .aplx-list.evt-list > * {
+        width: calc(50% - 9px);
+        margin: 0 18px 12px 0;
+    }
+
+    .aplx-list.evt-list > *:nth-child(2n) {
+        margin-right: 0;
+    }
+
+    /* ---------- Custom icon picker (7 × 180) ---------- */
+
+    .apl-tilepicker__grid {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 0 !important;
+        width: 1404px !important;           /* 7 × 180 + 6 × 24 */
+    }
+
+    .apl-tilepicker__grid > * {
+        margin: 0 24px 20px 0 !important;
+    }
+
+    /* ---------- Prayer page: the six prayer columns ---------- */
+
+    .pw__grid {
+        display: flex;
+        align-items: flex-start;
+        column-gap: 0;
+    }
+
+    .pw__grid > * {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .pw__grid > * + * {
+        margin-left: 6px;
+    }
+
+    /* ---------- Quran / Mushaf panel ---------- */
+
+    .mq.is-open {
+        display: flex;
+        align-items: stretch;
+        column-gap: 0;
+    }
+
+    .mq__side {
+        flex: 0 0 306px;
+        width: 306px;
+    }
+
+    .mq__pane {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .mq.is-open > .mq__pane {
+        margin-left: 22px;
+    }
+
+    .mq--read {
+        flex-direction: column;
+    }
+
+    .mq--read > .mq__pane {
+        margin-left: 0;
+    }
+
+    .mq__menus {
+        display: flex;
+        flex-direction: column;
+        row-gap: 0;
+    }
+
+    .mq__menus > * {
+        margin-bottom: 9px;
+    }
+
+    .mq__toolbar {
+        display: flex;
+        align-items: center;
+        column-gap: 0;
+    }
+
+    .mq__toolbar > * {
+        margin-right: 8px;
+    }
+
+    .mq__toolbar > *:last-child {
+        flex: 1 1 auto;
+        min-width: 150px;
+    }
+
+    .mq__index {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0;
+    }
+
+    .mq__index > * {
+        width: calc((100% - 28px) / 3);
+        margin: 0 14px 14px 0;
+    }
+
+    .mq__index > *:nth-child(3n) {
+        margin-right: 0;
+    }
+
+    .mq__searchbar {
+        display: flex;
+        align-items: center;
+        column-gap: 0;
+    }
+
+    .mq__searchbar > *:first-child {
+        flex: 1 1 auto;
+        min-width: 0;
+        margin-right: 12px;
+    }
+
+    .mq__search-layout {
+        display: flex;
+        align-items: stretch;
+        column-gap: 0;
+    }
+
+    .mq__search-layout > *:first-child {
+        flex: 0 0 306px;
+        width: 306px;
+        margin-right: 22px;
+    }
+
+    .mq__search-layout > *:last-child {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .mq__keyboard {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0;
+    }
+
+    .mq__keyboard > * {
+        width: calc((100% - 40px) / 6);
+        height: 54px;
+        margin: 0 8px 8px 0;
+    }
+
+    .mq__key--wide {
+        width: calc((100% - 40px) / 2) !important;
+    }
+
+    .mq--read .mq__tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        width: 100%;
+    }
+
+    .mq--read .mq__tools > * {
+        width: calc(50% - 3px);
+        margin: 0 5px 5px 0;
+    }
+
+    .mq__tool--wide {
+        width: 100% !important;
+        margin-right: 0 !important;
+    }
+
+    /* ---------- Prayer and Eid date editor ---------- */
+
+    .pe__grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+    }
+
+    .pe__grid > * {
+        width: calc(50% - 8px);
+        margin: 0 16px 16px 0;
+    }
+
+    .pe__grid > *:nth-child(2n) {
+        margin-right: 0;
+    }
+
+    /* ---------- Quran audio: surah and reciter grids ---------- */
+
+    .qa-surah-grid {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0;
+    }
+
+    .qa-surah-grid > * {
+        width: calc(25% - 9px);
+        margin: 0 12px 12px 0;
+    }
+
+    .qa-surah-grid > *:nth-child(4n) {
+        margin-right: 0;
+    }
+
+    .qa-reciter-grid {
+        display: flex;
+        flex-wrap: wrap;
+        align-content: flex-start;
+        gap: 0;
+    }
+
+    .qa-reciter-grid > * {
+        width: calc(50% - 6px);
+        margin: 0 12px 12px 0;
+    }
+
+    .qa-reciter-grid > *:nth-child(2n) {
+        margin-right: 0;
+    }
+}
