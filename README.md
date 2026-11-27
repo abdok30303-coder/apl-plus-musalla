@@ -154,7 +154,7 @@ Salah Launcher is free and open source. If it is useful to you, you can support 
 
 ## Credits
 
-Salah Launcher is a derivative of **APL Launcher** by Knikt (Gero Corp.), released under the MIT License. The original copyright notice is kept in [`LICENSE`](LICENSE). See [`NOTICE.md`](NOTICE.md) for the full list: Tanzil Quran text, fonts, data sources and trademarks.
+Salah Launcher is a derivative of an earlier open-source Tizen launcher, used under the MIT License. The original copyright notice is kept in [`LICENSE`](LICENSE), and [`NOTICE.md`](NOTICE.md) carries the full attribution plus the third-party list: Tanzil Quran text, fonts, data sources and trademarks.
 
 Salah Launcher uses its own package IDs (`APLMusalla`, `APLMusalla.Home`, `APLMusalla.Bridge`), so it installs next to APL Launcher and does not replace it.
 

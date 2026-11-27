@@ -14,7 +14,7 @@
     <content src="index.html"/>
     <icon src="icon.png"/>
     <name>Salah Launcher</name>
-    <description>Salah Launcher: an Apple TV style launcher for Samsung Tizen 6.5+ Smart TVs with prayer times, Quran radio and Mushaf, Pulse prayer alerts and tasks. Based on APL Launcher by Knikt (Gero Corp.).</description>
+    <description>Salah Launcher: an Apple TV style launcher for Samsung Tizen 6.5+ Smart TVs with prayer times, Quran radio and Mushaf, Pulse prayer alerts and tasks. Open source under the MIT License; full credits in NOTICE.md.</description>
     <author>Salah Launcher contributors</author>
 
     <feature name="http://tizen.org/feature/screen.size.all"/>
