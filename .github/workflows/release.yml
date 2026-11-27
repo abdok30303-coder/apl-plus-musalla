@@ -26,7 +26,16 @@ jobs:
         run: |
           ver="${TAG#v}"
           file="releases/salah-launcher-v${ver}.wgt"
-          test -f "$file"
+          # A build variant (the -legacy tag, for example) keeps its .wgt out of git and uploads it by hand,
+          # so a missing file is only an error when no release of that name exists yet.
+          if [ ! -f "$file" ]; then
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "No $file in the repo for $TAG: the release already exists, nothing to publish."
+              exit 0
+            fi
+            echo "::error::Missing $file for $TAG, and no release named $TAG exists. Commit the .wgt, or upload it by hand."
+            exit 1
+          fi
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$file" --clobber
           else
