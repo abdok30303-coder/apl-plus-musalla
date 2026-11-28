@@ -1,3 +1,7 @@
+## 8.7.61
+
+- Fix for the Mushaf recitation on the TV (8.7.60 showed the message but the sound cut off or did not start). The next ayahs are now downloaded in the background and played through the one audio player (8.7.60 used extra players, which some TVs do not handle). The radio is only stopped when it is really playing. A repeated OK from the remote can no longer stop the recitation right after it starts or open the tafsir. If the sound cannot start, the screen now shows the reason instead of a silent message. Untested on the TV: checked in headless Chrome with a test server and simulated remote key patterns only.
+
 ## 8.7.60
 
 - Listen to an ayah from the Mushaf: hold OK on the page text and the recitation starts from the selected ayah, in the reciter chosen on the Quran listening page, then continues ayah after ayah and turns the page by itself; hold OK again to stop. A short OK still opens the tafsir. The player now loads the next two ayahs in advance, in the Mushaf recitation and on the listening page too, so the next ayah starts with no pause (it used to wait about the length of the repeat delay and then load). In the local test with a slow server the pause between ayahs went from about 3.7 s to under 10 ms. Untested on the TV: checked in headless Chrome with a test server only; the Chromium 76 playback of preloaded audio and the long OK press on the real remote still need a try.

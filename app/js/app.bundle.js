@@ -25559,6 +25559,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.61: إصلاح تلاوة المصحف على التلفزيون (٨.٧.٦٠ كانت بتظهر الرسالة والصوت بيفصل أو مبيشتغلش). الآيات الجاية بقت بتتحمّل في الخلفية وتتشغّل من مشغّل صوت واحد، الإذاعة بتتوقف بس لو شغالة فعلاً، والضغطة المتكررة من الريموت مابقتش توقف التلاوة ولا تفتح التفسير بالغلط، ولو الصوت مابدأش بتظهر رسالة بالسبب. غير مجرّب على التلفزيون.",
         "✔ 8.7.60: تلاوة آية من المصحف: اضغط مطوّلًا على OK على نص الصفحة فتبدأ التلاوة من الآية المحددة بصوت القارئ المختار في صفحة الاستماع، وتكمل آية بعد آية وتقلّب الصفحة لوحدها، وضغطة مطوّلة تانية بتوقفها. الضغطة القصيرة على OK لسه بتفتح التفسير. وكمان المشغّل بقى بيحمّل الآيتين الجاية قبل وقتها، في تلاوة المصحف وفي صفحة الاستماع، فالآية الجاية بتبدأ من غير وقفة. غير مجرّب على التلفزيون: اتجرّب في متصفح بدون شاشة بس.",
         "✔ 8.7.59: الإعدادات ← Vetro Root Controls بقت بتقفل بشاشة «عن Vetro»: يعني إيه Vetro، وإيه اللي اللانشر بيكسبه منه، وفين خيار «خلي الشاشة دي الافتراضية» أصلاً، وإزاي يتثبّت وإيه اللي تخلي بالك منه. وعدّاد القرّاء بقى ٤١ زي القايمة.",
         "✔ 8.7.58: التحديث من جوه اللانشر بقى بياخد نسخة من الملفات الحالية قبل ما ينسخ الجديدة، ولو النسخ فشل بيرجّعها.",
@@ -25610,6 +25611,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.61: Fix for the Mushaf recitation on the TV: the next ayahs are downloaded in the background and played through one audio player, the radio is stopped only if it is playing, a repeated OK no longer stops the recitation or opens the tafsir, and a failed start now shows its reason. Untested on the TV.",
         "✔ 8.7.60: Hold OK on the Mushaf text to recite from the selected ayah in the reciter chosen on the listening page; it continues and turns the page, hold OK again to stop. A short OK still opens the tafsir. The next two ayahs are now loaded ahead (Mushaf and listening page), so there is no pause between ayahs. Untested on the TV.",
         "✔ 8.7.58: The in-launcher update keeps a copy of the current files before copying the new ones, and puts them back if the copy fails.",
         "✔ 8.7.57: Faster start: Home appears at once from the last list of apps, then updates; a start-up screen with the name instead of black; and a second copy of the settings that comes back by itself if a power cut empties them.",
@@ -27449,7 +27451,11 @@ window.APL_DEVICES = [
                 if ((view === "read" || view === "tafsir") && (n._qid.indexOf("menu-") === 0 || TOOLBAR.indexOf(n._qid) >= 0)) lastSide = n._qid;
                 else if (n._qid.indexOf("menu-") !== 0) lastContent = n._qid;
             },
-            onSelect: function (i, n) { if (n && n._run) n._run(); },
+            onSelect: function (i, n) {
+                /* a late short press right after a long press (key repeat) must not open the tafsir */
+                if (n && n._qid === "reading" && Date.now() - lastToggle < 1500) return;
+                if (n && n._run) n._run();
+            },
             /* long OK on the page text starts or stops the recitation of the selected ayah; every other tile acts at once, as before */
             canHold: function (i) { var t = nav && nav.tiles && nav.tiles[i]; return !!(t && t._qid === "reading" && view === "read"); },
             onLongPress: function (i, n) { if (n && n._qid === "reading" && view === "read") toggleRecitation(); },
@@ -27589,7 +27595,12 @@ window.APL_DEVICES = [
     var hlEl = null, hlTimer = 0, HL_MS = 2500;
     var reciting = false;     /* a recitation started here is running: the verse frame stays on the recited ayah */
     function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (reciting) return; if (readBody) readBody.classList.remove("hl-on"); }
+    var lastToggle = 0;
     function toggleRecitation() {
+        /* the remote repeats OK while it is held: one long press must start (or stop) the recitation once */
+        var nowT = Date.now();
+        if (nowT - lastToggle < 1500) return;
+        lastToggle = nowT;
         var QA = APL.quranAudio;
         if (!QA || !QA.mushafPlay || !data) { if (APL.toast) APL.toast(Q("مشغّل التلاوة مش متاح", "The recitation player is not available"), true); return; }
         if (QA.mushafActive()) {
@@ -29047,8 +29058,11 @@ window.APL_DEVICES = [
        so the switch to the next ayah starts from an already buffered element instead of waiting for a download. */
     var PRELOAD_AHEAD = 2;
     var fallbackTried = false;
-    var preMap = {};          /* url -> { el, xhr } */
-    var spareEls = [];
+    var preMap = {};          /* url -> { obj (blob url once downloaded), xhr } */
+    var curObj = "";          /* blob url the player is using now */
+    var playBlobFor = "";     /* the real url of the ayah that plays from a blob */
+    var playGuard = null;
+    function toastErr(m) { if (APL.toast) APL.toast(m, true); }
     var mushafActive = false; /* a recitation started from the Mushaf is running */
     var mushafCb = null;      /* (surah, ayah, active) => the Mushaf follows the recited ayah */
 
@@ -29178,6 +29192,7 @@ window.APL_DEVICES = [
             if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
+            if (playGuard) { clearTimeout(playGuard); playGuard = null; }
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
@@ -29217,14 +29232,22 @@ window.APL_DEVICES = [
         });
         a.addEventListener("ended", function () { if (a === audioEl) onAudioEnded(); });
         a.addEventListener("error", function () {
-            if (a !== audioEl) { dropPreloaded(a); return; }
+            if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
+            if (playBlobFor && audioEl.src.indexOf("blob:") === 0) {
+                /* the downloaded copy would not play: use the real address instead */
+                var realUrl = playBlobFor; playBlobFor = "";
+                audioEl.src = realUrl; try { audioEl.load(); } catch (e0) {}
+                var pr = audioEl.play(); if (pr && pr.catch) pr.catch(function () {});
+                return;
+            }
             if (tryFallback("audio error")) return;
             fallbackTried = false;
             isLoading = false;
             isPlaying = false;
             updateControlsUI();
-            if (APL.toast) APL.toast(APL.lang === "ar" ? "تعذر تشغيل تلاوة الآية من المصدر" : "Failed to stream ayah audio", true);
+            var ec = audioEl && audioEl.error ? " (" + audioEl.error.code + ")" : "";
+            if (APL.toast) APL.toast((APL.lang === "ar" ? "تعذر تشغيل تلاوة الآية من المصدر" : "Failed to stream ayah audio") + ec, true);
         });
         return a;
     }
@@ -29417,22 +29440,19 @@ window.APL_DEVICES = [
         return null;
     }
     function preloadedFor(c) {
-        return !!(c && preMap[buildAudioUrl(curReciter, c.s, c.a)]);
+        var e = c && preMap[buildAudioUrl(curReciter, c.s, c.a)];
+        return !!(e && e.obj);
     }
-    function releaseEl(el) {
-        try { el.pause(); } catch (e) {}
-        try { el.removeAttribute("src"); el.load(); } catch (e) {}
+    function revokeObj(u) { if (u) { try { URL.revokeObjectURL(u); } catch (e) {} } }
+    function dropEntry(k) {
+        var e = preMap[k];
+        if (!e) return;
+        if (e.xhr) { try { e.xhr.abort(); } catch (x) {} }
+        revokeObj(e.obj);
+        delete preMap[k];
     }
-    function dropPreloaded(el) {
-        for (var k in preMap) {
-            if (preMap[k].el === el) {
-                if (preMap[k].xhr) { try { preMap[k].xhr.abort(); } catch (e) {} }
-                delete preMap[k];
-                releaseEl(el);
-                if (spareEls.indexOf(el) < 0 && spareEls.length < 3) spareEls.push(el);
-            }
-        }
-    }
+    /* v8.7.61: the next ayahs are downloaded as plain files (XHR, kept as blobs) and the ONE audio element switches to the blob when its turn comes.
+       v8.7.60 loaded them into extra audio elements; a TV can have a single hardware audio decoder, so extra elements may leave the real one silent. */
     function preloadAhead() {
         if (!audioEl) return;
         var want = [], c = { s: curSurah, a: curAyah }, mode = mushafActive ? "continuous" : curMode, i, k;
@@ -29441,30 +29461,31 @@ window.APL_DEVICES = [
             if (!c) break;
             want.push(buildAudioUrl(curReciter, c.s, c.a));
         }
-        for (k in preMap) {
-            if (want.indexOf(k) < 0) { var el0 = preMap[k].el; dropPreloaded(el0); }
-        }
+        for (k in preMap) { if (want.indexOf(k) < 0) dropEntry(k); }
         want.forEach(function (url) {
             if (preMap[url]) return;
-            var el = spareEls.pop() || makeAudio();
-            el.preload = "auto";
-            el.src = url;
-            try { el.load(); } catch (e) {}
-            var entry = { el: el, xhr: null };
-            /* the full file is also requested once, so it sits in the HTTP cache even where the TV's player only buffers a little */
+            var entry = { obj: "", xhr: null };
+            preMap[url] = entry;
             try {
                 var x = new XMLHttpRequest();
                 x.open("GET", url, true);
-                x.responseType = "arraybuffer";
-                x.onload = x.onerror = function () { entry.xhr = null; };
+                x.responseType = "blob";
+                x.timeout = 30000;
+                x.onload = function () {
+                    entry.xhr = null;
+                    if (preMap[url] !== entry) return;
+                    if (x.status === 200 && x.response && x.response.size > 0) {
+                        try { entry.obj = URL.createObjectURL(x.response); } catch (e) { delete preMap[url]; }
+                    } else { delete preMap[url]; }
+                };
+                x.onerror = x.ontimeout = function () { entry.xhr = null; if (preMap[url] === entry) delete preMap[url]; };
                 x.send();
                 entry.xhr = x;
-            } catch (e) {}
-            preMap[url] = entry;
+            } catch (e) { delete preMap[url]; }
         });
     }
     function clearPreloads() {
-        for (var k in preMap) dropPreloaded(preMap[k].el);
+        for (var k in preMap) dropEntry(k);
         preMap = {};
     }
     function setMushaf(on) {
@@ -29476,35 +29497,32 @@ window.APL_DEVICES = [
 
     function playCurrentAyah() {
         initAudio();
-        if (APL.radio && APL.radio.stop) APL.radio.stop();
-        if (APL.audioPack && APL.audioPack.stop) APL.audioPack.stop();
+        /* v8.7.61: stop the radio / recording only when one is really running. radio.stop() also runs a "killall" on the TV
+           (it clears an old radio worker); doing that for every ayah could kill audio that had just started. */
+        try { if (APL.radio && APL.radio.stop && APL.radio.isPlaying && APL.radio.isPlaying()) APL.radio.stop(); } catch (eR) {}
+        try { if (APL.audioPack && APL.audioPack.stop && APL.audioPack.isPlaying && APL.audioPack.isPlaying()) APL.audioPack.stop(); } catch (eP) {}
 
         curSurah = parseInt(curSurah, 10) || 1;
         curAyah = parseInt(curAyah, 10) || 1;
 
         var src = buildAudioUrl(curReciter, curSurah, curAyah);
         var pre = preMap[src];
-        if (pre) {
-            /* this ayah was preloaded: its element becomes the player, the old one is recycled for the next preload */
-            delete preMap[src];
-            if (pre.xhr) { pre.xhr = null; }
-            var old = audioEl;
-            audioEl = pre.el;
-            fallbackTried = false;
-            if (old && old !== audioEl) { releaseEl(old); if (spareEls.length < 3) spareEls.push(old); }
-            audioEl.defaultPlaybackRate = curSpeed;
-            audioEl.playbackRate = curSpeed;
-            try { audioEl.currentTime = 0; } catch (e) {}
-            isLoading = audioEl.readyState < 3;
-            updateControlsUI();
-            if (audioEl.readyState >= 3) preloadAhead();
-        } else {
-            audioEl.src = src;
-            audioEl.defaultPlaybackRate = curSpeed;
-            try { audioEl.load(); } catch (e) {}
-            audioEl.playbackRate = curSpeed;
-            isLoading = true;
-            updateControlsUI();
+        var useSrc = src;
+        fallbackTried = false;
+        if (pre && pre.obj) { useSrc = pre.obj; playBlobFor = src; delete preMap[src]; revokeObj(curObj); curObj = pre.obj; }
+        else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
+        audioEl.src = useSrc;
+        audioEl.defaultPlaybackRate = curSpeed;
+        try { audioEl.load(); } catch (e) {}
+        audioEl.playbackRate = curSpeed;
+        isLoading = true;
+        updateControlsUI();
+        if (playGuard) { clearTimeout(playGuard); playGuard = null; }
+        if (mushafActive) {
+            playGuard = setTimeout(function () {
+                playGuard = null;
+                if (mushafActive && !isPlaying) toastErr(APL.lang === "ar" ? "التلاوة لسه ما بدأتش (الصوت بيتحمّل أو الشبكة بطيئة)" : "Recitation has not started yet (audio still loading or slow network)");
+            }, 10000);
         }
 
         var playPromise = audioEl.play();
@@ -29514,6 +29532,11 @@ window.APL_DEVICES = [
                 isLoading = false;
                 isPlaying = false;
                 updateControlsUI();
+                if (err && err.name === "AbortError") return;   /* a newer load replaced this one */
+                if (mushafActive) {
+                    var why = (err && (err.name || err.message)) ? String(err.name || err.message) : "unknown";
+                    toastErr((APL.lang === "ar" ? "تعذّر تشغيل التلاوة: " : "Could not start the recitation: ") + why);
+                }
             });
         }
     }
@@ -30791,13 +30814,14 @@ window.APL_DEVICES = [
         },
         mushafStop: function () {
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
+            if (playGuard) { clearTimeout(playGuard); playGuard = null; }
             var was = mushafActive;
             if (was) { if (audioEl) { try { audioEl.pause(); } catch (e) {} } isPlaying = false; setMushaf(false); }
             return was;
         },
         mushafActive: function () { return mushafActive; },
         onMushaf: function (fn) { mushafCb = fn; },
-        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap), spare: spareEls.length }; },
+        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap).map(function (k) { return k.split('/').pop() + (preMap[k].obj ? ':ready' : ':loading'); }), elements: 1 }; },
         getState: function () {
             return {
                 isOpen: isOpen,

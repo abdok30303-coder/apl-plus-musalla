@@ -427,7 +427,11 @@
                 if ((view === "read" || view === "tafsir") && (n._qid.indexOf("menu-") === 0 || TOOLBAR.indexOf(n._qid) >= 0)) lastSide = n._qid;
                 else if (n._qid.indexOf("menu-") !== 0) lastContent = n._qid;
             },
-            onSelect: function (i, n) { if (n && n._run) n._run(); },
+            onSelect: function (i, n) {
+                /* a late short press right after a long press (key repeat) must not open the tafsir */
+                if (n && n._qid === "reading" && Date.now() - lastToggle < 1500) return;
+                if (n && n._run) n._run();
+            },
             /* long OK on the page text starts or stops the recitation of the selected ayah; every other tile acts at once, as before */
             canHold: function (i) { var t = nav && nav.tiles && nav.tiles[i]; return !!(t && t._qid === "reading" && view === "read"); },
             onLongPress: function (i, n) { if (n && n._qid === "reading" && view === "read") toggleRecitation(); },
@@ -567,7 +571,12 @@
     var hlEl = null, hlTimer = 0, HL_MS = 2500;
     var reciting = false;     /* a recitation started here is running: the verse frame stays on the recited ayah */
     function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (reciting) return; if (readBody) readBody.classList.remove("hl-on"); }
+    var lastToggle = 0;
     function toggleRecitation() {
+        /* the remote repeats OK while it is held: one long press must start (or stop) the recitation once */
+        var nowT = Date.now();
+        if (nowT - lastToggle < 1500) return;
+        lastToggle = nowT;
         var QA = APL.quranAudio;
         if (!QA || !QA.mushafPlay || !data) { if (APL.toast) APL.toast(Q("مشغّل التلاوة مش متاح", "The recitation player is not available"), true); return; }
         if (QA.mushafActive()) {
