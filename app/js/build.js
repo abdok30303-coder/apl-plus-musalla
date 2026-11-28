@@ -1,6 +1,6 @@
-/* Build manifest for Salah Launcher v8.7.64 */
+/* Build manifest for Salah Launcher v8.7.65 */
 window.APL_BUILD = {
-  "version": "8.7.64",
+  "version": "8.7.65",
   "custom": true,
   "scripts": [
     "js/errlog.js",
@@ -20,6 +20,7 @@ window.APL_BUILD = {
     "js/home-wallpapers.js",
     "js/bg-daemon.js",
     "js/background-engine.js",
+    "js/radio-stations.js",
     "js/radio.js",
     "js/audio-pack.js",
     "js/prayer.js",

@@ -136,6 +136,7 @@
         radioBackground: true,      // v7.0.8: on by default: the AVPlay radio keeps going when another app or an HDMI input is in front (Settings > Accessibility)
         uiFont: "default",          // v7.0.8: "default" | "tahoma" | "naskh" | "kufi" | "serif" | "apl" (css/custom.css, js/safe-mode.js)
         radioDuringAlert: true,     // pause the radio while a prayer alert plays, then resume
+        radioStation: "",           // v8.7.65: id of a station from js/radio-stations.js; empty = Cairo
         radioUrl: "",               // empty: the station of js/site-config.js
         weatherPlace: "cairo",     // key in js/cities.js (weather.js)
         channelKeys: true,          // Channel Up / Down opens APL Settings (the Home key stays with Samsung)

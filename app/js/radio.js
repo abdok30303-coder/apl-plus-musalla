@@ -53,6 +53,12 @@
             if (!/^https?:\/\//i.test(u)) return;
             if (out.indexOf(u) < 0) out.push(u);
         }
+        /* v8.7.65: a station picked from the list (long press on the Radio tile) plays alone; no silent switch to Cairo */
+        var st = sys.pref("radioStation");
+        if (st && APL.radioStations) {
+            APL.radioStations.urls(st).forEach(add);
+            if (out.length) return out;
+        }
         add(sys.pref("radioUrl"));
         (CFG.urls && CFG.urls.length ? CFG.urls : DEFAULT_URLS).forEach(add);
         if (!out.length) DEFAULT_URLS.forEach(add);

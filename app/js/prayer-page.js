@@ -671,10 +671,10 @@
         takbeer: ic('<path d="M4 10v4h3.5L13 18V6L7.5 10z"/><path d="M16 9.2a4 4 0 0 1 0 5.6M18.8 6.8a7.5 7.5 0 0 1 0 10.4"/>'),
         quranOnline: ic('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3v6H5a1 1 0 0 1-1-1zM20 14h-3v6h2a1 1 0 0 0 1-1z"/>')
     };
-    function actBtn(ico, label, on, run) {
+    function actBtn(ico, label, on, run, hold) {
         var b = el("div", "pw-ic" + (on ? " is-on" : ""), (ACT_ICO[ico] || "") + "<span>" + label + "</span>");
         b.addEventListener("click", run);
-        tiles.push({ el: b, run: run });
+        tiles.push({ el: b, run: run, hold: hold || null });
         return b;
     }
     /* auto screen off: 30 min, then every 10 min up to 3 hours (the Sleep Timer of the Control Center) */
@@ -955,7 +955,7 @@
     function audioIcons() {
         var icons = el("div", "pw-ics");
         var rs = radioState(), alertsOn = p().alertsOn(), pauseOn = sys.pref("radioDuringAlert") !== false, sl = sleepOn();
-        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }));
+        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }, openStations));
         /* v1.2.116: Surat Al-Kahf and the Eid takbeer, played from the APL-Audio folder on the TV (not inside the package) */
         icons.appendChild(audioBtn("kahf", "kahf", APL.t("Al-Kahf")));
         icons.appendChild(kahfMini());      /* v7.2.0: Resume / Restart, two small buttons stacked beside the Al-Kahf tile */
@@ -1381,7 +1381,7 @@
         if (!nav || !nav.tiles || !nav.tiles.length || (code !== APL.KEY.UP && code !== APL.KEY.DOWN)) return false;
         var delta = code === APL.KEY.UP ? -1 : 1;
         /* City, occasions, weather and hekam use true vertical lists. */
-        if (mode === "city" || mode === "events" || mode === "weather" || mode === "wxday" || mode === "adjust" || mode === "sleep" || mode === "hekam" || mode === "hekam-items" || mode === "hekam-random") {
+        if (mode === "city" || mode === "events" || mode === "weather" || mode === "wxday" || mode === "adjust" || mode === "sleep" || mode === "stations" || mode === "hekam" || mode === "hekam-items" || mode === "hekam-random") {
             var next = nav.index + delta;
             if (next >= 0 && next < nav.tiles.length) {
                 nav.focus(next);
@@ -1510,6 +1510,72 @@
         });
     }
 
+    /* v8.7.65: long OK on the Radio tile opens the list of Quran radio stations (js/radio-stations.js) */
+    var stationReturn = 0;
+    function stationName(st) {
+        var cur = st && st.id ? st : null;
+        return cur ? (APL.lang === "ar" ? cur.ar : (cur.en || cur.ar)) : "";
+    }
+    function openStations() {
+        if (!APL.radioStations || !APL.radioStations.list.length) return;
+        stationReturn = focusIndex;
+        mode = "stations";
+        focusIndex = 0;
+        render();
+        /* the playing station is focused (row 0 is Cairo) */
+        var cur = sys.pref("radioStation") || "", L = APL.radioStations.list, k, at = 0;
+        for (k = 0; k < L.length; k++) if (L[k].id === cur) { at = k + 1; break; }
+        nav.focus(at);
+    }
+    function pickStation(id) {
+        var r = APL.radio;
+        sys.setPref("radioStation", id || "");
+        var o = id ? APL.radioStations.get(id) : null;
+        var name = o ? stationName(o) : (APL.lang === "ar" ? "إذاعة القرآن الكريم من القاهرة" : "Qur'an Cairo");
+        mode = "main"; focusIndex = stationReturn; render();
+        if (!r) return;
+        try { r.stop(); } catch (e) {}
+        if (APL.toast) APL.toast((APL.lang === "ar" ? "جاري تشغيل: " : "Playing: ") + name + " …", true);
+        setTimeout(function () {
+            r.play().then(function () { if (openFlag && mode === "main") render(); }, function (e) {
+                if (APL.toast) APL.toast((e && e.message) || APL.t("The radio needs the internet."));
+                if (openFlag && mode === "main") render();
+            });
+        }, 400);
+    }
+    function buildStations() {
+        bodyEl.innerHTML = "";
+        tiles = [];
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
+        titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
+        subEl.textContent = ar ? "اختر الإذاعة ثم اضغط OK. الإذاعة المختارة تبقى هي الإذاعة الأساسية." : "Pick a station and press OK. It stays the station of the Radio tile.";
+        var list = el("div", "aplx-list");
+        function row(label, sub, on, id) {
+            var r = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label"></span>' + (sub ? '<span class="aplx-row__sub"></span>' : "") + "</div>" + (on ? '<span class="aplx-badge aplx-badge--on">✓</span>' : ""));
+            r.querySelector(".aplx-row__label").textContent = label;
+            if (sub) r.querySelector(".aplx-row__sub").textContent = sub;
+            var run = function () { pickStation(id); };
+            r.addEventListener("click", run);
+            tiles.push({ el: r, run: run });
+            list.appendChild(r);
+        }
+        row(ar ? "إذاعة القرآن الكريم من القاهرة (الأساسية)" : "Qur'an Cairo (default)", "", !cur, "");
+        var lastCat = "", i, o, h;
+        for (i = 0; i < S.list.length; i++) {
+            o = S.list[i];
+            if (o.cat !== lastCat) {
+                lastCat = o.cat;
+                h = el("div", "aplx-row__sub");
+                h.style.padding = "14px 8px 4px";
+                h.textContent = (S.cats[o.cat] || [o.cat, o.cat])[ar ? 0 : 1];
+                list.appendChild(h);
+            }
+            row(ar ? o.ar : (o.en || o.ar), ar ? "" : (o.en && o.ar !== o.en ? o.ar : ""), o.id === cur, o.id);
+        }
+        bodyEl.appendChild(list);
+        hintEl.textContent = ar ? "OK للاختيار · رجوع للإلغاء" : "OK to choose · Back to cancel";
+    }
+
     function toggleRadio() {
         var r = APL.radio;
         if (!r) return;
@@ -1544,6 +1610,8 @@
         nav = new APL.Nav({
             onFocus: function (i) { focusIndex = i; },
             onSelect: function (i) { if (tiles[i] && tiles[i].run) tiles[i].run(); },
+            canHold: function (i) { return !!(tiles[i] && tiles[i].hold); },
+            onLongPress: function (i) { if (tiles[i] && tiles[i].hold) tiles[i].hold(); },
             onKey: moveVertical,
             /* The main Prayer grid has its own visible-row routing. */
             rawArrowKeys: true,
@@ -1551,6 +1619,7 @@
                 if (mode === "wxday") { mode = "weather"; focusIndex = wxReturn; render(); return; }
                 if (mode === "hekam-items") { mode = "hekam"; focusIndex = hekamReturn; render(); return; }
                 if (mode === "hekam-random") { mode = "hekam"; focusIndex = 0; render(); return; }
+                if (mode === "stations") { mode = "main"; focusIndex = stationReturn; render(); return; }
                 if (mode === "hekam") { focusIndex = mainReturn; mode = "main"; render(); return; }
                 if (mode === "city" && cityCC) { cityCC = null; focusIndex = 0; render(); return; }      // v8.7.28: back from a country's cities to the countries
                 if (mode === "city" || mode === "events" || mode === "weather" || mode === "adjust" || mode === "sleep" || mode === "adhkar") {
@@ -1568,6 +1637,7 @@
         var keep = Math.min(focusIndex, 999);
         if (mode === "city") buildCity();
         else if (mode === "sleep") buildSleep();
+        else if (mode === "stations") buildStations();
         else if (mode === "events") buildEvents();
         else if (mode === "weather") buildWeather();
         else if (mode === "wxday") buildWxDay();

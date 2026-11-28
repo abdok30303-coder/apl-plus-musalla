@@ -3259,6 +3259,7 @@ window.APL_CATALOG = [
         radioBackground: true,      // v7.0.8: on by default: the AVPlay radio keeps going when another app or an HDMI input is in front (Settings > Accessibility)
         uiFont: "default",          // v7.0.8: "default" | "tahoma" | "naskh" | "kufi" | "serif" | "apl" (css/custom.css, js/safe-mode.js)
         radioDuringAlert: true,     // pause the radio while a prayer alert plays, then resume
+        radioStation: "",           // v8.7.65: id of a station from js/radio-stations.js; empty = Cairo
         radioUrl: "",               // empty: the station of js/site-config.js
         weatherPlace: "cairo",     // key in js/cities.js (weather.js)
         channelKeys: true,          // Channel Up / Down opens APL Settings (the Home key stays with Samsung)
@@ -7515,6 +7516,211 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     };
 })(window);
 
+/* === js/radio-stations.js === */
+/* ============================================================
+   radio-stations.js: the Quran radio stations of MP3Quran.net (qurango.net).
+   v8.7.65: the list a long press on the Radio tile opens. Each station is a
+   public MP3 stream: https://qurango.net/radio/<id> (fallback host
+   https://backup.qurango.net/radio/<id>). Source: the public MP3Quran radio
+   list (https://www.mp3quran.net/api/radio/). Cairo stays the default.
+   ============================================================ */
+(function (global) {
+    "use strict";
+    var APL = global.APL;
+    if (!APL) return;
+    var CATS = {"quran": ["تلاوات القرآن الكريم", "Quran recitations"], "translation": ["ترجمات معاني القرآن", "Quran translations"], "tafseer": ["التفسير", "Tafsir"], "adhkar": ["الأذكار", "Adhkar"], "biography_of_the_prophet": ["السيرة النبوية", "Prophet's biography"], "roqyah": ["الرقية الشرعية", "Ruqyah"], "fatwas": ["الفتاوى", "Fatwas"], "others": ["إذاعات متنوعة", "Other stations"]};
+    var ROWS = [
+        ["quran", "ahmad_alhawashi", "أحمد الحواشي", "Ahmad Al-Hawashi"],
+        ["quran", "ahmed_altrabulsi", "أحمد الطرابلسي", "Ahmed Al-trabulsi"],
+        ["quran", "ahmad_khader_altarabulsi", "أحمد الطرابلسي - رواية قالون عن نافع", "Ahmad Khader Al-Tarabulsi - Rewayat Qalon A'n Nafi'"],
+        ["quran", "ahmad_alajmy", "أحمد بن علي العجمي", "Ahmad Al-Ajmy"],
+        ["quran", "ahmad_shaheen", "أحمد خليل شاهين", "Ahmad Shaheen"],
+        ["quran", "ahmad_deban", "أحمد ديبان", "Ahmad Deban"],
+        ["quran", "ahmad_saber", "أحمد صابر", "Ahmad Saber"],
+        ["quran", "ahmed_amer", "أحمد عامر", "Ahmed Amer"],
+        ["quran", "ahmad_nauina", "أحمد نعينع", "Ahmad Nauina"],
+        ["quran", "akram_alalaqmi", "أكرم العلاقمي", "Akram Alalaqmi"],
+        ["quran", "ibrahim_alakdar", "إبراهيم الأخضر", "Ibrahim Al-Akdar"],
+        ["quran", "idrees_abkr", "إدريس أبكر", "Idrees Abkr"],
+        ["quran", "ibrahim_aldosari", "ابراهيم الدوسري - رواية ورش عن نافع", "Ibrahim Aldosari - Rewaya Warsh A'n Nafi'"],
+        ["quran", "addokali_mohammad_alalim", "الدوكالي محمد العالم - رواية قالون عن نافع", "Addokali Mohammad Alalim - Rewaya Qalon A'n Nafi'"],
+        ["quran", "alzain_mohammad_ahmad", "الزين محمد أحمد", "Alzain Mohammad Ahmad"],
+        ["quran", "aloyoon_alkoshi", "العيون الكوشي - رواية ورش عن نافع", "Aloyoon Al-Koshi - Rewaya Warsh A'n Nafi'"],
+        ["quran", "alfateh_alzubair", "الفاتح محمد الزبير- رواية الدوري عن أبي عمرو", "Alfateh Alzubair- Rewayat Aldori A'n Abi Amr"],
+        ["quran", "alqaria_yassen", "القارئ ياسين- رواية ورش عن نافع", "Al-Qaria Yassen - Rewaya Warsh A'n Nafi'"],
+        ["quran", "bandar_balilah", "بندر بليله", "Bandar Balilah"],
+        ["quran", "tawfeeq_assayegh", "توفيق الصايغ", "Tawfeeq As-Sayegh"],
+        ["quran", "jamal_shaker_abdullah", "جمال شاكر عبدالله", "Jamal Shaker Abdullah"],
+        ["quran", "jamaan_alosaimi", "جمعان العصيمي", "Jamaan Alosaimi"],
+        ["quran", "hatem_fareed_alwaer", "حاتم فريد الواعر", "Abdullah Al-Kandari"],
+        ["quran", "khalid_aljileel", "خالد الجليل", "Khalid Al-Jileel"],
+        ["quran", "khaled_alqahtani", "خالد القحطاني", "Khaled Al-Qahtani"],
+        ["quran", "khalid_almohana", "خالد المهنا", "Khalid Almohana"],
+        ["quran", "khalid_abdulkafi", "خالد عبدالكافي", "Khalid Abdulkafi"],
+        ["quran", "khalifa_altunaiji", "خليفة الطنيجي", "Khalifa Altunaiji"],
+        ["quran", "zaki_daghistani", "زكي داغستاني", "Zaki Daghistani"],
+        ["quran", "saad_alghamdi", "سعد الغامدي", "Saad Al-Ghamdi"],
+        ["quran", "saud_alshuraim", "سعود الشريم", "Saud Al-Shuraim"],
+        ["quran", "sahl_yassin", "سهل ياسين", "Sahl Yassin"],
+        ["quran", "sayeed_ramadan", "سيد رمضان", "Sayeed Ramadan"],
+        ["quran", "shaik_abu_bakr_al_shatri", "شيخ أبو بكر الشاطري", "Shaik Abu Bakr Al Shatri"],
+        ["quran", "shirazad_taher", "شيرزاد عبدالرحمن طاهر", "Shirazad Taher"],
+        ["quran", "saber_abdulhakm", "صابر عبدالحكم", "Saber Abdulhakm"],
+        ["quran", "salah_albudair", "صلاح البدير", "Salah Albudair"],
+        ["quran", "salah_alhashim", "صلاح الهاشم", "Salah Alhashim"],
+        ["quran", "slaah_bukhatir", "صلاح بو خاطر", "Slaah Bukhatir"],
+        ["quran", "tareq_abdulgani_daawob", "طارق دعوب - رواية قالون عن نافع", "Tareq Abdulgani daawob - Rewaya Qalon A'n Nafi'"],
+        ["quran", "adel_alkhalbany", "عادل الكلباني", "Adel Al-Khalbany"],
+        ["quran", "adel_ryyan", "عادل ريان", "Adel Ryyan"],
+        ["quran", "abdelbari_altoubayti", "عبدالبارئ الثبيتي", "Abdelbari Al-Toubayti"],
+        ["quran", "abdulbari_mohammad", "عبدالبارئ محمد", "Abdulbari Mohammad"],
+        ["quran", "abdulbasit_abdulsamad", "عبدالباسط عبدالصمد", "Abdulbasit Abdulsamad"],
+        ["quran", "abdulbasit_abdulsamad_mojawwad", "عبدالباسط عبدالصمد - مجود", "Abdulbasit Abdulsamad - Mojawwad"],
+        ["quran", "abdulbasit_abdulsamad_warsh", "عبدالباسط عبدالصمد - رواية ورش عن نافع", "Abdulbasit Abdulsamad"],
+        ["quran", "abdulrahman_alsudaes", "عبدالرحمن السديس", "Abdulrahman Alsudaes"],
+        ["quran", "abdulrahman_almajed", "عبدالرحمن الماجد", "Abdulrahman Al-Majed"],
+        ["quran", "abdulrasheed_soufi_assosi", "عبدالرشيد صوفي - رواية السوسي عن أبي عمرو", "Abdulrasheed Soufi - Rewayat Assosi A'n Abi Amr"],
+        ["quran", "abdulrasheed_soufi_khalaf", "عبدالرشيد صوفي - رواية خلف عن حمزة", "Abdulrasheed Soufi - Rewaya Khalaf A'n Hamzah"],
+        ["quran", "abdul_aziz_alahmad", "عبدالعزيز الأحمد", "Abdul Aziz Al-Ahmad"],
+        ["quran", "abdullah_alkhalaf", "عبدالله الخلف", "Abdullah Al-Khalaf"],
+        ["quran", "abdullah_alkandari", "عبدالله الكندري", "Abdullah Al-Kandari"],
+        ["quran", "abdullah_almattrod", "عبدالله المطرود", "Abdullah Al-Mattrod"],
+        ["quran", "abdullah_almousa", "عبدالله الموسى", "Abdullah Al-Mousa"],
+        ["quran", "abdullah_basfer", "عبدالله بصفر", "Abdullah Basfer"],
+        ["quran", "abdullah_khayyat", "عبدالله خياط", "Abdullah Khayyat"],
+        ["quran", "abdullah_aljohany", "عبدالله عواد الجهني", "Abdullah Al-Johany"],
+        ["quran", "abdulmohsin_alharthy", "عبدالمحسن الحارثي", "Abdulmohsin Al-Harthy"],
+        ["quran", "abdulmohsin_alobaikan", "عبدالمحسن العبيكان", "Abdulmohsin Al-Obaikan"],
+        ["quran", "abdulmohsen_alqasim", "عبدالمحسن القاسم", "Abdulmohsen Al-Qasim"],
+        ["quran", "abdulhadi_kanakeri", "عبدالهادي أحمد كناكري", "Abdulhadi Kanakeri"],
+        ["quran", "abdulwadood_haneef", "عبدالودود حنيف", "Abdulwadood Haneef"],
+        ["quran", "ali_alhuthaifi", "علي الحذيفي", "Ali Alhuthaifi"],
+        ["quran", "ali_jaber", "علي جابر", "Ali Jaber"],
+        ["quran", "ali_hajjaj_alsouasi", "علي حجاج السويسي", "Ali Hajjaj Alsouasi"],
+        ["quran", "emad_hafez", "عماد زهير حافظ", "Emad Hafez"],
+        ["quran", "omar_alqazabri", "عمر القزابري - رواية ورش عن نافع", "Omar Al-Qazabri - Rewaya Warsh A'n Nafi'"],
+        ["quran", "fares_abbad", "فارس عباد", "Fares Abbad"],
+        ["quran", "majed_alzamel", "ماجد الزامل", "Majed Al-Zamil"],
+        ["quran", "maher", "ماهر المعيقلي", "Maher Al Meaqli"],
+        ["quran", "maher_shakhashero", "ماهر شخاشيرو", "Maher Shakhashero"],
+        ["quran", "mohammed_ayyub", "1 محمد أيوب", "Mohammed Ayyub 1"],
+        ["quran", "ayyoub2", "2 محمد أيوب", "Mohammed Ayyub 2"],
+        ["quran", "mohammad_altablaway", "محمد الطبلاوي", "Mohammad Al-Tablaway"],
+        ["quran", "mohammed_allohaidan", "محمد اللحيدان", "Mohammed Al-Lohaidan"],
+        ["quran", "mohammed_jibreel", "محمد جبريل", "Mohammed Jibreel"],
+        ["quran", "mohammad_rashad_alshareef", "محمد رشاد الشريف", "Mohammad Rashad Alshareef"],
+        ["quran", "mohammad_saleh_alim_shah", "محمد صالح عالم شاه", "Mohammad Saleh Alim Shah"],
+        ["quran", "mohammed_siddiq_alminshawi", "محمد صديق المنشاوي", "Mohammed Siddiq Al-Minshawi"],
+        ["quran", "mohammed_siddiq_alminshawi_mojawwad", "محمد صديق المنشاوي - مجود", "Mohammed Siddiq Al-Minshawi - Mojawwad"],
+        ["quran", "mohammad_alabdullah_albizi", "محمد عبدالحكيم العبدالله - رواية البزي وقنبل عن ابن كثير", "Mohammad Al-Abdullah- Rewayat Albizi and Qunbol A'n Ibn Katheer"],
+        ["quran", "mohammad_alabdullah_aldorai", "محمد عبدالحكيم العبدالله - رواية الدوري عن الكسائي", "Mohammad Al-Abdullah- Rewayat AlDorai A'n Al-Kisa'ai"],
+        ["quran", "mohammad_abdullkarem", "محمد عبدالكريم", "Mohammad Abdullkarem"],
+        ["quran", "mohammad_abdullkarem_alasbahani", "محمد عبدالكريم - رواية ورش عن نافع من طريق أبي بكر الأصبهاني", "Mohammad Abdullkarem - Rewayat Warsh A'n Nafi' Men  Tariq Abi Baker Alasbahani"],
+        ["quran", "mohammed_osman_khan", "محمد عثمان خان ( من الهند )", "Mohammed Osman Khan (from India)"],
+        ["quran", "mahmood_al_rifai", "محمود الرفاعي", "Mahmood Al rifai"],
+        ["quran", "mahmood_alsheimy", "محمود الشيمي - رواية الدوري عن الكسائي", "Mahmood AlSheimy - Rewayat Aldorai A'n Al-Kisa'ai"],
+        ["quran", "mahmoud_khalil_alhussary", "محمود خليل الحصري", "Mahmoud Khalil Al-Hussary"],
+        ["quran", "mahmoud_khalil_alhussary_mojawwad", "محمود خليل الحصري - مجود", "Mahmoud Khalil AlHussary - Mojawwad"],
+        ["quran", "mahmoud_khalil_alhussary_warsh", "محمود خليل الحصري - رواية ورش عن نافع", "Mahmoud Khalil Al-Hussary - Rewaya Warsh A'n Nafi'"],
+        ["quran", "mahmoud_ali__albanna", "محمود علي البنا", "Mahmoud Ali  Albanna"],
+        ["quran", "mahmoud_ali__albanna_mojawwad", "محمود علي البنا - مجود", "Mahmoud Ali  Albanna - Mojawwad"],
+        ["quran", "mishary_alafasi", "مشاري العفاسي", "Mishary Alafasi"],
+        ["quran", "mustafa_ismail", "مصطفى إسماعيل", "Mustafa Ismail"],
+        ["quran", "mustafa_allahoni", "مصطفى اللاهوني", "Mustafa Al-Lahoni"],
+        ["quran", "mustafa_raad_alazawy", "مصطفى رعد العزاوي", "Mustafa raad Alazawy"],
+        ["quran", "moeedh_alharthi", "معيض الحارثي", "Moeedh Alharthi"],
+        ["quran", "muftah_alsaltany_ibn_thakwan_an_ibn_amr ", "مفتاح السلطني - رواية ابن ذكوان عن ابن عامر", "Muftah Alsaltany - Rewayat Ibn Thakwan A'n Ibn Amer"],
+        ["quran", "muftah_alsaltany_aldori_an_abi_amr ", "مفتاح السلطني - رواية الدوري عن أبي عمرو", "Muftah Alsaltany - Rewayat Aldori A'n Abi Amr"],
+        ["quran", "muftah_alsaltany_aldorai", "مفتاح السلطني - رواية الدوري عن الكسائي", "Muftah Alsaltany - Rewayat Aldorai A'n Al-Kisa'ai"],
+        ["quran", "mousa_bilal", "موسى بلال", "Mousa Bilal"],
+        ["quran", "nasser_alosfor", "ناصر العصفور", "Nasser Alosfor"],
+        ["quran", "nasser_alqatami", "ناصر القطامي", "Nasser Alqatami"],
+        ["quran", "nasser_almajed", "ناصر الماجد", "Nasser Almajed"],
+        ["quran", "nabil_al_rifay", "نبيل الرفاعي", "Nabil Al Rifay"],
+        ["quran", "neamah_alhassan", "نعمة الحسان", "Neamah Al-Hassan"],
+        ["quran", "hani_arrifai", "هاني الرفاعي", "Hani Arrifai"],
+        ["quran", "hitham_aljadani", "هيثم الجدعاني", "Hitham Aljadani"],
+        ["quran", "waleed_alnaehi", "وليد النائحي - رواية قالون عن نافع من طريق أبي نشيط", "Waleed Alnaehi - Rewayat Qalon A'n Nafi' Men Tariq Abi Nasheet"],
+        ["quran", "yasser_aldosari", "ياسر الدوسري", "Yasser Al-Dosari"],
+        ["quran", "yasser_alqurashi", "ياسر القرشي", "Yasser Al-Qurashi"],
+        ["quran", "yasser_almazroyee", "ياسر المزروعي - قراءة يعقوب الحضرمي بروايتي رويس وروح", "Yasser Al-Mazroyee - Rowis and Rawh A'n Yakoob Al Hadrami"],
+        ["quran", "yahya_hawwa", "يحيى حوا", "Yahya Hawwa"],
+        ["quran", "yousef_alshoaey", "يوسف الشويعي", "Yousef Alshoaey"],
+        ["quran", "yousef_bin_noah_ahmad", "يوسف بن نوح أحمد", "Yousef Bin Noah Ahmad"],
+        ["quran", "a_alshahhat", "عبدالرحمن الشحات", "Abdurrahman Alshahhat"],
+        ["quran", "sneineh", "محمد أبوسنينة", "Muhammad Abu Sunaynah"],
+        ["quran", "qeniwa", "محمد الأمين قنيوة", "Muhammad Al-Amin Qaniwah"],
+        ["quran", "a_sheim", "عبدالعزيز سحيم", "Abdul Aziz Suhaim"],
+        ["quran", "saleh_alhabdan", "صالح الهبدان", "Saleh Al-Habdan"],
+        ["quran", "buajan", "عبدالله البعيجان", "Abdullah Al-Bu'ayjan"],
+        ["quran", "a_binhameed", "أحمد طالب بن حميد", "Ahmad Talib bin Humaid"],
+        ["quran", "bader", "بدر التركي", "Badr Al-Turki"],
+        ["quran", "hazza", "هزاع البلوشي", "Hazza Al-Balushi"],
+        ["quran", "Surah_Al-Mulk", "سورة الملك", "Surah Al-Mulk"],
+        ["translation", "translation_quran_urdu_basit", "ترجمة معاني القرآن الكريم باللغة الأوردية - القارئ عبدالباسط عبدالصمد", "Translation of the meanings of the Noble Qur’an in the urdu language - Abdulbasit Abdulsamad"],
+        ["translation", "translation_quran_spanish_afs", "ترجمة معاني القرآن باللغة الأسبانية", "Translation of the meanings of the Noble Qur’an in the spanish language"],
+        ["translation", "translation_quran_albanian", "ترجمة معاني القرآن باللغة الألبانية", "Translation of the meanings of the Noble Qur’an in the albanian language"],
+        ["translation", "translation_quran_german", "ترجمة معاني القرآن باللغة الألمانية", "Translation of the meanings of the Noble Qur’an in the german language"],
+        ["translation", "translation_quran_tamazight", "ترجمة معاني القرآن باللغة الأمازيغية", "Translation of the meanings of the Noble Qur’an in the tamazight language"],
+        ["translation", "translation_quran_urdu_sds_shur", "ترجمة معاني القرآن باللغة الأوردية - القارئ عبدالرحمن السديس و سعود الشريم", "Translation of the meanings of the Noble Qur’an in the urdu language - Abdulrahman Alsudais and Saud"],
+        ["translation", "translation_quran_urdu_minsh", "ترجمة معاني القرآن باللغة الأوردية - القارئ محمد المنشاوي", "Translation of the meanings of the Noble Qur’an in the urdu language - Mohammad alminshawi"],
+        ["translation", "translation_quran_english_basit", "ترجمة معاني القرآن باللغة الإنجليزية -  القارئ عبدالباسط عبدالصمد", "Translation of the meanings of the Noble Qur’an in the english language - Abdulbasit Abdulsamad"],
+        ["translation", "translation_quran_english_bsfr", "ترجمة معاني القرآن باللغة الإنجليزية -  القارئ عبدالله صفر", "Translation of the meanings of the Noble Qur’an in the english language - Abdullah Basfr"],
+        ["translation", "translation_quran_english_walk_basit", "ترجمة معاني القرآن باللغة الإنجليزية - ترجمة والك-  القارئ عبدالباسط عبدالصمد", "Translation of the meanings of the Noble Qur’an in the english - walk translation - Abdulbasit Abdul"],
+        ["translation", "translation_quran_portuguese", "ترجمة معاني القرآن باللغة البرتغالية", "Translation of the meanings of the Noble Qur’an in the portuguese language"],
+        ["translation", "translation_quran_bosnia", "ترجمة معاني القرآن باللغة البوسنية", "Translation of the meanings of the Noble Qur’an in the Bosnian language"],
+        ["translation", "translation_quran_turkish", "ترجمة معاني القرآن باللغة التركية", "Translation of the meanings of the Noble Qur’an in the turkish language"],
+        ["translation", "translation_quran_chinese", "ترجمة معاني القرآن باللغة الصينية", "Translation of the meanings of the Noble Qur’an in the chinese language"],
+        ["translation", "translation_quran_farsi", "ترجمة معاني القرآن باللغة الفارسية", "Translating the meanings of the Noble Qur’an into Persian"],
+        ["translation", "translation_quran_french", "ترجمة معاني القرآن باللغة الفرنسية", "Translation of the meanings of the Noble Qur’an in the french language"],
+        ["translation", "translation_quran_kurdish", "ترجمة معاني القرآن باللغة الكردية", "Translation of the meanings of the Noble Qur’an in the kurdish language"],
+        ["translation", "translation_quran_hungarian", "ترجمة معاني القرآن باللغة المجرية", "Translation of the meanings of the Noble Qur’an in the hungarian language"],
+        ["translation", "translation_quran_greek", "ترجمة معاني القرآن باللغة اليونانية", "Translation of the meanings of the Noble Qur’an in the greek language"],
+        ["translation", "translation_quran_Russia", "ترجمة معاني القرآن باللغة الروسية", "Translation of the meanings of the Noble Qur'an in the Russian language"],
+        ["translation", "translation_quran_Korean", "ترجمة معاني القرآن باللغة الكورية", "Translation of the meanings of the Noble Qur'an in the Korean language"],
+        ["translation", "Translation_Quran_Hausa", "ترجمة معاني القرآن باللغة الهوسا", "Translation of the meanings of the Noble Qur'an in the Hausa language"],
+        ["tafseer", "tafseer", "تفسير القرآن الكريم", "Quran Tafseer"],
+        ["tafseer", "mukhtasartafsir", "المختصر في تفسير القرآن الكريم", "Tafseer - Short Version"],
+        ["tafseer", "tabri", "تفسير القرآن الكريم - الخلاصة من تفسير الطبري", "Quran Tafseer Summary - Tabari"],
+        ["tafseer", "gareeb-quran", "تفسير غريب القرآن", "Tafsir of Difficult Quran Words"],
+        ["adhkar", "athkar_sabah", "أذكار الصباح", "Morning Adhkar"],
+        ["adhkar", "athkar_masa", "أذكار المساء", "Evening Adhkar"],
+        ["biography_of_the_prophet", "almukhtasar_fi_alsiyra", "المختصر في السيرة النبوية - حلقات مختصرة عن سيرة نبيّنا محمد ﷺ", "Brief of the biography of the Prophet Muhammad (PBUH)"],
+        ["biography_of_the_prophet", "fi_zilal_alsiyra", "في ظلال السيرة النبوية - 400 حلقة عن سيرة نبينا محمد ﷺ", "Biography of the Prophet Muhammad (PBUH)"],
+        ["roqyah", "roqiah", "الرقية الشرعية", "ROQYAH"],
+        ["fatwas", "fatwa", "الفتاوى", "FATAWA"],
+        ["others", "sahabah", "صور من حياة الصحابة", "Sahaba Stories"],
+        ["others", "tarateel", "تراتيل قصيرة متميزة", "Amazing short Recitations"],
+        ["others", "sakeenah", "آيات السكينة", "Calm Recitations"],
+        ["others", "albaqarah", "سورة البقرة - لعدد من القراء", "Surah Al-Baqarah - Many Reciters"],
+        ["others", "mix", "الإذاعة العامة - اذاعة متنوعة لمختلف القراء", "Main Radio"],
+        ["others", "salma", "تلاوات خاشعة", "Beautiful Recitations"],
+        ["others", "saheh-muslim", "صحيح مسلم", "Sahih Muslim"],
+        ["others", "saheh-bokharee", "صحيح البخاري", "Sahih Al-Bukhari"],
+        ["others", "alanbiya", "قصص الأنبياء", "Stories of the Prophets"],
+        ["others", "riyad", "رياض الصالحين", "Riyad Al-Salihin"],
+        ["others", "eid", "تكبيرات العيد", "EID's TAKBEER"],
+        ["others", "alaikhtiarat_alfiqhayh_bin_baz", "كتاب الاختيارات الفقهية في مسائل العبادات والمعاملات من فتاوى الشيخ الإمام ابن باز -رحمه لله", "The Book of Jurisprudential Choices in Issues of Worship and Transactions from the Fftwas of Sheikh"],
+        ["others", "ramadan", "شهر رمضان المبارك", "Ramadan"]
+    ];
+    var list = [], byId = {}, i, r, o;
+    for (i = 0; i < ROWS.length; i++) {
+        r = ROWS[i];
+        o = { cat: r[0], id: r[1], ar: r[2], en: r[3] };
+        list.push(o);
+        byId[o.id] = o;
+    }
+    APL.radioStations = {
+        cats: CATS,
+        list: list,
+        get: function (id) { return id && byId.hasOwnProperty(id) ? byId[id] : null; },
+        urls: function (id) {
+            if (!this.get(id)) return [];
+            return ["https://qurango.net/radio/" + id, "https://backup.qurango.net/radio/" + id];
+        }
+    };
+})(window);
+
 /* === js/radio.js === */
 /* ============================================================
    radio.js — Qur'an Cairo (Egyptian Quran Radio), foreground playback.
@@ -7570,6 +7776,12 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
             u = String(u || "").trim();
             if (!/^https?:\/\//i.test(u)) return;
             if (out.indexOf(u) < 0) out.push(u);
+        }
+        /* v8.7.65: a station picked from the list (long press on the Radio tile) plays alone; no silent switch to Cairo */
+        var st = sys.pref("radioStation");
+        if (st && APL.radioStations) {
+            APL.radioStations.urls(st).forEach(add);
+            if (out.length) return out;
         }
         add(sys.pref("radioUrl"));
         (CFG.urls && CFG.urls.length ? CFG.urls : DEFAULT_URLS).forEach(add);
@@ -14553,10 +14765,10 @@ window.APL_KEYS = {
         takbeer: ic('<path d="M4 10v4h3.5L13 18V6L7.5 10z"/><path d="M16 9.2a4 4 0 0 1 0 5.6M18.8 6.8a7.5 7.5 0 0 1 0 10.4"/>'),
         quranOnline: ic('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3v6H5a1 1 0 0 1-1-1zM20 14h-3v6h2a1 1 0 0 0 1-1z"/>')
     };
-    function actBtn(ico, label, on, run) {
+    function actBtn(ico, label, on, run, hold) {
         var b = el("div", "pw-ic" + (on ? " is-on" : ""), (ACT_ICO[ico] || "") + "<span>" + label + "</span>");
         b.addEventListener("click", run);
-        tiles.push({ el: b, run: run });
+        tiles.push({ el: b, run: run, hold: hold || null });
         return b;
     }
     /* auto screen off: 30 min, then every 10 min up to 3 hours (the Sleep Timer of the Control Center) */
@@ -14837,7 +15049,7 @@ window.APL_KEYS = {
     function audioIcons() {
         var icons = el("div", "pw-ics");
         var rs = radioState(), alertsOn = p().alertsOn(), pauseOn = sys.pref("radioDuringAlert") !== false, sl = sleepOn();
-        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }));
+        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }, openStations));
         /* v1.2.116: Surat Al-Kahf and the Eid takbeer, played from the APL-Audio folder on the TV (not inside the package) */
         icons.appendChild(audioBtn("kahf", "kahf", APL.t("Al-Kahf")));
         icons.appendChild(kahfMini());      /* v7.2.0: Resume / Restart, two small buttons stacked beside the Al-Kahf tile */
@@ -15263,7 +15475,7 @@ window.APL_KEYS = {
         if (!nav || !nav.tiles || !nav.tiles.length || (code !== APL.KEY.UP && code !== APL.KEY.DOWN)) return false;
         var delta = code === APL.KEY.UP ? -1 : 1;
         /* City, occasions, weather and hekam use true vertical lists. */
-        if (mode === "city" || mode === "events" || mode === "weather" || mode === "wxday" || mode === "adjust" || mode === "sleep" || mode === "hekam" || mode === "hekam-items" || mode === "hekam-random") {
+        if (mode === "city" || mode === "events" || mode === "weather" || mode === "wxday" || mode === "adjust" || mode === "sleep" || mode === "stations" || mode === "hekam" || mode === "hekam-items" || mode === "hekam-random") {
             var next = nav.index + delta;
             if (next >= 0 && next < nav.tiles.length) {
                 nav.focus(next);
@@ -15392,6 +15604,72 @@ window.APL_KEYS = {
         });
     }
 
+    /* v8.7.65: long OK on the Radio tile opens the list of Quran radio stations (js/radio-stations.js) */
+    var stationReturn = 0;
+    function stationName(st) {
+        var cur = st && st.id ? st : null;
+        return cur ? (APL.lang === "ar" ? cur.ar : (cur.en || cur.ar)) : "";
+    }
+    function openStations() {
+        if (!APL.radioStations || !APL.radioStations.list.length) return;
+        stationReturn = focusIndex;
+        mode = "stations";
+        focusIndex = 0;
+        render();
+        /* the playing station is focused (row 0 is Cairo) */
+        var cur = sys.pref("radioStation") || "", L = APL.radioStations.list, k, at = 0;
+        for (k = 0; k < L.length; k++) if (L[k].id === cur) { at = k + 1; break; }
+        nav.focus(at);
+    }
+    function pickStation(id) {
+        var r = APL.radio;
+        sys.setPref("radioStation", id || "");
+        var o = id ? APL.radioStations.get(id) : null;
+        var name = o ? stationName(o) : (APL.lang === "ar" ? "إذاعة القرآن الكريم من القاهرة" : "Qur'an Cairo");
+        mode = "main"; focusIndex = stationReturn; render();
+        if (!r) return;
+        try { r.stop(); } catch (e) {}
+        if (APL.toast) APL.toast((APL.lang === "ar" ? "جاري تشغيل: " : "Playing: ") + name + " …", true);
+        setTimeout(function () {
+            r.play().then(function () { if (openFlag && mode === "main") render(); }, function (e) {
+                if (APL.toast) APL.toast((e && e.message) || APL.t("The radio needs the internet."));
+                if (openFlag && mode === "main") render();
+            });
+        }, 400);
+    }
+    function buildStations() {
+        bodyEl.innerHTML = "";
+        tiles = [];
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
+        titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
+        subEl.textContent = ar ? "اختر الإذاعة ثم اضغط OK. الإذاعة المختارة تبقى هي الإذاعة الأساسية." : "Pick a station and press OK. It stays the station of the Radio tile.";
+        var list = el("div", "aplx-list");
+        function row(label, sub, on, id) {
+            var r = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label"></span>' + (sub ? '<span class="aplx-row__sub"></span>' : "") + "</div>" + (on ? '<span class="aplx-badge aplx-badge--on">✓</span>' : ""));
+            r.querySelector(".aplx-row__label").textContent = label;
+            if (sub) r.querySelector(".aplx-row__sub").textContent = sub;
+            var run = function () { pickStation(id); };
+            r.addEventListener("click", run);
+            tiles.push({ el: r, run: run });
+            list.appendChild(r);
+        }
+        row(ar ? "إذاعة القرآن الكريم من القاهرة (الأساسية)" : "Qur'an Cairo (default)", "", !cur, "");
+        var lastCat = "", i, o, h;
+        for (i = 0; i < S.list.length; i++) {
+            o = S.list[i];
+            if (o.cat !== lastCat) {
+                lastCat = o.cat;
+                h = el("div", "aplx-row__sub");
+                h.style.padding = "14px 8px 4px";
+                h.textContent = (S.cats[o.cat] || [o.cat, o.cat])[ar ? 0 : 1];
+                list.appendChild(h);
+            }
+            row(ar ? o.ar : (o.en || o.ar), ar ? "" : (o.en && o.ar !== o.en ? o.ar : ""), o.id === cur, o.id);
+        }
+        bodyEl.appendChild(list);
+        hintEl.textContent = ar ? "OK للاختيار · رجوع للإلغاء" : "OK to choose · Back to cancel";
+    }
+
     function toggleRadio() {
         var r = APL.radio;
         if (!r) return;
@@ -15426,6 +15704,8 @@ window.APL_KEYS = {
         nav = new APL.Nav({
             onFocus: function (i) { focusIndex = i; },
             onSelect: function (i) { if (tiles[i] && tiles[i].run) tiles[i].run(); },
+            canHold: function (i) { return !!(tiles[i] && tiles[i].hold); },
+            onLongPress: function (i) { if (tiles[i] && tiles[i].hold) tiles[i].hold(); },
             onKey: moveVertical,
             /* The main Prayer grid has its own visible-row routing. */
             rawArrowKeys: true,
@@ -15433,6 +15713,7 @@ window.APL_KEYS = {
                 if (mode === "wxday") { mode = "weather"; focusIndex = wxReturn; render(); return; }
                 if (mode === "hekam-items") { mode = "hekam"; focusIndex = hekamReturn; render(); return; }
                 if (mode === "hekam-random") { mode = "hekam"; focusIndex = 0; render(); return; }
+                if (mode === "stations") { mode = "main"; focusIndex = stationReturn; render(); return; }
                 if (mode === "hekam") { focusIndex = mainReturn; mode = "main"; render(); return; }
                 if (mode === "city" && cityCC) { cityCC = null; focusIndex = 0; render(); return; }      // v8.7.28: back from a country's cities to the countries
                 if (mode === "city" || mode === "events" || mode === "weather" || mode === "adjust" || mode === "sleep" || mode === "adhkar") {
@@ -15450,6 +15731,7 @@ window.APL_KEYS = {
         var keep = Math.min(focusIndex, 999);
         if (mode === "city") buildCity();
         else if (mode === "sleep") buildSleep();
+        else if (mode === "stations") buildStations();
         else if (mode === "events") buildEvents();
         else if (mode === "weather") buildWeather();
         else if (mode === "wxday") buildWxDay();
@@ -25559,6 +25841,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.65: إذاعات القرآن الكريم. اضغط مطولاً على OK على أيقونة الراديو في صفحة الصلاة والقرآن تظهر قائمة بـ ١٧٢ إذاعة قرآنية (تلاوات لقراء كثيرين، وترجمات المعاني، والتفسير، والأذكار، والسيرة النبوية، والرقية، والفتاوى وغيرها) مقسمة حسب النوع، واختر منها. الإذاعة المختارة تتحفظ وتشتغل من أيقونة الراديو ومن صفحة الاستماع للقرآن ومركز التحكم وشاشة التوقف؛ وإذاعة القاهرة تفضل أول صف والإذاعة الأساسية. كل إذاعة ليها عنوان احتياطي. الإذاعات من القائمة العامة لموقع MP3Quran.net. غير مجرّب على التلفزيون: اتفحص في Chrome بدون شاشة على التطبيق الحقيقي، ولسه محتاج تجربة على التلفزيون.",
         "✔ 8.7.64: طقطقة أقل في الآيات القصيرة. أول انتقال في التلاوة (من الآية الأولى للتانية) كان بيبدأ بعد ما الأولى تخلص فيحصل فاصل صغير وخرج الصوت يهدا. دلوقتي الآية الأولى كمان بتتحمّل وتتفك أول ما تتخزّن فمدتها الحقيقية معروفة، والآية الجاية بتبدأ على ساعة الصوت قبل نهاية الأولى بأجزاء من الثانية، فخرج الصوت مابيهداش، وبعدها السلسلة بتكمل زي ٨.٧.٦٢. لو الأولى ماتفكتش في وقتها بيرجع للسلوك القديم. غير مجرّب على التلفزيون.",
         "✔ 8.7.63: إصلاح قطع الآيات الطويلة في التلاوة. نسخة الآية المحمّلة كانت بتتشغّل من عنوان داخلي (blob) وبعض مشغّلات التلفزيون بتقطعها في الملفات الطويلة؛ دلوقتي المشغّل بيشغّل العنوان الحقيقي دايماً، والنسخة المحمّلة بتُستخدم بس للانتقال من غير فاصل (للملفات الأصغر من حوالي ٦٠٠ كيلوبايت)، والانتقال للآية الجاية بيبدأ عند النهاية الحقيقية للملف مش عند مدة مقدّرة فمبقاش بيقفز بدري. غير مجرّب على التلفزيون.",
         "✔ 8.7.62: اختفاء الطقطقة بين الآيات في التلاوة (المصحف وصفحة الاستماع). قبل كده المشغّل كان بيتعاد تحميله مع كل آية وده ممكن يبان في صوت التلفزيون كفصل ووصل سريع. دلوقتي الآية الجاية بتكون متحمّلة ومفكوكة جاهزة وبتبدأ على ساعة الصوت في نفس لحظة نهاية اللي قبلها، وكل آية بعدها بنفس الطريقة، فخرج الصوت مابيتقفلش بين الآيات. لو التلفزيون مادعمش كده المشغّل بيرجع لطريقة ٨.٧.٦١. غير مجرّب على التلفزيون.",
@@ -25614,6 +25897,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.65: Quran radio stations: long-press OK on the Radio tile to pick from 172 stations (reciters, translations, tafsir, adhkar and more). Cairo stays the default. Source: MP3Quran.net. Untested on the TV.",
         "✔ 8.7.64: Fewer clicks on short ayahs: the first ayah is decoded too, and the next ayah starts on the audio clock a few milliseconds before it ends, so the sound output never goes idle at the first hand-over. Untested on the TV.",
         "✔ 8.7.63: Fix for long ayahs being cut short: the player always streams the real address, and the hand-over to the next ayah starts at the real end of the file. Untested on the TV.",
         "✔ 8.7.62: No more click between ayahs in the recitation: the next ayah is downloaded and decoded ahead and started on the audio clock at the exact end of the current one, so the sound output is never reloaded between ayahs. Untested on the TV.",
