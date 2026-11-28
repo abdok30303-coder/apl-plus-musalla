@@ -1,3 +1,7 @@
+## 8.7.64
+
+- Fewer clicks on short ayahs in the recitation. The first hand-over of a recitation (from the first ayah to the next) used to start only after the first ayah ended, which left a small gap and let the audio output go idle. Now the first ayah is also downloaded and decoded once it is buffered, its exact length is known, and the next ayah is started on the audio clock a few milliseconds before it ends, so the output never goes idle; the 8.7.62 chain then carries on as before. If the first ayah is not decoded in time, the previous behaviour is used. Untested on the TV: checked in headless Chrome with real recordings of surahs 108 to 114 and test files; the click on the real TV, and how fast it decodes, still need a listen.
+
 ## 8.7.63
 
 - Fix for long ayahs being cut short in the recitation. A downloaded copy of the ayah was played from a blob address, which some TV players cut short on long files; now the player always streams the real address, and the downloaded copy is only used for the gapless hand-over (and only for files under about 600 KB; longer ayahs play from the stream). The hand-over to the next ayah now starts at the real end of the file, not at an estimated duration, so it can no longer jump early. Untested on the TV: checked in headless Chrome with a 25 s and a 40 s test file (both played to the end, the next ayah followed); the cause on the TV itself is not confirmed.

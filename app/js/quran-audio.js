@@ -346,12 +346,14 @@
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
             if (playGuard) { clearTimeout(playGuard); playGuard = null; }
+            if (!chainTick) chainTick = setInterval(chainWatch, 50);
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
         });
         a.addEventListener("pause", function () {
             if (a !== audioEl) return;
+            if (chainQ.length) return;   /* the element stopped at its own end while the chain already plays the next ayah */
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
             isPlaying = false;
             updateControlsUI();
@@ -381,6 +383,11 @@
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             isLoading = false;
             updateControlsUI();
+            preloadAhead();
+        });
+        a.addEventListener("canplaythrough", function () {
+            if (a !== audioEl || curWanted) return;
+            curWanted = true;      /* the file is buffered: fetching it again for decoding now comes from the cache and does not slow the stream */
             preloadAhead();
         });
         a.addEventListener("ended", function () {
@@ -626,6 +633,7 @@
     function preloadAhead() {
         if (!audioEl) return;
         var want = [], c = { s: curSurah, a: curAyah }, mode = mushafActive ? "continuous" : curMode, i, k;
+        if (curWanted && !chainQ.length) want.push(buildAudioUrl(curReciter, curSurah, curAyah));
         for (i = 0; i < PRELOAD_AHEAD; i++) {
             c = nextCoords(c.s, c.a, mode);
             if (!c) break;
@@ -673,6 +681,7 @@
     var ctx = null;           /* AudioContext, or false when unavailable */
     var chainQ = [];          /* scheduled buffers: { src, c, when, end, timer } */
     var chainTick = null;
+    var curWanted = false;    /* the ayah playing from the element may also be downloaded and decoded (to know its exact length) */
     var chainResume = false;  /* playback was paused while chained: resuming replays the current ayah with the element */
     function haltChain() {
         var had = chainQ.length > 0;
@@ -736,6 +745,19 @@
         var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
         if (nc && chainQ.length === 1) chainSchedule(nc, q.end);
     }
+    /* While an ayah plays from the element and both it and the next one are decoded, the next one is started on the audio clock a few
+       milliseconds before the current one ends (the length comes from the decoded copy, never from the element's estimate).
+       The element then finishes its own silent tail; the audio output is not left idle. */
+    function chainWatch() {
+        if (chainQ.length || !audioEl || !isPlaying || !curWanted || !chainOk()) return;
+        var cb = bufFor({ s: curSurah, a: curAyah });
+        if (!cb) return;
+        var rem = cb.duration - audioEl.currentTime;
+        if (rem > 1.0 || rem < -0.3) return;
+        var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
+        if (!nc || !bufFor(nc)) return;
+        chainSchedule(nc, getCtx().currentTime + Math.max(0, rem - 0.02));
+    }
     function setMushaf(on) {
         if (mushafActive === !!on) return;
         mushafActive = !!on;
@@ -757,7 +779,7 @@
         var pre = preMap[src];
         var useSrc = src;
         fallbackTried = false;
-        haltChain(); chainResume = false; wakeCtx();
+        haltChain(); chainResume = false; curWanted = false; wakeCtx();
         /* the element always plays the real address (a downloaded copy played from a blob: URL may be cut short on some TV players); the downloaded copy is only decoded for the chain */
         playBlobFor = "";
         audioEl.src = useSrc;
@@ -2070,7 +2092,7 @@
         },
         mushafActive: function () { return mushafActive; },
         onMushaf: function (fn) { mushafCb = fn; },
-        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap).map(function (k) { return k.split('/').pop() + (preMap[k].obj ? ':ready' : ':loading'); }), elements: 1, chained: chainQ.length, decoded: Object.keys(preMap).filter(function (k) { return !!preMap[k].buf; }).length }; },
+        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap).map(function (k) { return k.split('/').pop() + (preMap[k].buf ? ':decoded' : (preMap[k].ab ? ':downloaded' : ':loading')); }), elements: 1, chained: chainQ.length, decoded: Object.keys(preMap).filter(function (k) { return !!preMap[k].buf; }).length }; },
         getState: function () {
             return {
                 isOpen: isOpen,
