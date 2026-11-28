@@ -206,6 +206,15 @@
     var tafsirAyahOrder = [];
     var wasPlayingBeforeAlert = false;
     var endedAdvanceTimer = null;
+    /* v8.7.60: ayah preloading (shared by the listening page and the Mushaf recitation).
+       The next two ayahs are loaded into spare audio elements (and warmed in the HTTP cache) while the current one plays,
+       so the switch to the next ayah starts from an already buffered element instead of waiting for a download. */
+    var PRELOAD_AHEAD = 2;
+    var fallbackTried = false;
+    var preMap = {};          /* url -> { el, xhr } */
+    var spareEls = [];
+    var mushafActive = false; /* a recitation started from the Mushaf is running */
+    var mushafCb = null;      /* (surah, ayah, active) => the Mushaf follows the recited ayah */
 
     function lruSet(cache, order, key, val, max) {
         var sKey = String(key);
@@ -289,11 +298,14 @@
 
     /* Initialize Audio element */
     function initAudio() {
-        if (audioEl) return audioEl;
-        audioEl = new Audio();
-        audioEl.preload = "auto";
-        audioEl.defaultPlaybackRate = curSpeed;
-        var fallbackTried = false;
+        if (!audioEl) audioEl = makeAudio();
+        return audioEl;
+    }
+
+    function makeAudio() {
+        var a = new Audio();
+        a.preload = "auto";
+        a.defaultPlaybackRate = curSpeed;
 
         function tryFallback(reason) {
             if (fallbackTried || !audioEl || !audioEl.src) return false;
@@ -321,23 +333,27 @@
             return false;
         }
 
-        audioEl.addEventListener("loadedmetadata", function () {
+        a.addEventListener("loadedmetadata", function () {
+            if (a !== audioEl) return;
             audioEl.playbackRate = curSpeed;
         });
 
-        audioEl.addEventListener("playing", function () {
+        a.addEventListener("playing", function () {
+            if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
         });
-        audioEl.addEventListener("pause", function () {
+        a.addEventListener("pause", function () {
+            if (a !== audioEl) return;
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
             isPlaying = false;
             updateControlsUI();
         });
-        audioEl.addEventListener("loadstart", function () {
+        a.addEventListener("loadstart", function () {
+            if (a !== audioEl) return;
             isLoading = true;
             updateControlsUI();
             if (stallWatchdog) clearTimeout(stallWatchdog);
@@ -347,7 +363,8 @@
                 }
             }, 12000);
         });
-        audioEl.addEventListener("waiting", function () {
+        a.addEventListener("waiting", function () {
+            if (a !== audioEl) return;
             if (stallWatchdog) clearTimeout(stallWatchdog);
             stallWatchdog = setTimeout(function () {
                 if (audioEl && !fallbackTried && !audioEl.paused) {
@@ -355,13 +372,16 @@
                 }
             }, 10000);
         });
-        audioEl.addEventListener("canplay", function () {
+        a.addEventListener("canplay", function () {
+            if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             isLoading = false;
             updateControlsUI();
+            preloadAhead();
         });
-        audioEl.addEventListener("ended", onAudioEnded);
-        audioEl.addEventListener("error", function () {
+        a.addEventListener("ended", function () { if (a === audioEl) onAudioEnded(); });
+        a.addEventListener("error", function () {
+            if (a !== audioEl) { dropPreloaded(a); return; }
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             if (tryFallback("audio error")) return;
             fallbackTried = false;
@@ -370,19 +390,20 @@
             updateControlsUI();
             if (APL.toast) APL.toast(APL.lang === "ar" ? "تعذر تشغيل تلاوة الآية من المصدر" : "Failed to stream ayah audio", true);
         });
-        return audioEl;
+        return a;
     }
 
     function onAudioEnded() {
         if (endedAdvanceTimer) clearTimeout(endedAdvanceTimer);
         endedAdvanceTimer = setTimeout(function () {
             endedAdvanceTimer = null;
-            if (!isOpen && !sys.pref("quran_bg_playback")) return;
+            if (!isOpen && !mushafActive && !sys.pref("quran_bg_playback")) return;
             var sNum = parseInt(curSurah, 10) || 1;
             var aNum = parseInt(curAyah, 10) || 1;
-            if (curMode === "repeat_verse") {
+            var mode = mushafActive ? "continuous" : curMode;
+            if (mode === "repeat_verse") {
                 playCurrentAyah();
-            } else if (curMode === "repeat_surah") {
+            } else if (mode === "repeat_surah") {
                 var surahObj = getSurahObj(sNum);
                 if (aNum < surahObj.verses) {
                     stepAyah(1);
@@ -391,7 +412,7 @@
                     curAyah = 1;
                     loadAndPlayCurrent();
                 }
-            } else if (curMode === "continuous") {
+            } else if (mode === "continuous") {
                 var sObj = getSurahObj(sNum);
                 if (aNum < sObj.verses) {
                     stepAyah(1);
@@ -401,13 +422,14 @@
                     loadAndPlayCurrent();
                 } else {
                     isPlaying = false;
+                    setMushaf(false);
                     updateControlsUI();
                 }
             } else {
                 isPlaying = false;
                 updateControlsUI();
             }
-        }, 50);
+        }, preloadedFor(nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode)) ? 0 : 50);
     }
 
     /* Fetch Verse Text & Tafsir */
@@ -548,6 +570,74 @@
     }
 
     /* Playback Operations */
+    /* ---- ayah preloading ---- */
+    function nextCoords(sNum, aNum, mode) {
+        sNum = parseInt(sNum, 10) || 1; aNum = parseInt(aNum, 10) || 1;
+        if (mode === "repeat_verse" || mode === "off") return null;
+        var so = getSurahObj(sNum);
+        if (aNum < so.verses) return { s: sNum, a: aNum + 1 };
+        if (mode === "repeat_surah") return { s: sNum, a: 1 };
+        if (sNum < 114) return { s: sNum + 1, a: 1 };
+        return null;
+    }
+    function preloadedFor(c) {
+        return !!(c && preMap[buildAudioUrl(curReciter, c.s, c.a)]);
+    }
+    function releaseEl(el) {
+        try { el.pause(); } catch (e) {}
+        try { el.removeAttribute("src"); el.load(); } catch (e) {}
+    }
+    function dropPreloaded(el) {
+        for (var k in preMap) {
+            if (preMap[k].el === el) {
+                if (preMap[k].xhr) { try { preMap[k].xhr.abort(); } catch (e) {} }
+                delete preMap[k];
+                releaseEl(el);
+                if (spareEls.indexOf(el) < 0 && spareEls.length < 3) spareEls.push(el);
+            }
+        }
+    }
+    function preloadAhead() {
+        if (!audioEl) return;
+        var want = [], c = { s: curSurah, a: curAyah }, mode = mushafActive ? "continuous" : curMode, i, k;
+        for (i = 0; i < PRELOAD_AHEAD; i++) {
+            c = nextCoords(c.s, c.a, mode);
+            if (!c) break;
+            want.push(buildAudioUrl(curReciter, c.s, c.a));
+        }
+        for (k in preMap) {
+            if (want.indexOf(k) < 0) { var el0 = preMap[k].el; dropPreloaded(el0); }
+        }
+        want.forEach(function (url) {
+            if (preMap[url]) return;
+            var el = spareEls.pop() || makeAudio();
+            el.preload = "auto";
+            el.src = url;
+            try { el.load(); } catch (e) {}
+            var entry = { el: el, xhr: null };
+            /* the full file is also requested once, so it sits in the HTTP cache even where the TV's player only buffers a little */
+            try {
+                var x = new XMLHttpRequest();
+                x.open("GET", url, true);
+                x.responseType = "arraybuffer";
+                x.onload = x.onerror = function () { entry.xhr = null; };
+                x.send();
+                entry.xhr = x;
+            } catch (e) {}
+            preMap[url] = entry;
+        });
+    }
+    function clearPreloads() {
+        for (var k in preMap) dropPreloaded(preMap[k].el);
+        preMap = {};
+    }
+    function setMushaf(on) {
+        if (mushafActive === !!on) return;
+        mushafActive = !!on;
+        if (!mushafActive) clearPreloads();
+        if (mushafCb) { try { mushafCb(curSurah, curAyah, mushafActive); } catch (e) {} }
+    }
+
     function playCurrentAyah() {
         initAudio();
         if (APL.radio && APL.radio.stop) APL.radio.stop();
@@ -557,12 +647,29 @@
         curAyah = parseInt(curAyah, 10) || 1;
 
         var src = buildAudioUrl(curReciter, curSurah, curAyah);
-        audioEl.src = src;
-        audioEl.defaultPlaybackRate = curSpeed;
-        try { audioEl.load(); } catch (e) {}
-        audioEl.playbackRate = curSpeed;
-        isLoading = true;
-        updateControlsUI();
+        var pre = preMap[src];
+        if (pre) {
+            /* this ayah was preloaded: its element becomes the player, the old one is recycled for the next preload */
+            delete preMap[src];
+            if (pre.xhr) { pre.xhr = null; }
+            var old = audioEl;
+            audioEl = pre.el;
+            fallbackTried = false;
+            if (old && old !== audioEl) { releaseEl(old); if (spareEls.length < 3) spareEls.push(old); }
+            audioEl.defaultPlaybackRate = curSpeed;
+            audioEl.playbackRate = curSpeed;
+            try { audioEl.currentTime = 0; } catch (e) {}
+            isLoading = audioEl.readyState < 3;
+            updateControlsUI();
+            if (audioEl.readyState >= 3) preloadAhead();
+        } else {
+            audioEl.src = src;
+            audioEl.defaultPlaybackRate = curSpeed;
+            try { audioEl.load(); } catch (e) {}
+            audioEl.playbackRate = curSpeed;
+            isLoading = true;
+            updateControlsUI();
+        }
 
         var playPromise = audioEl.play();
         if (playPromise && playPromise.catch) {
@@ -580,14 +687,17 @@
         curAyah = parseInt(curAyah, 10) || 1;
         sys.setPref("quran_audio_surah", curSurah);
         sys.setPref("quran_audio_ayah", curAyah);
-        renderHeader();
-        renderVerseArea();
-        var reqId = ++verseReq;
-        loadVerseData(curSurah, curAyah, function () {
-            if (reqId === verseReq) {
-                renderVerseArea();
-            }
-        });
+        if (isOpen) {
+            renderHeader();
+            renderVerseArea();
+            var reqId = ++verseReq;
+            loadVerseData(curSurah, curAyah, function () {
+                if (reqId === verseReq) {
+                    renderVerseArea();
+                }
+            });
+        }
+        if (mushafActive && mushafCb) { try { mushafCb(curSurah, curAyah, true); } catch (e) {} }
         playCurrentAyah();
     }
 
@@ -1660,6 +1770,7 @@
         if (ayah) curAyah = parseInt(ayah, 10) || 1;
         if (reciter) curReciter = reciter;
 
+        setMushaf(false);
         buildUI();
         if (activeModal) closeModal();
         isOpen = true;
@@ -1720,6 +1831,7 @@
         if (sys.pref("quran_bg_playback")) {
             return;
         }
+        clearPreloads();
         if (audioEl) {
             try { audioEl.pause(); } catch (e) {}
             try {
@@ -1803,7 +1915,7 @@
         resumeAfterAlert: function () {
             if (!wasPlayingBeforeAlert) return Promise.resolve(false);
             if (!audioEl || !audioEl.src) { wasPlayingBeforeAlert = false; return Promise.resolve(false); }
-            if (!isOpen && !sys.pref("quran_bg_playback")) { wasPlayingBeforeAlert = false; return Promise.resolve(false); }
+            if (!isOpen && !mushafActive && !sys.pref("quran_bg_playback")) { wasPlayingBeforeAlert = false; return Promise.resolve(false); }
             /* the intent is cleared only after play() really succeeded; up to 3 tries, 800 ms apart */
             function attempt(n) {
                 if (!wasPlayingBeforeAlert) return Promise.resolve(false);   /* Stop / close in between */
@@ -1830,6 +1942,26 @@
         setMode: function (m) { curMode = m; updateControlsUI(); },
         getReciters: function () { return RECITERS; },
         getSurahs: function () { return SURAHS; },
+        /* Mushaf recitation (long OK on an ayah): plays from that ayah in the listening page's reciter, continuous, preloading 2 ahead */
+        mushafPlay: function (surah, ayah) {
+            initAudio();
+            curSurah = parseInt(surah, 10) || 1;
+            curAyah = parseInt(ayah, 10) || 1;
+            mushafActive = true;
+            sys.setPref("quran_audio_surah", curSurah);
+            sys.setPref("quran_audio_ayah", curAyah);
+            if (mushafCb) { try { mushafCb(curSurah, curAyah, true); } catch (e) {} }
+            playCurrentAyah();
+        },
+        mushafStop: function () {
+            if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
+            var was = mushafActive;
+            if (was) { if (audioEl) { try { audioEl.pause(); } catch (e) {} } isPlaying = false; setMushaf(false); }
+            return was;
+        },
+        mushafActive: function () { return mushafActive; },
+        onMushaf: function (fn) { mushafCb = fn; },
+        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap), spare: spareEls.length }; },
         getState: function () {
             return {
                 isOpen: isOpen,

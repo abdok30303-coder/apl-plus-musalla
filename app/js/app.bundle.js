@@ -25559,6 +25559,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.60: تلاوة آية من المصحف: اضغط مطوّلًا على OK على نص الصفحة فتبدأ التلاوة من الآية المحددة بصوت القارئ المختار في صفحة الاستماع، وتكمل آية بعد آية وتقلّب الصفحة لوحدها، وضغطة مطوّلة تانية بتوقفها. الضغطة القصيرة على OK لسه بتفتح التفسير. وكمان المشغّل بقى بيحمّل الآيتين الجاية قبل وقتها، في تلاوة المصحف وفي صفحة الاستماع، فالآية الجاية بتبدأ من غير وقفة. غير مجرّب على التلفزيون: اتجرّب في متصفح بدون شاشة بس.",
         "✔ 8.7.59: الإعدادات ← Vetro Root Controls بقت بتقفل بشاشة «عن Vetro»: يعني إيه Vetro، وإيه اللي اللانشر بيكسبه منه، وفين خيار «خلي الشاشة دي الافتراضية» أصلاً، وإزاي يتثبّت وإيه اللي تخلي بالك منه. وعدّاد القرّاء بقى ٤١ زي القايمة.",
         "✔ 8.7.58: التحديث من جوه اللانشر بقى بياخد نسخة من الملفات الحالية قبل ما ينسخ الجديدة، ولو النسخ فشل بيرجّعها.",
         "✔ 8.7.57: البداية أسرع: الرئيسية بتظهر فوراً من آخر قايمة تطبيقات وبعدين بتتحدّث، وشاشة بدء بالاسم بدل الشاشة السودا، ونسخة تانية من الإعدادات بترجع لوحدها لو الكهربا اتقطعت وضاعت الإعدادات.",
@@ -25609,6 +25610,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.60: Hold OK on the Mushaf text to recite from the selected ayah in the reciter chosen on the listening page; it continues and turns the page, hold OK again to stop. A short OK still opens the tafsir. The next two ayahs are now loaded ahead (Mushaf and listening page), so there is no pause between ayahs. Untested on the TV.",
         "✔ 8.7.58: The in-launcher update keeps a copy of the current files before copying the new ones, and puts them back if the copy fails.",
         "✔ 8.7.57: Faster start: Home appears at once from the last list of apps, then updates; a start-up screen with the name instead of black; and a second copy of the settings that comes back by itself if a power cut empties them.",
         "✔ 8.7.56: Back in the nasheed player closes it and returns to the Nasheeds list, on the same song, instead of the Home Screen.",
@@ -27448,6 +27450,9 @@ window.APL_DEVICES = [
                 else if (n._qid.indexOf("menu-") !== 0) lastContent = n._qid;
             },
             onSelect: function (i, n) { if (n && n._run) n._run(); },
+            /* long OK on the page text starts or stops the recitation of the selected ayah; every other tile acts at once, as before */
+            canHold: function (i) { var t = nav && nav.tiles && nav.tiles[i]; return !!(t && t._qid === "reading" && view === "read"); },
+            onLongPress: function (i, n) { if (n && n._qid === "reading" && view === "read") toggleRecitation(); },
             onBack: back,
             onKey: onKey
         });
@@ -27582,7 +27587,32 @@ window.APL_DEVICES = [
     /* v8.7.28: the verse frame is hidden by default; it shows only while the viewer moves down verse by verse and hides again about 2.5 s after the last move.
        It is fast now: only the old and the new verse change (it used to visit every verse of the page, measure each one, and fade a box-shadow). */
     var hlEl = null, hlTimer = 0, HL_MS = 2500;
-    function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (readBody) readBody.classList.remove("hl-on"); }
+    var reciting = false;     /* a recitation started here is running: the verse frame stays on the recited ayah */
+    function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (reciting) return; if (readBody) readBody.classList.remove("hl-on"); }
+    function toggleRecitation() {
+        var QA = APL.quranAudio;
+        if (!QA || !QA.mushafPlay || !data) { if (APL.toast) APL.toast(Q("مشغّل التلاوة مش متاح", "The recitation player is not available"), true); return; }
+        if (QA.mushafActive()) {
+            QA.mushafStop();
+            if (APL.toast) APL.toast(Q("اتوقفت التلاوة", "Recitation stopped"), true);
+            return;
+        }
+        var m = meta(activeVerseIdx);
+        if (APL.toast) APL.toast(Q("تلاوة من آية ", "Reciting from verse ") + dg(m.ayah) + " · " + SN(m.name), true);
+        QA.mushafPlay(m.surah, m.ayah);
+    }
+    function followRecitation(sNum, aNum, active) {
+        if (!opened || !data) return;
+        if (!active) { reciting = false; hideHighlight(); return; }
+        reciting = true;
+        if (view !== "read") return;
+        var n = data.surahs[sNum - 1][1] + aNum - 1;
+        if (n < 0 || n >= TOTAL) return;
+        var page = boundary(data.pages, n) + 1;
+        if (page !== APL.khatma.state().page) { target = n; savedScroll = 0; APL.khatma.goTo(page, true); show("read"); }
+        else { activeVerseIdx = n; updateActiveAyahHighlight(true); }
+        if (readBody) { readBody.classList.add("hl-on"); }
+    }
     function showHighlight() {
         if (!readBody) return;
         readBody.classList.add("hl-on");
@@ -27626,7 +27656,7 @@ window.APL_DEVICES = [
             var txt = elAyah ? elAyah.textContent : "";
             openAyahTafsir(v.surah, v.ayah, v.name, txt);
         };
-        readBody.setAttribute("aria-label", Q("نص الصفحة؛ أعلى وأسفل للتنقل بين الآيات، OK لتفسير السعدي، ويسار للصفحة التالية، ويمين للقائمة", "Page text; up and down to move between verses, OK for the tafsir, left for the next page, right for the menu"));
+        readBody.setAttribute("aria-label", Q("نص الصفحة؛ أعلى وأسفل للتنقل بين الآيات، OK لتفسير السعدي، OK مطوّلة لتشغيل أو إيقاف التلاوة، ويسار للصفحة التالية، ويمين للقائمة", "Page text; up and down to move between verses, OK for the tafsir, hold OK to start or stop the recitation, left for the next page, right for the menu"));
         var flow = null, last = -1, i;
         for (i = from; i < end; i++) {
             var info = meta(i), split = splitOpening(i, info);
@@ -27658,7 +27688,7 @@ window.APL_DEVICES = [
         var progress = el("div", "mq__progress"), fill = el("i", ""); fill.style.width = (page/604*100).toFixed(2) + "%"; progress.appendChild(fill); main.appendChild(progress);
         var stat = el("div", "mq__reading-stat");
         stat.appendChild(el("span", "mq__stat-main", Q("سورة ", "Surah ") + SN(m.name) + Q(" · صفحة ", " · Page ") + dg(page) + Q(" من ", " of ") + dg(604) + Q(" · الجزء ", " · Juz ") + dg(m.juz)));
-        stat.appendChild(el("span", "mq__stat-hint", Q("▼ تحديد آية · OK تفسير السعدي · ◄ الصفحة التالية · ▲ السابقة · ► القائمة", "▼ pick a verse · OK tafsir · ◄ Next page · ▲ Previous page · ► Menu")));
+        stat.appendChild(el("span", "mq__stat-hint", Q("▼ تحديد آية · OK تفسير السعدي · OK مطوّلة تلاوة · ◄ الصفحة التالية · ▲ السابقة · ► القائمة", "▼ pick a verse · OK tafsir · hold OK recite · ◄ Next page · ▲ Previous page · ► Menu")));
         main.appendChild(stat);
         applyLook();      /* needs the text and the final size of the area: auto-fit happens here */
         var token = generation, currentBody = readBody;
@@ -28311,10 +28341,7 @@ window.APL_DEVICES = [
             }
         }
         if (view === "read" && id === "reading") {
-            if (code === K.ENTER) {
-                if (readBody && readBody._run) readBody._run();
-                return true;
-            }
+            /* v8.7.60: OK is handled by the Nav (short press = tafsir through onSelect, long press = recitation through onLongPress) */
             if (code === K.LEFT) { changePage(1); return true; }
             if (code === K.RIGHT) { setSide(true); return true; }
             /* v8.7.28: LEFT = next page, UP = previous page. DOWN shows the verse frame (first press) and then moves it to the next verse;
@@ -28355,6 +28382,7 @@ window.APL_DEVICES = [
         opened = true; generation++; var token = generation;
         savedScroll = !page && prefs.page === APL.khatma.state().page ? Number(prefs.scroll) || 0 : 0;
         build(); APL.pushNav(nav); root.classList.add("is-open");
+        if (APL.quranAudio && APL.quranAudio.onMushaf) APL.quranAudio.onMushaf(followRecitation);
         header(T("المصحف الشريف"), T("بنفتح النص المحلي…"), T("النص موجود جوّه الحزمة؛ مش محتاج إنترنت"));
         main.appendChild(el("div", "mq__empty", T("جارٍ فتح مصحف حفص…"))); refreshNav("menu-read");
         load().then(function () {
@@ -28376,6 +28404,8 @@ window.APL_DEVICES = [
     function close() {
         if (!opened) return;
         rememberScroll(); opened = false; generation++; returnTo = null; target = -1;
+        reciting = false;
+        if (APL.quranAudio) { if (APL.quranAudio.onMushaf) APL.quranAudio.onMushaf(null); if (APL.quranAudio.mushafStop) APL.quranAudio.mushafStop(); }
         if (field) field.blur();
         if (tafModal && tafModal.parentNode) {
             if (tafModal._nav) APL.popNav(tafModal._nav);
@@ -29012,6 +29042,15 @@ window.APL_DEVICES = [
     var tafsirAyahOrder = [];
     var wasPlayingBeforeAlert = false;
     var endedAdvanceTimer = null;
+    /* v8.7.60: ayah preloading (shared by the listening page and the Mushaf recitation).
+       The next two ayahs are loaded into spare audio elements (and warmed in the HTTP cache) while the current one plays,
+       so the switch to the next ayah starts from an already buffered element instead of waiting for a download. */
+    var PRELOAD_AHEAD = 2;
+    var fallbackTried = false;
+    var preMap = {};          /* url -> { el, xhr } */
+    var spareEls = [];
+    var mushafActive = false; /* a recitation started from the Mushaf is running */
+    var mushafCb = null;      /* (surah, ayah, active) => the Mushaf follows the recited ayah */
 
     function lruSet(cache, order, key, val, max) {
         var sKey = String(key);
@@ -29095,11 +29134,14 @@ window.APL_DEVICES = [
 
     /* Initialize Audio element */
     function initAudio() {
-        if (audioEl) return audioEl;
-        audioEl = new Audio();
-        audioEl.preload = "auto";
-        audioEl.defaultPlaybackRate = curSpeed;
-        var fallbackTried = false;
+        if (!audioEl) audioEl = makeAudio();
+        return audioEl;
+    }
+
+    function makeAudio() {
+        var a = new Audio();
+        a.preload = "auto";
+        a.defaultPlaybackRate = curSpeed;
 
         function tryFallback(reason) {
             if (fallbackTried || !audioEl || !audioEl.src) return false;
@@ -29127,23 +29169,27 @@ window.APL_DEVICES = [
             return false;
         }
 
-        audioEl.addEventListener("loadedmetadata", function () {
+        a.addEventListener("loadedmetadata", function () {
+            if (a !== audioEl) return;
             audioEl.playbackRate = curSpeed;
         });
 
-        audioEl.addEventListener("playing", function () {
+        a.addEventListener("playing", function () {
+            if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
         });
-        audioEl.addEventListener("pause", function () {
+        a.addEventListener("pause", function () {
+            if (a !== audioEl) return;
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
             isPlaying = false;
             updateControlsUI();
         });
-        audioEl.addEventListener("loadstart", function () {
+        a.addEventListener("loadstart", function () {
+            if (a !== audioEl) return;
             isLoading = true;
             updateControlsUI();
             if (stallWatchdog) clearTimeout(stallWatchdog);
@@ -29153,7 +29199,8 @@ window.APL_DEVICES = [
                 }
             }, 12000);
         });
-        audioEl.addEventListener("waiting", function () {
+        a.addEventListener("waiting", function () {
+            if (a !== audioEl) return;
             if (stallWatchdog) clearTimeout(stallWatchdog);
             stallWatchdog = setTimeout(function () {
                 if (audioEl && !fallbackTried && !audioEl.paused) {
@@ -29161,13 +29208,16 @@ window.APL_DEVICES = [
                 }
             }, 10000);
         });
-        audioEl.addEventListener("canplay", function () {
+        a.addEventListener("canplay", function () {
+            if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             isLoading = false;
             updateControlsUI();
+            preloadAhead();
         });
-        audioEl.addEventListener("ended", onAudioEnded);
-        audioEl.addEventListener("error", function () {
+        a.addEventListener("ended", function () { if (a === audioEl) onAudioEnded(); });
+        a.addEventListener("error", function () {
+            if (a !== audioEl) { dropPreloaded(a); return; }
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             if (tryFallback("audio error")) return;
             fallbackTried = false;
@@ -29176,19 +29226,20 @@ window.APL_DEVICES = [
             updateControlsUI();
             if (APL.toast) APL.toast(APL.lang === "ar" ? "تعذر تشغيل تلاوة الآية من المصدر" : "Failed to stream ayah audio", true);
         });
-        return audioEl;
+        return a;
     }
 
     function onAudioEnded() {
         if (endedAdvanceTimer) clearTimeout(endedAdvanceTimer);
         endedAdvanceTimer = setTimeout(function () {
             endedAdvanceTimer = null;
-            if (!isOpen && !sys.pref("quran_bg_playback")) return;
+            if (!isOpen && !mushafActive && !sys.pref("quran_bg_playback")) return;
             var sNum = parseInt(curSurah, 10) || 1;
             var aNum = parseInt(curAyah, 10) || 1;
-            if (curMode === "repeat_verse") {
+            var mode = mushafActive ? "continuous" : curMode;
+            if (mode === "repeat_verse") {
                 playCurrentAyah();
-            } else if (curMode === "repeat_surah") {
+            } else if (mode === "repeat_surah") {
                 var surahObj = getSurahObj(sNum);
                 if (aNum < surahObj.verses) {
                     stepAyah(1);
@@ -29197,7 +29248,7 @@ window.APL_DEVICES = [
                     curAyah = 1;
                     loadAndPlayCurrent();
                 }
-            } else if (curMode === "continuous") {
+            } else if (mode === "continuous") {
                 var sObj = getSurahObj(sNum);
                 if (aNum < sObj.verses) {
                     stepAyah(1);
@@ -29207,13 +29258,14 @@ window.APL_DEVICES = [
                     loadAndPlayCurrent();
                 } else {
                     isPlaying = false;
+                    setMushaf(false);
                     updateControlsUI();
                 }
             } else {
                 isPlaying = false;
                 updateControlsUI();
             }
-        }, 50);
+        }, preloadedFor(nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode)) ? 0 : 50);
     }
 
     /* Fetch Verse Text & Tafsir */
@@ -29354,6 +29406,74 @@ window.APL_DEVICES = [
     }
 
     /* Playback Operations */
+    /* ---- ayah preloading ---- */
+    function nextCoords(sNum, aNum, mode) {
+        sNum = parseInt(sNum, 10) || 1; aNum = parseInt(aNum, 10) || 1;
+        if (mode === "repeat_verse" || mode === "off") return null;
+        var so = getSurahObj(sNum);
+        if (aNum < so.verses) return { s: sNum, a: aNum + 1 };
+        if (mode === "repeat_surah") return { s: sNum, a: 1 };
+        if (sNum < 114) return { s: sNum + 1, a: 1 };
+        return null;
+    }
+    function preloadedFor(c) {
+        return !!(c && preMap[buildAudioUrl(curReciter, c.s, c.a)]);
+    }
+    function releaseEl(el) {
+        try { el.pause(); } catch (e) {}
+        try { el.removeAttribute("src"); el.load(); } catch (e) {}
+    }
+    function dropPreloaded(el) {
+        for (var k in preMap) {
+            if (preMap[k].el === el) {
+                if (preMap[k].xhr) { try { preMap[k].xhr.abort(); } catch (e) {} }
+                delete preMap[k];
+                releaseEl(el);
+                if (spareEls.indexOf(el) < 0 && spareEls.length < 3) spareEls.push(el);
+            }
+        }
+    }
+    function preloadAhead() {
+        if (!audioEl) return;
+        var want = [], c = { s: curSurah, a: curAyah }, mode = mushafActive ? "continuous" : curMode, i, k;
+        for (i = 0; i < PRELOAD_AHEAD; i++) {
+            c = nextCoords(c.s, c.a, mode);
+            if (!c) break;
+            want.push(buildAudioUrl(curReciter, c.s, c.a));
+        }
+        for (k in preMap) {
+            if (want.indexOf(k) < 0) { var el0 = preMap[k].el; dropPreloaded(el0); }
+        }
+        want.forEach(function (url) {
+            if (preMap[url]) return;
+            var el = spareEls.pop() || makeAudio();
+            el.preload = "auto";
+            el.src = url;
+            try { el.load(); } catch (e) {}
+            var entry = { el: el, xhr: null };
+            /* the full file is also requested once, so it sits in the HTTP cache even where the TV's player only buffers a little */
+            try {
+                var x = new XMLHttpRequest();
+                x.open("GET", url, true);
+                x.responseType = "arraybuffer";
+                x.onload = x.onerror = function () { entry.xhr = null; };
+                x.send();
+                entry.xhr = x;
+            } catch (e) {}
+            preMap[url] = entry;
+        });
+    }
+    function clearPreloads() {
+        for (var k in preMap) dropPreloaded(preMap[k].el);
+        preMap = {};
+    }
+    function setMushaf(on) {
+        if (mushafActive === !!on) return;
+        mushafActive = !!on;
+        if (!mushafActive) clearPreloads();
+        if (mushafCb) { try { mushafCb(curSurah, curAyah, mushafActive); } catch (e) {} }
+    }
+
     function playCurrentAyah() {
         initAudio();
         if (APL.radio && APL.radio.stop) APL.radio.stop();
@@ -29363,12 +29483,29 @@ window.APL_DEVICES = [
         curAyah = parseInt(curAyah, 10) || 1;
 
         var src = buildAudioUrl(curReciter, curSurah, curAyah);
-        audioEl.src = src;
-        audioEl.defaultPlaybackRate = curSpeed;
-        try { audioEl.load(); } catch (e) {}
-        audioEl.playbackRate = curSpeed;
-        isLoading = true;
-        updateControlsUI();
+        var pre = preMap[src];
+        if (pre) {
+            /* this ayah was preloaded: its element becomes the player, the old one is recycled for the next preload */
+            delete preMap[src];
+            if (pre.xhr) { pre.xhr = null; }
+            var old = audioEl;
+            audioEl = pre.el;
+            fallbackTried = false;
+            if (old && old !== audioEl) { releaseEl(old); if (spareEls.length < 3) spareEls.push(old); }
+            audioEl.defaultPlaybackRate = curSpeed;
+            audioEl.playbackRate = curSpeed;
+            try { audioEl.currentTime = 0; } catch (e) {}
+            isLoading = audioEl.readyState < 3;
+            updateControlsUI();
+            if (audioEl.readyState >= 3) preloadAhead();
+        } else {
+            audioEl.src = src;
+            audioEl.defaultPlaybackRate = curSpeed;
+            try { audioEl.load(); } catch (e) {}
+            audioEl.playbackRate = curSpeed;
+            isLoading = true;
+            updateControlsUI();
+        }
 
         var playPromise = audioEl.play();
         if (playPromise && playPromise.catch) {
@@ -29386,14 +29523,17 @@ window.APL_DEVICES = [
         curAyah = parseInt(curAyah, 10) || 1;
         sys.setPref("quran_audio_surah", curSurah);
         sys.setPref("quran_audio_ayah", curAyah);
-        renderHeader();
-        renderVerseArea();
-        var reqId = ++verseReq;
-        loadVerseData(curSurah, curAyah, function () {
-            if (reqId === verseReq) {
-                renderVerseArea();
-            }
-        });
+        if (isOpen) {
+            renderHeader();
+            renderVerseArea();
+            var reqId = ++verseReq;
+            loadVerseData(curSurah, curAyah, function () {
+                if (reqId === verseReq) {
+                    renderVerseArea();
+                }
+            });
+        }
+        if (mushafActive && mushafCb) { try { mushafCb(curSurah, curAyah, true); } catch (e) {} }
         playCurrentAyah();
     }
 
@@ -30466,6 +30606,7 @@ window.APL_DEVICES = [
         if (ayah) curAyah = parseInt(ayah, 10) || 1;
         if (reciter) curReciter = reciter;
 
+        setMushaf(false);
         buildUI();
         if (activeModal) closeModal();
         isOpen = true;
@@ -30526,6 +30667,7 @@ window.APL_DEVICES = [
         if (sys.pref("quran_bg_playback")) {
             return;
         }
+        clearPreloads();
         if (audioEl) {
             try { audioEl.pause(); } catch (e) {}
             try {
@@ -30609,7 +30751,7 @@ window.APL_DEVICES = [
         resumeAfterAlert: function () {
             if (!wasPlayingBeforeAlert) return Promise.resolve(false);
             if (!audioEl || !audioEl.src) { wasPlayingBeforeAlert = false; return Promise.resolve(false); }
-            if (!isOpen && !sys.pref("quran_bg_playback")) { wasPlayingBeforeAlert = false; return Promise.resolve(false); }
+            if (!isOpen && !mushafActive && !sys.pref("quran_bg_playback")) { wasPlayingBeforeAlert = false; return Promise.resolve(false); }
             /* the intent is cleared only after play() really succeeded; up to 3 tries, 800 ms apart */
             function attempt(n) {
                 if (!wasPlayingBeforeAlert) return Promise.resolve(false);   /* Stop / close in between */
@@ -30636,6 +30778,26 @@ window.APL_DEVICES = [
         setMode: function (m) { curMode = m; updateControlsUI(); },
         getReciters: function () { return RECITERS; },
         getSurahs: function () { return SURAHS; },
+        /* Mushaf recitation (long OK on an ayah): plays from that ayah in the listening page's reciter, continuous, preloading 2 ahead */
+        mushafPlay: function (surah, ayah) {
+            initAudio();
+            curSurah = parseInt(surah, 10) || 1;
+            curAyah = parseInt(ayah, 10) || 1;
+            mushafActive = true;
+            sys.setPref("quran_audio_surah", curSurah);
+            sys.setPref("quran_audio_ayah", curAyah);
+            if (mushafCb) { try { mushafCb(curSurah, curAyah, true); } catch (e) {} }
+            playCurrentAyah();
+        },
+        mushafStop: function () {
+            if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
+            var was = mushafActive;
+            if (was) { if (audioEl) { try { audioEl.pause(); } catch (e) {} } isPlaying = false; setMushaf(false); }
+            return was;
+        },
+        mushafActive: function () { return mushafActive; },
+        onMushaf: function (fn) { mushafCb = fn; },
+        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap), spare: spareEls.length }; },
         getState: function () {
             return {
                 isOpen: isOpen,

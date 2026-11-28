@@ -1,3 +1,7 @@
+## 8.7.60
+
+- Listen to an ayah from the Mushaf: hold OK on the page text and the recitation starts from the selected ayah, in the reciter chosen on the Quran listening page, then continues ayah after ayah and turns the page by itself; hold OK again to stop. A short OK still opens the tafsir. The player now loads the next two ayahs in advance, in the Mushaf recitation and on the listening page too, so the next ayah starts with no pause (it used to wait about the length of the repeat delay and then load). In the local test with a slow server the pause between ayahs went from about 3.7 s to under 10 ms. Untested on the TV: checked in headless Chrome with a test server only; the Chromium 76 playback of preloaded audio and the long OK press on the real remote still need a try.
+
 ## 8.7.59
 
 - Settings > Vetro Root Controls now ends with an About Vetro screen: what Vetro is, what this launcher gains from it, where the "make this the default screen" option already lives (it needs Vetro), how Vetro is installed and what to be careful about, in Arabic and English.

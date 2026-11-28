@@ -428,6 +428,9 @@
                 else if (n._qid.indexOf("menu-") !== 0) lastContent = n._qid;
             },
             onSelect: function (i, n) { if (n && n._run) n._run(); },
+            /* long OK on the page text starts or stops the recitation of the selected ayah; every other tile acts at once, as before */
+            canHold: function (i) { var t = nav && nav.tiles && nav.tiles[i]; return !!(t && t._qid === "reading" && view === "read"); },
+            onLongPress: function (i, n) { if (n && n._qid === "reading" && view === "read") toggleRecitation(); },
             onBack: back,
             onKey: onKey
         });
@@ -562,7 +565,32 @@
     /* v8.7.28: the verse frame is hidden by default; it shows only while the viewer moves down verse by verse and hides again about 2.5 s after the last move.
        It is fast now: only the old and the new verse change (it used to visit every verse of the page, measure each one, and fade a box-shadow). */
     var hlEl = null, hlTimer = 0, HL_MS = 2500;
-    function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (readBody) readBody.classList.remove("hl-on"); }
+    var reciting = false;     /* a recitation started here is running: the verse frame stays on the recited ayah */
+    function hideHighlight() { clearTimeout(hlTimer); hlTimer = 0; if (reciting) return; if (readBody) readBody.classList.remove("hl-on"); }
+    function toggleRecitation() {
+        var QA = APL.quranAudio;
+        if (!QA || !QA.mushafPlay || !data) { if (APL.toast) APL.toast(Q("مشغّل التلاوة مش متاح", "The recitation player is not available"), true); return; }
+        if (QA.mushafActive()) {
+            QA.mushafStop();
+            if (APL.toast) APL.toast(Q("اتوقفت التلاوة", "Recitation stopped"), true);
+            return;
+        }
+        var m = meta(activeVerseIdx);
+        if (APL.toast) APL.toast(Q("تلاوة من آية ", "Reciting from verse ") + dg(m.ayah) + " · " + SN(m.name), true);
+        QA.mushafPlay(m.surah, m.ayah);
+    }
+    function followRecitation(sNum, aNum, active) {
+        if (!opened || !data) return;
+        if (!active) { reciting = false; hideHighlight(); return; }
+        reciting = true;
+        if (view !== "read") return;
+        var n = data.surahs[sNum - 1][1] + aNum - 1;
+        if (n < 0 || n >= TOTAL) return;
+        var page = boundary(data.pages, n) + 1;
+        if (page !== APL.khatma.state().page) { target = n; savedScroll = 0; APL.khatma.goTo(page, true); show("read"); }
+        else { activeVerseIdx = n; updateActiveAyahHighlight(true); }
+        if (readBody) { readBody.classList.add("hl-on"); }
+    }
     function showHighlight() {
         if (!readBody) return;
         readBody.classList.add("hl-on");
@@ -606,7 +634,7 @@
             var txt = elAyah ? elAyah.textContent : "";
             openAyahTafsir(v.surah, v.ayah, v.name, txt);
         };
-        readBody.setAttribute("aria-label", Q("نص الصفحة؛ أعلى وأسفل للتنقل بين الآيات، OK لتفسير السعدي، ويسار للصفحة التالية، ويمين للقائمة", "Page text; up and down to move between verses, OK for the tafsir, left for the next page, right for the menu"));
+        readBody.setAttribute("aria-label", Q("نص الصفحة؛ أعلى وأسفل للتنقل بين الآيات، OK لتفسير السعدي، OK مطوّلة لتشغيل أو إيقاف التلاوة، ويسار للصفحة التالية، ويمين للقائمة", "Page text; up and down to move between verses, OK for the tafsir, hold OK to start or stop the recitation, left for the next page, right for the menu"));
         var flow = null, last = -1, i;
         for (i = from; i < end; i++) {
             var info = meta(i), split = splitOpening(i, info);
@@ -638,7 +666,7 @@
         var progress = el("div", "mq__progress"), fill = el("i", ""); fill.style.width = (page/604*100).toFixed(2) + "%"; progress.appendChild(fill); main.appendChild(progress);
         var stat = el("div", "mq__reading-stat");
         stat.appendChild(el("span", "mq__stat-main", Q("سورة ", "Surah ") + SN(m.name) + Q(" · صفحة ", " · Page ") + dg(page) + Q(" من ", " of ") + dg(604) + Q(" · الجزء ", " · Juz ") + dg(m.juz)));
-        stat.appendChild(el("span", "mq__stat-hint", Q("▼ تحديد آية · OK تفسير السعدي · ◄ الصفحة التالية · ▲ السابقة · ► القائمة", "▼ pick a verse · OK tafsir · ◄ Next page · ▲ Previous page · ► Menu")));
+        stat.appendChild(el("span", "mq__stat-hint", Q("▼ تحديد آية · OK تفسير السعدي · OK مطوّلة تلاوة · ◄ الصفحة التالية · ▲ السابقة · ► القائمة", "▼ pick a verse · OK tafsir · hold OK recite · ◄ Next page · ▲ Previous page · ► Menu")));
         main.appendChild(stat);
         applyLook();      /* needs the text and the final size of the area: auto-fit happens here */
         var token = generation, currentBody = readBody;
@@ -1291,10 +1319,7 @@
             }
         }
         if (view === "read" && id === "reading") {
-            if (code === K.ENTER) {
-                if (readBody && readBody._run) readBody._run();
-                return true;
-            }
+            /* v8.7.60: OK is handled by the Nav (short press = tafsir through onSelect, long press = recitation through onLongPress) */
             if (code === K.LEFT) { changePage(1); return true; }
             if (code === K.RIGHT) { setSide(true); return true; }
             /* v8.7.28: LEFT = next page, UP = previous page. DOWN shows the verse frame (first press) and then moves it to the next verse;
@@ -1335,6 +1360,7 @@
         opened = true; generation++; var token = generation;
         savedScroll = !page && prefs.page === APL.khatma.state().page ? Number(prefs.scroll) || 0 : 0;
         build(); APL.pushNav(nav); root.classList.add("is-open");
+        if (APL.quranAudio && APL.quranAudio.onMushaf) APL.quranAudio.onMushaf(followRecitation);
         header(T("المصحف الشريف"), T("بنفتح النص المحلي…"), T("النص موجود جوّه الحزمة؛ مش محتاج إنترنت"));
         main.appendChild(el("div", "mq__empty", T("جارٍ فتح مصحف حفص…"))); refreshNav("menu-read");
         load().then(function () {
@@ -1356,6 +1382,8 @@
     function close() {
         if (!opened) return;
         rememberScroll(); opened = false; generation++; returnTo = null; target = -1;
+        reciting = false;
+        if (APL.quranAudio) { if (APL.quranAudio.onMushaf) APL.quranAudio.onMushaf(null); if (APL.quranAudio.mushafStop) APL.quranAudio.mushafStop(); }
         if (field) field.blur();
         if (tafModal && tafModal.parentNode) {
             if (tafModal._nav) APL.popNav(tafModal._nav);
