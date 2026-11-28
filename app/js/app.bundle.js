@@ -3911,17 +3911,54 @@ window.APL_CATALOG = [
     /* ---------- sleep timer ----------
        The screen does the counting (background command): the launcher stops as soon as an app
        is in front, which is exactly when the timer is needed. The file is shared with overlay/. */
-    var SLEEP_FILE = "/tmp/apl-sleep-at";
+    var SLEEP_FILE = "/tmp/apl-sleep-at", SLEEP_LOG = "/tmp/apl-sleep.log";
+    /* v8.7.66: the counting shell is fully detached (setsid when the screen has it, stdin closed), so it is not taken down
+       with the command that started it, and it writes a line to /tmp/apl-sleep.log when it arms and when it fires. The file
+       holds the wanted time: a later timer, or a cancel, makes an older shell do nothing. */
+    function sleepShell(secs, minutes) {
+        return "echo " + secs + " > " + SLEEP_FILE + "; echo \"armed $(date) wait=" + (minutes * 60) + "s\" >> " + SLEEP_LOG + "; " +
+               "S=; command -v setsid >/dev/null 2>&1 && S=setsid; " +
+               "$S sh -c 'sleep \"$1\"; if [ \"$(cat " + SLEEP_FILE + " 2>/dev/null)\" = \"$2\" ]; then rm -f " + SLEEP_FILE +
+               "; echo \"fired $(date)\" >> " + SLEEP_LOG + "; /usr/bin/input_keyevent XF86PowerOff; fi' x " + (minutes * 60) + " " + secs +
+               " </dev/null >/dev/null 2>&1 &";
+    }
     function armSleepTimer(minutes) {
         var at = minutes ? Date.now() + minutes * 60000 : 0;
         setPref("sleepTimer", minutes);
         setPref("sleepAt", at);
+        sleepFallbackDone = false;
         if (PREVIEW) return;
         var secs = Math.round(at / 1000);
-        tvExec(minutes ? "echo " + secs + " > " + SLEEP_FILE + "; (sleep " + (minutes * 60) + "; if [ \"$(cat " + SLEEP_FILE + " 2>/dev/null)\" = \"" + secs + "\" ]; then rm -f " + SLEEP_FILE +
-                         "; /usr/bin/input_keyevent XF86PowerOff; fi) >/dev/null 2>&1 &"
-                       : "rm -f " + SLEEP_FILE).catch(function () {});
+        tvExec(minutes ? sleepShell(secs, minutes) : "rm -f " + SLEEP_FILE).catch(function () {});
     }
+    /* v8.7.66: second line of defence, in the launcher itself (it also stops what the launcher plays). When the time is up
+       the radio, the recitation and the recordings stop at once. If the screen's own shell has not turned the screen off
+       25 seconds later (its file is still there), the launcher does it. The file is the lock: whoever removes it sends
+       the power key, so it is never sent twice. */
+    var sleepFallbackDone = false;
+    function stopAllAudio() {
+        try { if (APL.radio && APL.radio.stop) APL.radio.stop(); } catch (e) {}
+        try { if (APL.quranAudio && APL.quranAudio.pause) APL.quranAudio.pause(); } catch (e1) {}
+        try { if (APL.audioPack && APL.audioPack.stop) APL.audioPack.stop(); } catch (e2) {}
+    }
+    function sleepWatchTick() {
+        var at = pref("sleepAt") || 0, now = Date.now();
+        if (!at || now < at || sleepFallbackDone) return;
+        sleepFallbackDone = true;
+        stopAllAudio();
+        if (now > at + 10 * 60000) { setPref("sleepAt", 0); setPref("sleepTimer", 0); return; }     // a stale time (the launcher was asleep): do nothing more
+        setTimeout(function () {
+            setPref("sleepAt", 0);
+            setPref("sleepTimer", 0);
+            if (PREVIEW) return;
+            tvExec("if [ -f " + SLEEP_FILE + " ]; then rm -f " + SLEEP_FILE + "; echo \"launcher fallback $(date)\" >> " + SLEEP_LOG +
+                   "; /usr/bin/input_keyevent XF86PowerOff; fi").catch(function (e) {
+                if (APL.toast) APL.toast(APL.t("Auto Off could not turn the screen off: {why}", { why: String((e && e.message) || e).slice(0, 80) }));
+            });
+        }, 25000);
+    }
+    setInterval(sleepWatchTick, 5000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) sleepWatchTick(); });
     /* Timer set from the native Control Center: the launcher picks it up. */
     function readSleepTimer() {
         if (PREVIEW) return Promise.resolve();
@@ -7763,6 +7800,10 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
     var abortAttempt = null, retryCount = 0, curUrl = "";
     var mode = "", playing = false, preparing = false, pausedForAlert = false, why = "";
     var waiters = [];
+    /* v8.7.66: stations of the list (Shoutcast MP3) are watched more closely: the audio clock must keep moving, and after
+       a stall the other host (backup.qurango.net) is tried first. Cairo keeps the old settings. */
+    var avLast = -1, avStill = 0, avMoved = false, rot = 0;
+    function isStation() { return !!(sys.pref("radioStation") && APL.radioStations && APL.radioStations.get(sys.pref("radioStation"))); }
 
     function storeGet(k) { try { return global.localStorage.getItem(k) || ""; } catch (e) { return ""; } }
     function storeSet(k, v) { try { if (v) global.localStorage.setItem(k, v); else global.localStorage.removeItem(k); } catch (e) {} }
@@ -7781,7 +7822,11 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         var st = sys.pref("radioStation");
         if (st && APL.radioStations) {
             APL.radioStations.urls(st).forEach(add);
-            if (out.length) return out;
+            if (out.length) {
+                var r = rot % out.length;
+                if (r) out = out.slice(r).concat(out.slice(0, r));
+                return out;
+            }
         }
         add(sys.pref("radioUrl"));
         (CFG.urls && CFG.urls.length ? CFG.urls : DEFAULT_URLS).forEach(add);
@@ -7904,7 +7949,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                                 stallTimer = setTimeout(function () {
                                     stallTimer = null;
                                     runtimeFailure("stalled", "buffering for over " + (STALL_LIMIT / 1000) + " seconds");
-                                }, STALL_LIMIT);
+                                }, isStation() ? 10000 : STALL_LIMIT);
                             }
                         },
                         onbufferingcomplete: function () {
@@ -7995,6 +8040,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         mode = h5 ? "html5" : "avplay";
         why = "";
         retryCount = 0;
+        avLast = -1; avStill = 0; avMoved = false;
         clearRetry();
         // The TV can release a player without any callback (alert focus, source
         // change). Check the real player state while we believe we are playing.
@@ -8006,10 +8052,21 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                 var ct = h5.currentTime;
                 h5Still = (ct === h5Last || h5.paused || h5.ended) ? h5Still + 1 : 0;
                 h5Last = ct;
-                if (h5Still >= 2) lostStream(token, "player state", "audio clock stopped");
+                if (h5Still >= (isStation() ? 3 : 2)) lostStream(token, "player state", "audio clock stopped");
                 return;
             }
             try { st = String(av.getState()); } catch (e) { st = "ERROR"; }
+            if (st === "PLAYING" && isStation()) {
+                /* AVPlay can say PLAYING while the stream delivers nothing: judge by the play position moving */
+                var cp = -1;
+                try { cp = Number(av.getCurrentTime()); } catch (e5) { cp = -1; }
+                if (cp >= 0) {
+                    if (avLast >= 0 && cp !== avLast) { avMoved = true; avStill = 0; }
+                    else if (avLast >= 0) avStill++;
+                    avLast = cp;
+                    if (avMoved && avStill >= 3) { lostStream(token, "no progress", "the audio position stopped moving"); return; }
+                }
+            }
             if (st !== "PLAYING") {
                 if (document.hidden && bgOK()) {            // released while another app is in front: do not reopen now
                     closeAvPlay(); playing = false; mode = ""; clearTimers();
@@ -8018,7 +8075,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
                 }
                 lostStream(token, "player state", st);
             }
-        }, WATCH_EVERY);
+        }, isStation() ? 4000 : WATCH_EVERY);
         changed();
     }
 
@@ -8026,6 +8083,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
        radio is wanted and the launcher is in front. */
     function lostStream(token, phase, e) {
         if (token !== session) return;
+        if (isStation()) rot++;                 // the next try starts on the other host
         closeAvPlay();
         playing = false;
         why = "AVPlay " + phase + ": " + errorText(e);
@@ -8094,6 +8152,7 @@ window.APL_BG_DAEMON = "#!/bin/sh\n# ===========================================
         pausedForAlert = false;
         clearRetry();
         retryCount = 0;
+        rot = 0;
         setWanted(true);
         var targetUrl = forcedUrl || url();
         curUrl = targetUrl;
@@ -14765,10 +14824,10 @@ window.APL_KEYS = {
         takbeer: ic('<path d="M4 10v4h3.5L13 18V6L7.5 10z"/><path d="M16 9.2a4 4 0 0 1 0 5.6M18.8 6.8a7.5 7.5 0 0 1 0 10.4"/>'),
         quranOnline: ic('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3v6H5a1 1 0 0 1-1-1zM20 14h-3v6h2a1 1 0 0 0 1-1z"/>')
     };
-    function actBtn(ico, label, on, run, hold) {
+    function actBtn(ico, label, on, run, hold, hint) {
         var b = el("div", "pw-ic" + (on ? " is-on" : ""), (ACT_ICO[ico] || "") + "<span>" + label + "</span>");
         b.addEventListener("click", run);
-        tiles.push({ el: b, run: run, hold: hold || null });
+        tiles.push({ el: b, run: run, hold: hold || null, hint: hint || "" });
         return b;
     }
     /* auto screen off: 30 min, then every 10 min up to 3 hours (the Sleep Timer of the Control Center) */
@@ -15049,16 +15108,16 @@ window.APL_KEYS = {
     function audioIcons() {
         var icons = el("div", "pw-ics");
         var rs = radioState(), alertsOn = p().alertsOn(), pauseOn = sys.pref("radioDuringAlert") !== false, sl = sleepOn();
-        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }, openStations));
+        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }, openStations, APL.lang === "ar" ? "اضغط OK مطولاً لعرض الإذاعات واختيار إذاعة" : "Hold OK to choose a radio station"));
         /* v1.2.116: Surat Al-Kahf and the Eid takbeer, played from the APL-Audio folder on the TV (not inside the package) */
         icons.appendChild(audioBtn("kahf", "kahf", APL.t("Al-Kahf")));
         icons.appendChild(kahfMini());      /* v7.2.0: Resume / Restart, two small buttons stacked beside the Al-Kahf tile */
-        icons.appendChild(audioBtn("takbeer", "takbeer", APL.t("Eid Takbeer")));
+        icons.appendChild(actBtn("power", APL.t("Black Screen"), false, function () { enterBlackout(); }));
         icons.appendChild(actBtn(alertsOn ? "bell" : "bellOff", APL.t("Alerts"), alertsOn, function () { p().setAlerts(!p().alertsOn()); render(); }));
         icons.appendChild(actBtn("pause", APL.t("Pause on alert"), pauseOn, function () { sys.setPref("radioDuringAlert", sys.pref("radioDuringAlert") === false); render(); }));
         icons.appendChild(actBtn("test", APL.t("Test Alert"), false, function () { if (APL.prayerAlert) APL.prayerAlert.test(); }));
         icons.appendChild(actBtn("sleep", sl ? minText(sys.pref("sleepTimer")) : APL.t("Auto Off"), sl, openSleep));
-        icons.appendChild(actBtn("power", APL.t("Black Screen"), false, function () { enterBlackout(); }));
+        icons.appendChild(audioBtn("takbeer", "takbeer", APL.t("Eid Takbeer")));
         icons.appendChild(actBtn("refresh", APL.t("Refresh"), false, function () {
             p().refresh(); render();
             if (APL.toast) APL.toast(APL.t("Updated {time}", { time: new Date().toLocaleTimeString(APL.locale) }), true);
@@ -15098,6 +15157,7 @@ window.APL_KEYS = {
         hintEl.textContent = APL.t("OK to choose · Back to cancel") + " · ⏯ " + APL.t("Control Center") +
                              " · " + APL.t("OK on an occasion: all occasions") +
                              " · ≈ " + APL.t("estimated until the moon sighting");
+        mainHint = hintEl.textContent;
     }
 
     function buildWeather() {
@@ -15472,6 +15532,7 @@ window.APL_KEYS = {
             } else if (APL.sound && APL.sound.edge) APL.sound.edge();
             return true;
         }
+        if (mode === "stations" && nav && tiles.length && stationsKey(code)) return true;
         if (!nav || !nav.tiles || !nav.tiles.length || (code !== APL.KEY.UP && code !== APL.KEY.DOWN)) return false;
         var delta = code === APL.KEY.UP ? -1 : 1;
         /* City, occasions, weather and hekam use true vertical lists. */
@@ -15605,7 +15666,18 @@ window.APL_KEYS = {
     }
 
     /* v8.7.65: long OK on the Radio tile opens the list of Quran radio stations (js/radio-stations.js) */
-    var stationReturn = 0;
+    var stationReturn = 0, mainHint = "", stFilter = "", stRowStart = 1, stActiveChip = 1, stChipsEl = null, stListEl = null;
+    var AR_ORDER = "ابتثجحخدذرزسشصضطظعغفقكلمنهوىي";
+    function arNorm(c) { return /[\u0623\u0625\u0622\u0671]/.test(c) ? "\u0627" : (c === "\u0629" ? "\u0647" : c); }
+    function stLetter(o, ar) {
+        var n = String((ar ? o.ar : (o.en || o.ar)) || "").replace(/^\s+/, "");
+        if (!n) return "";
+        return ar ? arNorm(n.charAt(0)) : n.charAt(0).toUpperCase();
+    }
+    function letterRank(c, ar) {
+        var i = ar ? AR_ORDER.indexOf(c) : "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c);
+        return i < 0 ? 100 + c.charCodeAt(0) : i;
+    }
     function stationName(st) {
         var cur = st && st.id ? st : null;
         return cur ? (APL.lang === "ar" ? cur.ar : (cur.en || cur.ar)) : "";
@@ -15614,12 +15686,13 @@ window.APL_KEYS = {
         if (!APL.radioStations || !APL.radioStations.list.length) return;
         stationReturn = focusIndex;
         mode = "stations";
+        stFilter = "";
         focusIndex = 0;
         render();
         /* the playing station is focused (row 0 is Cairo) */
         var cur = sys.pref("radioStation") || "", L = APL.radioStations.list, k, at = 0;
-        for (k = 0; k < L.length; k++) if (L[k].id === cur) { at = k + 1; break; }
-        nav.focus(at);
+        for (k = 0; k < L.length; k++) if (L[k].id === cur) { at = stRowStart + k; break; }
+        nav.focus(at ? at : 0);
     }
     function pickStation(id) {
         var r = APL.radio;
@@ -15637,13 +15710,9 @@ window.APL_KEYS = {
             });
         }, 400);
     }
-    function buildStations() {
-        bodyEl.innerHTML = "";
-        tiles = [];
-        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
-        titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
-        subEl.textContent = ar ? "اختر الإذاعة ثم اضغط OK. الإذاعة المختارة تبقى هي الإذاعة الأساسية." : "Pick a station and press OK. It stays the station of the Radio tile.";
-        var list = el("div", "aplx-list");
+    function stRowsFill(list) {
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "", lastCat = "", i, o, h;
+        list.innerHTML = "";
         function row(label, sub, on, id) {
             var r = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label"></span>' + (sub ? '<span class="aplx-row__sub"></span>' : "") + "</div>" + (on ? '<span class="aplx-badge aplx-badge--on">✓</span>' : ""));
             r.querySelector(".aplx-row__label").textContent = label;
@@ -15653,10 +15722,9 @@ window.APL_KEYS = {
             tiles.push({ el: r, run: run });
             list.appendChild(r);
         }
-        row(ar ? "إذاعة القرآن الكريم من القاهرة (الأساسية)" : "Qur'an Cairo (default)", "", !cur, "");
-        var lastCat = "", i, o, h;
         for (i = 0; i < S.list.length; i++) {
             o = S.list[i];
+            if (stFilter && stLetter(o, ar) !== stFilter) continue;
             if (o.cat !== lastCat) {
                 lastCat = o.cat;
                 h = el("div", "aplx-row__sub");
@@ -15666,8 +15734,89 @@ window.APL_KEYS = {
             }
             row(ar ? o.ar : (o.en || o.ar), ar ? "" : (o.en && o.ar !== o.en ? o.ar : ""), o.id === cur, o.id);
         }
-        bodyEl.appendChild(list);
-        hintEl.textContent = ar ? "OK للاختيار · رجوع للإلغاء" : "OK to choose · Back to cancel";
+    }
+    /* v8.7.66: focusing a letter filters the stations at once (no OK needed) */
+    function stationsFocus(i) {
+        var t = tiles[i];
+        if (!t || !t.chip || t.letter === stFilter) return;
+        stFilter = t.letter;
+        stActiveChip = i;
+        var k;
+        for (k = 0; k < tiles.length; k++) if (tiles[k].chip) tiles[k].el.classList.toggle("is-on", tiles[k].letter === stFilter);
+        tiles.length = stRowStart;
+        stRowsFill(stListEl);
+        nav.tiles = tiles.map(function (x) { return x.el; });
+        if (bodyEl) bodyEl.scrollTop = 0;
+    }
+    function buildStations() {
+        bodyEl.innerHTML = "";
+        tiles = [];
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
+        titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
+        subEl.textContent = ar ? "حرّك على الحرف لتصفية الإذاعات، ثم انزل واختر الإذاعة واضغط OK. الإذاعة المختارة تبقى هي إذاعة أيقونة الراديو." : "Move onto a letter to filter, go down, pick a station and press OK. It stays the station of the Radio tile.";
+        /* the first letters that really exist among the names, nothing else */
+        var seen = {}, letters = [], i, c;
+        for (i = 0; i < S.list.length; i++) {
+            c = stLetter(S.list[i], ar);
+            if (c && !seen[c]) { seen[c] = 1; letters.push(c); }
+        }
+        letters.sort(function (x, y) { return letterRank(x, ar) - letterRank(y, ar); });
+        if (stFilter && !seen[stFilter]) stFilter = "";
+        var bar = el("div", "");
+        bar.style.cssText = "position:sticky;top:0;z-index:3;background:rgba(12,16,24,.94);padding:6px 4px 10px";
+        /* above the letters: the original radio (Cairo, the default) */
+        var cairo = el("div", "pw-ic" + (!cur ? " is-on" : ""), (ACT_ICO.radio || "") + "<span></span>");
+        cairo.querySelector("span").textContent = ar ? "الإذاعة الأصلية · القرآن الكريم من القاهرة" : "Original radio · Qur'an Cairo";
+        cairo.style.cssText = "display:inline-flex;margin-bottom:8px";
+        var cairoRun = function () { pickStation(""); };
+        cairo.addEventListener("click", cairoRun);
+        tiles.push({ el: cairo, run: cairoRun, cairo: true });
+        bar.appendChild(cairo);
+        var chips = el("div", "");
+        chips.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
+        stChipsEl = chips;
+        function chip(label, letter) {
+            var t = el("div", "pw-ic" + (stFilter === letter ? " is-on" : ""), "<span></span>");
+            t.querySelector("span").textContent = label;
+            t.style.cssText = "min-width:48px;padding:8px 14px;text-align:center;flex:0 0 auto";
+            var run = function () { if (tiles.length > stRowStart) nav.focus(stRowStart); };
+            t.addEventListener("click", function () { var k; for (k = 0; k < tiles.length; k++) if (tiles[k].el === t) { nav.focus(k); break; } });
+            if (stFilter === letter) stActiveChip = tiles.length;
+            tiles.push({ el: t, run: run, chip: true, letter: letter });
+            chips.appendChild(t);
+        }
+        chip(ar ? "الجميع" : "All", "");
+        for (i = 0; i < letters.length; i++) chip(letters[i], letters[i]);
+        stRowStart = tiles.length;
+        bar.appendChild(chips);
+        bodyEl.appendChild(bar);
+        stListEl = el("div", "aplx-list");
+        stRowsFill(stListEl);
+        bodyEl.appendChild(stListEl);
+        hintEl.textContent = ar ? "◀ ▶ حرف (التصفية فورية) · ▼ للإذاعات · OK للاختيار · رجوع للإلغاء" : "◀ ▶ letter (filters at once) · ▼ stations · OK to choose · Back to cancel";
+    }
+    /* arrows inside the stations list: the original-radio button, the letters, then the stations */
+    function stationsKey(code) {
+        var idx = nav.index, rtl = false, d, inChips = idx >= 1 && idx < stRowStart;
+        try { rtl = global.getComputedStyle(stChipsEl).direction === "rtl"; } catch (e) {}
+        if (code === APL.KEY.LEFT || code === APL.KEY.RIGHT) {
+            if (!inChips) return true;
+            d = code === APL.KEY.RIGHT ? (rtl ? -1 : 1) : (rtl ? 1 : -1);
+            if (idx + d >= 1 && idx + d < stRowStart) { nav.focus(idx + d); if (APL.sound) APL.sound.tick(); }
+            return true;
+        }
+        if (code === APL.KEY.DOWN) {
+            var to = idx === 0 ? stActiveChip : (inChips ? stRowStart : idx + 1);
+            if (to < tiles.length && to !== idx) { nav.focus(to); if (APL.sound) APL.sound.tick(); }
+            return true;
+        }
+        if (code === APL.KEY.UP) {
+            if (idx === 0) return true;
+            nav.focus(inChips ? 0 : (idx === stRowStart ? stActiveChip : idx - 1));
+            if (APL.sound) APL.sound.tick();
+            return true;
+        }
+        return false;
     }
 
     function toggleRadio() {
@@ -15702,7 +15851,16 @@ window.APL_KEYS = {
         root.appendChild(head); root.appendChild(bodyEl); root.appendChild(hintEl);
         document.body.appendChild(root);
         nav = new APL.Nav({
-            onFocus: function (i) { focusIndex = i; },
+            onFocus: function (i) {
+                focusIndex = i;
+                if (mode === "stations") stationsFocus(i);
+                /* v8.7.66: a tile with a hint (the Radio tile) shows it in the footer while focused */
+                if (mode === "main" && hintEl) {
+                    var tt = tiles[i];
+                    if (tt && tt.hint) hintEl.textContent = tt.hint;
+                    else if (mainHint) hintEl.textContent = mainHint;
+                }
+            },
             onSelect: function (i) { if (tiles[i] && tiles[i].run) tiles[i].run(); },
             canHold: function (i) { return !!(tiles[i] && tiles[i].hold); },
             onLongPress: function (i) { if (tiles[i] && tiles[i].hold) tiles[i].hold(); },
@@ -20601,7 +20759,8 @@ window.APL_DEVICES = [
     var APL = global.APL, K = APL.KEY;
     var LETTERS = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
     var root, fieldEl, keysEl, resultsEl, emptyEl, toolEl, nav;
-    var isOpen = false, query = "", keys = [], found = [], cleaning = false;
+    var isOpen = false, query = "", keys = [], found = [], cleaning = false, allMode = false;
+    function allLabel() { return APL.lang === "ar" ? "الجميع" : "All"; }
 
     function el(tag, cls, text) {
         var e = document.createElement(tag);
@@ -20624,6 +20783,8 @@ window.APL_DEVICES = [
     /* The name's start first, then the start of a word in it, then anywhere. Nothing typed: the recent apps. */
     function match(q) {
         var all = candidates();
+        /* v8.7.66: "All" lists every app by name */
+        if (allMode) return all.slice().sort(function (x, y) { var a = norm(x.name), b = norm(y.name); return a < b ? -1 : (a > b ? 1 : 0); });
         if (!q) {
             var recent = APL.sys.pref("recentApps") || [];
             return recent.map(function (id) { return all.filter(function (a) { return a.id === id; })[0]; }).filter(Boolean);
@@ -20649,6 +20810,7 @@ window.APL_DEVICES = [
         root.appendChild(fieldEl); root.appendChild(keysEl); root.appendChild(resultsEl); root.appendChild(emptyEl);
         document.body.appendChild(root);
 
+        keys.push({ all: true, label: allLabel(), wide: true });       // v8.7.66: "All" first, before the letters
         LETTERS.forEach(function (c) { keys.push({ type: c, label: c }); });
         keys.push({ del: true, label: APL.t("Delete"), wide: true });
         keys.forEach(function (k) {
@@ -20665,6 +20827,13 @@ window.APL_DEVICES = [
         root.appendChild(toolEl);
 
         nav = new APL.Nav({
+            /* v8.7.66: moving onto a letter (or "All") filters at once, no OK needed */
+            onFocus: function (i, e) {
+                var k = e && e._key;
+                if (!k || !isOpen) return;
+                if (k.all) showAll();
+                else if (k.type) type(k.type);
+            },
             rows: true,     /* v7.0.5: LEFT/RIGHT stay in the row (Clean Background button no longer drops into the letters) */
             onSelect: function (i) {
                 var t = nav.tiles[i];
@@ -20682,10 +20851,11 @@ window.APL_DEVICES = [
         });
     }
 
-    function press(k) { if (k.del) erase(); else type(k.type); }
+    function press(k) { if (k.del) erase(); else if (k.all) showAll(); else type(k.type); }
+    function showAll() { if (!allMode || query) { allMode = true; query = ""; refresh(); } }
     /* v1.2.115: one letter at a time: the new letter replaces the one chosen before */
-    function type(c) { c = String(c || "").replace(/\s/g, "").slice(-1); if (!c) return; if (query !== c) { query = c; refresh(); } }
-    function erase() { if (query) { query = ""; refresh(); } }
+    function type(c) { c = String(c || "").replace(/\s/g, "").slice(-1); if (!c) return; if (query !== c || allMode) { allMode = false; query = c; refresh(); } }
+    function erase() { if (query || allMode) { allMode = false; query = ""; refresh(); } }
 
     /* ---- v1.2.115: Clean Background -------------------------------------------------------------------
        Closes the apps that are still open behind the launcher (YouTube, Netflix... stay in memory when you
@@ -20730,8 +20900,8 @@ window.APL_DEVICES = [
     /* Field and results again; the focus stays where it is (on the letter just typed). */
     function refresh() {
         var q = norm(query).replace(/\s+/g, " ").replace(/^ /, "");
-        fieldEl.textContent = query || APL.t("Search");
-        fieldEl.classList.toggle("is-empty", !query);
+        fieldEl.textContent = allMode ? allLabel() : (query || APL.t("Search"));
+        fieldEl.classList.toggle("is-empty", !query && !allMode);
         found = match(q);
         resultsEl.innerHTML = "";
         var tiles = found.map(function (app) {
@@ -20740,10 +20910,10 @@ window.APL_DEVICES = [
             resultsEl.appendChild(t);
             return t;
         });
-        emptyEl.textContent = !q ? (found.length ? APL.t("Recently Used") : "") :
+        emptyEl.textContent = allMode ? "" : !q ? (found.length ? APL.t("Recently Used") : "") :
             found.length ? "" : APL.t("No apps found for “{q}”", { q: query.trim() });
-        root.classList.toggle("has-recent", !q && found.length > 0);
-        keys.forEach(function (k) { if (k.type) k.el.classList.toggle("is-picked", k.type === query); });
+        root.classList.toggle("has-recent", !q && !allMode && found.length > 0);
+        keys.forEach(function (k) { if (k.type) k.el.classList.toggle("is-picked", !allMode && k.type === query); else if (k.all) k.el.classList.toggle("is-picked", allMode); });
         var keyEls = [toolEl].concat(keys.map(function (k) { k.el._key = k; return k.el; }));
         var cur = nav.current && nav.current(), at = Math.max(0, keyEls.indexOf(cur));
         nav.setTiles(keyEls.concat(tiles));
@@ -20752,10 +20922,10 @@ window.APL_DEVICES = [
 
     function open() {
         if (!root) buildDom();
-        query = "";
+        query = ""; allMode = false;
         nav.setTiles([]);
         refresh();
-        nav.focus(1);                                        // the first letter (index 0 is the cleaning button)
+        nav.focus(1);                                        // "All" (index 0 is the cleaning button)
         root.classList.add("is-open");
         document.body.classList.add("has-search");          // the Home Screen steps back (launcher.css)
         APL.pushNav(nav);
@@ -25841,6 +26011,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.66: قائمة الإذاعات والبحث والإطفاء التلقائي وأشكال المصحف. أيقونة الراديو تعرض «اضغط OK مطولاً لاختيار إذاعة». قائمة الإذاعات فيها زر الإذاعة الأصلية (القاهرة) وصف حروف (الموجودة فعلاً فقط، و«الجميع» أولاً) والتصفية فورية بمجرد الوقوف على الحرف؛ وبحث الشاشة الرئيسية بنفس الطريقة. الإذاعات اللي كانت بتقطع: في مراقب جديد بيعيد الاتصال وبيجرب العنوان الاحتياطي (السبب مش مؤكد على التلفزيون). زرّي الشاشة السوداء وتكبير العيد اتبدلوا. الإطفاء التلقائي: اتقوّى بخطّ دفاع تاني من التطبيق نفسه بيوقف الصوت وبيبعت زر الطاقة. المصحف: الشكل الورقي هو الأساسي، والأخضر لسه موجود، وزر الشكل بيدوّر: ورقي، سيبيا، هادئ، ليلي، أخضر. غير مجرّب على التلفزيون.",
         "✔ 8.7.65: إذاعات القرآن الكريم. اضغط مطولاً على OK على أيقونة الراديو في صفحة الصلاة والقرآن تظهر قائمة بـ ١٧٢ إذاعة قرآنية (تلاوات لقراء كثيرين، وترجمات المعاني، والتفسير، والأذكار، والسيرة النبوية، والرقية، والفتاوى وغيرها) مقسمة حسب النوع، واختر منها. الإذاعة المختارة تتحفظ وتشتغل من أيقونة الراديو ومن صفحة الاستماع للقرآن ومركز التحكم وشاشة التوقف؛ وإذاعة القاهرة تفضل أول صف والإذاعة الأساسية. كل إذاعة ليها عنوان احتياطي. الإذاعات من القائمة العامة لموقع MP3Quran.net. غير مجرّب على التلفزيون: اتفحص في Chrome بدون شاشة على التطبيق الحقيقي، ولسه محتاج تجربة على التلفزيون.",
         "✔ 8.7.64: طقطقة أقل في الآيات القصيرة. أول انتقال في التلاوة (من الآية الأولى للتانية) كان بيبدأ بعد ما الأولى تخلص فيحصل فاصل صغير وخرج الصوت يهدا. دلوقتي الآية الأولى كمان بتتحمّل وتتفك أول ما تتخزّن فمدتها الحقيقية معروفة، والآية الجاية بتبدأ على ساعة الصوت قبل نهاية الأولى بأجزاء من الثانية، فخرج الصوت مابيهداش، وبعدها السلسلة بتكمل زي ٨.٧.٦٢. لو الأولى ماتفكتش في وقتها بيرجع للسلوك القديم. غير مجرّب على التلفزيون.",
         "✔ 8.7.63: إصلاح قطع الآيات الطويلة في التلاوة. نسخة الآية المحمّلة كانت بتتشغّل من عنوان داخلي (blob) وبعض مشغّلات التلفزيون بتقطعها في الملفات الطويلة؛ دلوقتي المشغّل بيشغّل العنوان الحقيقي دايماً، والنسخة المحمّلة بتُستخدم بس للانتقال من غير فاصل (للملفات الأصغر من حوالي ٦٠٠ كيلوبايت)، والانتقال للآية الجاية بيبدأ عند النهاية الحقيقية للملف مش عند مدة مقدّرة فمبقاش بيقفز بدري. غير مجرّب على التلفزيون.",
@@ -25897,6 +26068,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.66: Radio list with letters and the original-radio button, instant letter filter (also in the Home search), a reconnecting radio watchdog, Auto Off backed up by the launcher, and Mushaf looks: Paper (default), Sepia, Soft, Night, Green. Untested on the TV.",
         "✔ 8.7.65: Quran radio stations: long-press OK on the Radio tile to pick from 172 stations (reciters, translations, tafsir, adhkar and more). Cairo stays the default. Source: MP3Quran.net. Untested on the TV.",
         "✔ 8.7.64: Fewer clicks on short ayahs: the first ayah is decoded too, and the next ayah starts on the audio clock a few milliseconds before it ends, so the sound output never goes idle at the first hand-over. Untested on the TV.",
         "✔ 8.7.63: Fix for long ayahs being cut short: the player always streams the real address, and the hand-over to the next ayah starts at the real end of the file. Untested on the TV.",
@@ -27420,6 +27592,33 @@ window.APL_DEVICES = [
         return name;
     }
 
+    var LOOKS = [["paper", "ورقي", "Paper", true], ["sepia", "سيبيا", "Sepia", true], ["soft", "هادئ", "Soft", true], ["night", "ليلي", "Night", false], ["green", "أخضر", "Green", false]];
+    function isLook(id) { for (var i = 0; i < LOOKS.length; i++) if (LOOKS[i][0] === id) return true; return false; }
+    function lookRow(id) { for (var i = 0; i < LOOKS.length; i++) if (LOOKS[i][0] === (id || (prefs && prefs.look))) return LOOKS[i]; return LOOKS[0]; }
+    function lookLight(id) { return lookRow(id)[3]; }
+    function lookName() { var r = lookRow(); return Q(r[1], r[2]); }
+    function lookLabel() { return "◐ " + lookName(); }
+    /* the page element gets is-paper (light structure) and is-sepia / is-soft / is-night on top */
+    function lookClasses(node) {
+        var id = prefs.look, k;
+        for (k = 0; k < LOOKS.length; k++) node.classList.remove("is-" + LOOKS[k][0]);
+        node.classList.toggle("is-paper", lookLight());
+        if (id !== "paper" && id !== "green") node.classList.add("is-" + id);
+    }
+    function refreshLookButtons() {
+        if (!toolsEl) return;
+        var b = toolsEl.querySelectorAll(".mq__button"), i;
+        for (i = 0; i < b.length; i++) if (b[i]._qid === "paper" || b[i]._qid === "tf-paper") b[i].textContent = lookLabel();
+    }
+    function cycleLook() {
+        var i = 0, k;
+        for (k = 0; k < LOOKS.length; k++) if (LOOKS[k][0] === prefs.look) i = k;
+        prefs.look = LOOKS[(i + 1) % LOOKS.length][0];
+        prefs.paper = lookLight();
+        savePrefs();
+        refreshLookButtons();
+        if (APL.toast) APL.toast(Q("شكل الصفحة: ", "Page look: ") + lookName(), true);
+    }
     var COLORS_DARK = [["تلقائي", ""], ["أبيض", "#ffffff"], ["ذهبي", "#ffd36b"], ["أخضر فاتح", "#b9f27a"], ["سماوي", "#9fe3ff"], ["كريمي", "#f6e9c8"]];
     var COLORS_PAPER = [["تلقائي", ""], ["أسود", "#000000"], ["بني", "#4a2f0c"], ["أخضر غامق", "#14501f"], ["كحلي", "#14285a"], ["عنابي", "#6a1420"]];
     var prefs = readPrefs(), savedScroll = 0;
@@ -27471,7 +27670,10 @@ window.APL_DEVICES = [
         if (SIZES.indexOf(p.font) < 0) p.font = 42;
         if (typeof p.lh !== "number" || p.lh < 0 || p.lh >= LH.length) p.lh = 0;
         p.fit = p.fit !== false;      /* v7.2.0: the whole page fits the screen (auto font size) unless the size was set by hand */
-        p.paper = p.paper === true;
+        /* v8.7.66: five looks. The paper page is the default; the green one stays as an option. Someone who had chosen the
+           dark/green page by hand (paper === false) keeps it; everyone else gets the paper page. */
+        if (!isLook(p.look)) p.look = p.paper === false ? "green" : "paper";
+        p.paper = lookLight(p.look);
         if (typeof p.color !== "number" || p.color < 0 || p.color >= 6) p.color = 0;   /* v7.1.0 text colour */
         p.ayah = typeof p.ayah === "number" && p.ayah >= 0 && p.ayah < TOTAL ? p.ayah : -1;
         return p;
@@ -27651,7 +27853,7 @@ window.APL_DEVICES = [
             toolsEl.appendChild(button(T("+ أ"), "font-larger", function () { setSize(1); }));
             toolsEl.appendChild(button(T("⤢ ملء الشاشة"), "fit", toggleFit));
             toolsEl.appendChild(button(T("↕ تباعد"), "spacing", cycleSpacing));
-            toolsEl.appendChild(button(T("◐ ورقي"), "paper", togglePaper));
+            toolsEl.appendChild(button(lookLabel(), "paper", togglePaper));
             toolsEl.appendChild(button(T("◉ لون"), "color", cycleColor));
             toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "safe", cycleSafe));
             toolsEl.appendChild(button(T("✓ قرأت الصفحة"), "mark-read", markRead, "mq__button--green mq__tool--wide"));
@@ -27667,13 +27869,10 @@ window.APL_DEVICES = [
                 prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); tfLook();
                 if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
             }));
-            toolsEl.appendChild(button(T("◐ ورقي"), "tf-paper", function () {
-                prefs.paper = !prefs.paper; savePrefs(); tfLook();
-                if (APL.toast) APL.toast(prefs.paper ? Q("الوضع الورقي مفعّل", "Paper mode on") : Q("الوضع الليلي مفعّل", "Night mode on"), true);
-            }));
+            toolsEl.appendChild(button(lookLabel(), "tf-paper", function () { cycleLook(); tfLook(); }));
             toolsEl.appendChild(button(T("◉ لون"), "tf-color", function () {
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
-                if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
+                if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
             }, "mq__tool--wide"));
             toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "tf-safe", cycleSafe, "mq__tool--wide"));
         }
@@ -27848,24 +28047,21 @@ window.APL_DEVICES = [
         applySafe();
         if (!readBody) return;
         readBody.style.lineHeight = String(LH[prefs.lh]);
-        readBody.classList.toggle("is-paper", !!prefs.paper);
-        var hex = (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
+        lookClasses(readBody);
+        var hex = (lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
         readBody.style.color = hex; readBody.classList.toggle("has-color", !!hex);
         if (prefs.fit !== false) fit();
         else { readBody.style.fontSize = prefs.font + "px"; readBody.style.overflowY = "auto"; }
     }
     function cycleColor() {
         prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); applyLook();
-        if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
+        if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
     }
     function cycleSpacing() {
         prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); applyLook();
         if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
     }
-    function togglePaper() {
-        prefs.paper = !prefs.paper; savePrefs(); applyLook();
-        if (APL.toast) APL.toast(prefs.paper ? Q("ثيم ورقي هادي", "Calm paper theme") : Q("ثيم داكن", "Dark theme"), true);
-    }
+    function togglePaper() { cycleLook(); applyLook(); }
     /* "Continue from the last verse": open the page of the saved verse and mark it. */
     function resumeNow() {
         if (!data) return;
@@ -28307,8 +28503,8 @@ window.APL_DEVICES = [
         if (!tfBody) return;
         tfBody.style.fontFamily = global.getComputedStyle(document.body).fontFamily;
         tfBody.style.fontSize = (prefs.tfont || 34) + "px"; tfBody.style.lineHeight = String(LH[prefs.lh]); tfBody.style.overflowY = "auto"; applySafe();
-        tfBody.classList.toggle("is-paper", !!prefs.paper);
-        var hex = (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
+        lookClasses(tfBody);
+        var hex = (lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
         tfBody.style.color = hex; tfBody.classList.toggle("has-color", !!hex);
     }
     function tfSize(d) {

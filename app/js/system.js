@@ -788,17 +788,54 @@
     /* ---------- sleep timer ----------
        The screen does the counting (background command): the launcher stops as soon as an app
        is in front, which is exactly when the timer is needed. The file is shared with overlay/. */
-    var SLEEP_FILE = "/tmp/apl-sleep-at";
+    var SLEEP_FILE = "/tmp/apl-sleep-at", SLEEP_LOG = "/tmp/apl-sleep.log";
+    /* v8.7.66: the counting shell is fully detached (setsid when the screen has it, stdin closed), so it is not taken down
+       with the command that started it, and it writes a line to /tmp/apl-sleep.log when it arms and when it fires. The file
+       holds the wanted time: a later timer, or a cancel, makes an older shell do nothing. */
+    function sleepShell(secs, minutes) {
+        return "echo " + secs + " > " + SLEEP_FILE + "; echo \"armed $(date) wait=" + (minutes * 60) + "s\" >> " + SLEEP_LOG + "; " +
+               "S=; command -v setsid >/dev/null 2>&1 && S=setsid; " +
+               "$S sh -c 'sleep \"$1\"; if [ \"$(cat " + SLEEP_FILE + " 2>/dev/null)\" = \"$2\" ]; then rm -f " + SLEEP_FILE +
+               "; echo \"fired $(date)\" >> " + SLEEP_LOG + "; /usr/bin/input_keyevent XF86PowerOff; fi' x " + (minutes * 60) + " " + secs +
+               " </dev/null >/dev/null 2>&1 &";
+    }
     function armSleepTimer(minutes) {
         var at = minutes ? Date.now() + minutes * 60000 : 0;
         setPref("sleepTimer", minutes);
         setPref("sleepAt", at);
+        sleepFallbackDone = false;
         if (PREVIEW) return;
         var secs = Math.round(at / 1000);
-        tvExec(minutes ? "echo " + secs + " > " + SLEEP_FILE + "; (sleep " + (minutes * 60) + "; if [ \"$(cat " + SLEEP_FILE + " 2>/dev/null)\" = \"" + secs + "\" ]; then rm -f " + SLEEP_FILE +
-                         "; /usr/bin/input_keyevent XF86PowerOff; fi) >/dev/null 2>&1 &"
-                       : "rm -f " + SLEEP_FILE).catch(function () {});
+        tvExec(minutes ? sleepShell(secs, minutes) : "rm -f " + SLEEP_FILE).catch(function () {});
     }
+    /* v8.7.66: second line of defence, in the launcher itself (it also stops what the launcher plays). When the time is up
+       the radio, the recitation and the recordings stop at once. If the screen's own shell has not turned the screen off
+       25 seconds later (its file is still there), the launcher does it. The file is the lock: whoever removes it sends
+       the power key, so it is never sent twice. */
+    var sleepFallbackDone = false;
+    function stopAllAudio() {
+        try { if (APL.radio && APL.radio.stop) APL.radio.stop(); } catch (e) {}
+        try { if (APL.quranAudio && APL.quranAudio.pause) APL.quranAudio.pause(); } catch (e1) {}
+        try { if (APL.audioPack && APL.audioPack.stop) APL.audioPack.stop(); } catch (e2) {}
+    }
+    function sleepWatchTick() {
+        var at = pref("sleepAt") || 0, now = Date.now();
+        if (!at || now < at || sleepFallbackDone) return;
+        sleepFallbackDone = true;
+        stopAllAudio();
+        if (now > at + 10 * 60000) { setPref("sleepAt", 0); setPref("sleepTimer", 0); return; }     // a stale time (the launcher was asleep): do nothing more
+        setTimeout(function () {
+            setPref("sleepAt", 0);
+            setPref("sleepTimer", 0);
+            if (PREVIEW) return;
+            tvExec("if [ -f " + SLEEP_FILE + " ]; then rm -f " + SLEEP_FILE + "; echo \"launcher fallback $(date)\" >> " + SLEEP_LOG +
+                   "; /usr/bin/input_keyevent XF86PowerOff; fi").catch(function (e) {
+                if (APL.toast) APL.toast(APL.t("Auto Off could not turn the screen off: {why}", { why: String((e && e.message) || e).slice(0, 80) }));
+            });
+        }, 25000);
+    }
+    setInterval(sleepWatchTick, 5000);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) sleepWatchTick(); });
     /* Timer set from the native Control Center: the launcher picks it up. */
     function readSleepTimer() {
         if (PREVIEW) return Promise.resolve();

@@ -106,6 +106,33 @@
         return name;
     }
 
+    var LOOKS = [["paper", "ورقي", "Paper", true], ["sepia", "سيبيا", "Sepia", true], ["soft", "هادئ", "Soft", true], ["night", "ليلي", "Night", false], ["green", "أخضر", "Green", false]];
+    function isLook(id) { for (var i = 0; i < LOOKS.length; i++) if (LOOKS[i][0] === id) return true; return false; }
+    function lookRow(id) { for (var i = 0; i < LOOKS.length; i++) if (LOOKS[i][0] === (id || (prefs && prefs.look))) return LOOKS[i]; return LOOKS[0]; }
+    function lookLight(id) { return lookRow(id)[3]; }
+    function lookName() { var r = lookRow(); return Q(r[1], r[2]); }
+    function lookLabel() { return "◐ " + lookName(); }
+    /* the page element gets is-paper (light structure) and is-sepia / is-soft / is-night on top */
+    function lookClasses(node) {
+        var id = prefs.look, k;
+        for (k = 0; k < LOOKS.length; k++) node.classList.remove("is-" + LOOKS[k][0]);
+        node.classList.toggle("is-paper", lookLight());
+        if (id !== "paper" && id !== "green") node.classList.add("is-" + id);
+    }
+    function refreshLookButtons() {
+        if (!toolsEl) return;
+        var b = toolsEl.querySelectorAll(".mq__button"), i;
+        for (i = 0; i < b.length; i++) if (b[i]._qid === "paper" || b[i]._qid === "tf-paper") b[i].textContent = lookLabel();
+    }
+    function cycleLook() {
+        var i = 0, k;
+        for (k = 0; k < LOOKS.length; k++) if (LOOKS[k][0] === prefs.look) i = k;
+        prefs.look = LOOKS[(i + 1) % LOOKS.length][0];
+        prefs.paper = lookLight();
+        savePrefs();
+        refreshLookButtons();
+        if (APL.toast) APL.toast(Q("شكل الصفحة: ", "Page look: ") + lookName(), true);
+    }
     var COLORS_DARK = [["تلقائي", ""], ["أبيض", "#ffffff"], ["ذهبي", "#ffd36b"], ["أخضر فاتح", "#b9f27a"], ["سماوي", "#9fe3ff"], ["كريمي", "#f6e9c8"]];
     var COLORS_PAPER = [["تلقائي", ""], ["أسود", "#000000"], ["بني", "#4a2f0c"], ["أخضر غامق", "#14501f"], ["كحلي", "#14285a"], ["عنابي", "#6a1420"]];
     var prefs = readPrefs(), savedScroll = 0;
@@ -157,7 +184,10 @@
         if (SIZES.indexOf(p.font) < 0) p.font = 42;
         if (typeof p.lh !== "number" || p.lh < 0 || p.lh >= LH.length) p.lh = 0;
         p.fit = p.fit !== false;      /* v7.2.0: the whole page fits the screen (auto font size) unless the size was set by hand */
-        p.paper = p.paper === true;
+        /* v8.7.66: five looks. The paper page is the default; the green one stays as an option. Someone who had chosen the
+           dark/green page by hand (paper === false) keeps it; everyone else gets the paper page. */
+        if (!isLook(p.look)) p.look = p.paper === false ? "green" : "paper";
+        p.paper = lookLight(p.look);
         if (typeof p.color !== "number" || p.color < 0 || p.color >= 6) p.color = 0;   /* v7.1.0 text colour */
         p.ayah = typeof p.ayah === "number" && p.ayah >= 0 && p.ayah < TOTAL ? p.ayah : -1;
         return p;
@@ -337,7 +367,7 @@
             toolsEl.appendChild(button(T("+ أ"), "font-larger", function () { setSize(1); }));
             toolsEl.appendChild(button(T("⤢ ملء الشاشة"), "fit", toggleFit));
             toolsEl.appendChild(button(T("↕ تباعد"), "spacing", cycleSpacing));
-            toolsEl.appendChild(button(T("◐ ورقي"), "paper", togglePaper));
+            toolsEl.appendChild(button(lookLabel(), "paper", togglePaper));
             toolsEl.appendChild(button(T("◉ لون"), "color", cycleColor));
             toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "safe", cycleSafe));
             toolsEl.appendChild(button(T("✓ قرأت الصفحة"), "mark-read", markRead, "mq__button--green mq__tool--wide"));
@@ -353,13 +383,10 @@
                 prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); tfLook();
                 if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
             }));
-            toolsEl.appendChild(button(T("◐ ورقي"), "tf-paper", function () {
-                prefs.paper = !prefs.paper; savePrefs(); tfLook();
-                if (APL.toast) APL.toast(prefs.paper ? Q("الوضع الورقي مفعّل", "Paper mode on") : Q("الوضع الليلي مفعّل", "Night mode on"), true);
-            }));
+            toolsEl.appendChild(button(lookLabel(), "tf-paper", function () { cycleLook(); tfLook(); }));
             toolsEl.appendChild(button(T("◉ لون"), "tf-color", function () {
                 prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); tfLook();
-                if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
+                if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
             }, "mq__tool--wide"));
             toolsEl.appendChild(button(T("⇔ حواف الشاشة"), "tf-safe", cycleSafe, "mq__tool--wide"));
         }
@@ -534,24 +561,21 @@
         applySafe();
         if (!readBody) return;
         readBody.style.lineHeight = String(LH[prefs.lh]);
-        readBody.classList.toggle("is-paper", !!prefs.paper);
-        var hex = (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
+        lookClasses(readBody);
+        var hex = (lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
         readBody.style.color = hex; readBody.classList.toggle("has-color", !!hex);
         if (prefs.fit !== false) fit();
         else { readBody.style.fontSize = prefs.font + "px"; readBody.style.overflowY = "auto"; }
     }
     function cycleColor() {
         prefs.color = (prefs.color + 1) % COLORS_DARK.length; savePrefs(); applyLook();
-        if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
+        if (APL.toast) APL.toast(APL.enx("لون الخط: ") + APL.enx((lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][0]), true);
     }
     function cycleSpacing() {
         prefs.lh = (prefs.lh + 1) % LH.length; savePrefs(); applyLook();
         if (APL.toast) APL.toast(APL.enx("تباعد السطور ") + dg(prefs.lh + 1) + (APL.lang === "ar" ? " من " : " of ") + dg(LH.length), true);
     }
-    function togglePaper() {
-        prefs.paper = !prefs.paper; savePrefs(); applyLook();
-        if (APL.toast) APL.toast(prefs.paper ? Q("ثيم ورقي هادي", "Calm paper theme") : Q("ثيم داكن", "Dark theme"), true);
-    }
+    function togglePaper() { cycleLook(); applyLook(); }
     /* "Continue from the last verse": open the page of the saved verse and mark it. */
     function resumeNow() {
         if (!data) return;
@@ -993,8 +1017,8 @@
         if (!tfBody) return;
         tfBody.style.fontFamily = global.getComputedStyle(document.body).fontFamily;
         tfBody.style.fontSize = (prefs.tfont || 34) + "px"; tfBody.style.lineHeight = String(LH[prefs.lh]); tfBody.style.overflowY = "auto"; applySafe();
-        tfBody.classList.toggle("is-paper", !!prefs.paper);
-        var hex = (prefs.paper ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
+        lookClasses(tfBody);
+        var hex = (lookLight() ? COLORS_PAPER : COLORS_DARK)[prefs.color][1];
         tfBody.style.color = hex; tfBody.classList.toggle("has-color", !!hex);
     }
     function tfSize(d) {

@@ -671,10 +671,10 @@
         takbeer: ic('<path d="M4 10v4h3.5L13 18V6L7.5 10z"/><path d="M16 9.2a4 4 0 0 1 0 5.6M18.8 6.8a7.5 7.5 0 0 1 0 10.4"/>'),
         quranOnline: ic('<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14h3v6H5a1 1 0 0 1-1-1zM20 14h-3v6h2a1 1 0 0 0 1-1z"/>')
     };
-    function actBtn(ico, label, on, run, hold) {
+    function actBtn(ico, label, on, run, hold, hint) {
         var b = el("div", "pw-ic" + (on ? " is-on" : ""), (ACT_ICO[ico] || "") + "<span>" + label + "</span>");
         b.addEventListener("click", run);
-        tiles.push({ el: b, run: run, hold: hold || null });
+        tiles.push({ el: b, run: run, hold: hold || null, hint: hint || "" });
         return b;
     }
     /* auto screen off: 30 min, then every 10 min up to 3 hours (the Sleep Timer of the Control Center) */
@@ -955,16 +955,16 @@
     function audioIcons() {
         var icons = el("div", "pw-ics");
         var rs = radioState(), alertsOn = p().alertsOn(), pauseOn = sys.pref("radioDuringAlert") !== false, sl = sleepOn();
-        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }, openStations));
+        icons.appendChild(actBtn("radio", APL.t("Radio") + (rs.playing ? " · LIVE" : (rs.starting ? " …" : "")), rs.playing || rs.starting, function () { toggleRadio(); }, openStations, APL.lang === "ar" ? "اضغط OK مطولاً لعرض الإذاعات واختيار إذاعة" : "Hold OK to choose a radio station"));
         /* v1.2.116: Surat Al-Kahf and the Eid takbeer, played from the APL-Audio folder on the TV (not inside the package) */
         icons.appendChild(audioBtn("kahf", "kahf", APL.t("Al-Kahf")));
         icons.appendChild(kahfMini());      /* v7.2.0: Resume / Restart, two small buttons stacked beside the Al-Kahf tile */
-        icons.appendChild(audioBtn("takbeer", "takbeer", APL.t("Eid Takbeer")));
+        icons.appendChild(actBtn("power", APL.t("Black Screen"), false, function () { enterBlackout(); }));
         icons.appendChild(actBtn(alertsOn ? "bell" : "bellOff", APL.t("Alerts"), alertsOn, function () { p().setAlerts(!p().alertsOn()); render(); }));
         icons.appendChild(actBtn("pause", APL.t("Pause on alert"), pauseOn, function () { sys.setPref("radioDuringAlert", sys.pref("radioDuringAlert") === false); render(); }));
         icons.appendChild(actBtn("test", APL.t("Test Alert"), false, function () { if (APL.prayerAlert) APL.prayerAlert.test(); }));
         icons.appendChild(actBtn("sleep", sl ? minText(sys.pref("sleepTimer")) : APL.t("Auto Off"), sl, openSleep));
-        icons.appendChild(actBtn("power", APL.t("Black Screen"), false, function () { enterBlackout(); }));
+        icons.appendChild(audioBtn("takbeer", "takbeer", APL.t("Eid Takbeer")));
         icons.appendChild(actBtn("refresh", APL.t("Refresh"), false, function () {
             p().refresh(); render();
             if (APL.toast) APL.toast(APL.t("Updated {time}", { time: new Date().toLocaleTimeString(APL.locale) }), true);
@@ -1004,6 +1004,7 @@
         hintEl.textContent = APL.t("OK to choose · Back to cancel") + " · ⏯ " + APL.t("Control Center") +
                              " · " + APL.t("OK on an occasion: all occasions") +
                              " · ≈ " + APL.t("estimated until the moon sighting");
+        mainHint = hintEl.textContent;
     }
 
     function buildWeather() {
@@ -1378,6 +1379,7 @@
             } else if (APL.sound && APL.sound.edge) APL.sound.edge();
             return true;
         }
+        if (mode === "stations" && nav && tiles.length && stationsKey(code)) return true;
         if (!nav || !nav.tiles || !nav.tiles.length || (code !== APL.KEY.UP && code !== APL.KEY.DOWN)) return false;
         var delta = code === APL.KEY.UP ? -1 : 1;
         /* City, occasions, weather and hekam use true vertical lists. */
@@ -1511,7 +1513,18 @@
     }
 
     /* v8.7.65: long OK on the Radio tile opens the list of Quran radio stations (js/radio-stations.js) */
-    var stationReturn = 0;
+    var stationReturn = 0, mainHint = "", stFilter = "", stRowStart = 1, stActiveChip = 1, stChipsEl = null, stListEl = null;
+    var AR_ORDER = "ابتثجحخدذرزسشصضطظعغفقكلمنهوىي";
+    function arNorm(c) { return /[\u0623\u0625\u0622\u0671]/.test(c) ? "\u0627" : (c === "\u0629" ? "\u0647" : c); }
+    function stLetter(o, ar) {
+        var n = String((ar ? o.ar : (o.en || o.ar)) || "").replace(/^\s+/, "");
+        if (!n) return "";
+        return ar ? arNorm(n.charAt(0)) : n.charAt(0).toUpperCase();
+    }
+    function letterRank(c, ar) {
+        var i = ar ? AR_ORDER.indexOf(c) : "ABCDEFGHIJKLMNOPQRSTUVWXYZ".indexOf(c);
+        return i < 0 ? 100 + c.charCodeAt(0) : i;
+    }
     function stationName(st) {
         var cur = st && st.id ? st : null;
         return cur ? (APL.lang === "ar" ? cur.ar : (cur.en || cur.ar)) : "";
@@ -1520,12 +1533,13 @@
         if (!APL.radioStations || !APL.radioStations.list.length) return;
         stationReturn = focusIndex;
         mode = "stations";
+        stFilter = "";
         focusIndex = 0;
         render();
         /* the playing station is focused (row 0 is Cairo) */
         var cur = sys.pref("radioStation") || "", L = APL.radioStations.list, k, at = 0;
-        for (k = 0; k < L.length; k++) if (L[k].id === cur) { at = k + 1; break; }
-        nav.focus(at);
+        for (k = 0; k < L.length; k++) if (L[k].id === cur) { at = stRowStart + k; break; }
+        nav.focus(at ? at : 0);
     }
     function pickStation(id) {
         var r = APL.radio;
@@ -1543,13 +1557,9 @@
             });
         }, 400);
     }
-    function buildStations() {
-        bodyEl.innerHTML = "";
-        tiles = [];
-        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
-        titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
-        subEl.textContent = ar ? "اختر الإذاعة ثم اضغط OK. الإذاعة المختارة تبقى هي الإذاعة الأساسية." : "Pick a station and press OK. It stays the station of the Radio tile.";
-        var list = el("div", "aplx-list");
+    function stRowsFill(list) {
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "", lastCat = "", i, o, h;
+        list.innerHTML = "";
         function row(label, sub, on, id) {
             var r = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label"></span>' + (sub ? '<span class="aplx-row__sub"></span>' : "") + "</div>" + (on ? '<span class="aplx-badge aplx-badge--on">✓</span>' : ""));
             r.querySelector(".aplx-row__label").textContent = label;
@@ -1559,10 +1569,9 @@
             tiles.push({ el: r, run: run });
             list.appendChild(r);
         }
-        row(ar ? "إذاعة القرآن الكريم من القاهرة (الأساسية)" : "Qur'an Cairo (default)", "", !cur, "");
-        var lastCat = "", i, o, h;
         for (i = 0; i < S.list.length; i++) {
             o = S.list[i];
+            if (stFilter && stLetter(o, ar) !== stFilter) continue;
             if (o.cat !== lastCat) {
                 lastCat = o.cat;
                 h = el("div", "aplx-row__sub");
@@ -1572,8 +1581,89 @@
             }
             row(ar ? o.ar : (o.en || o.ar), ar ? "" : (o.en && o.ar !== o.en ? o.ar : ""), o.id === cur, o.id);
         }
-        bodyEl.appendChild(list);
-        hintEl.textContent = ar ? "OK للاختيار · رجوع للإلغاء" : "OK to choose · Back to cancel";
+    }
+    /* v8.7.66: focusing a letter filters the stations at once (no OK needed) */
+    function stationsFocus(i) {
+        var t = tiles[i];
+        if (!t || !t.chip || t.letter === stFilter) return;
+        stFilter = t.letter;
+        stActiveChip = i;
+        var k;
+        for (k = 0; k < tiles.length; k++) if (tiles[k].chip) tiles[k].el.classList.toggle("is-on", tiles[k].letter === stFilter);
+        tiles.length = stRowStart;
+        stRowsFill(stListEl);
+        nav.tiles = tiles.map(function (x) { return x.el; });
+        if (bodyEl) bodyEl.scrollTop = 0;
+    }
+    function buildStations() {
+        bodyEl.innerHTML = "";
+        tiles = [];
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
+        titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
+        subEl.textContent = ar ? "حرّك على الحرف لتصفية الإذاعات، ثم انزل واختر الإذاعة واضغط OK. الإذاعة المختارة تبقى هي إذاعة أيقونة الراديو." : "Move onto a letter to filter, go down, pick a station and press OK. It stays the station of the Radio tile.";
+        /* the first letters that really exist among the names, nothing else */
+        var seen = {}, letters = [], i, c;
+        for (i = 0; i < S.list.length; i++) {
+            c = stLetter(S.list[i], ar);
+            if (c && !seen[c]) { seen[c] = 1; letters.push(c); }
+        }
+        letters.sort(function (x, y) { return letterRank(x, ar) - letterRank(y, ar); });
+        if (stFilter && !seen[stFilter]) stFilter = "";
+        var bar = el("div", "");
+        bar.style.cssText = "position:sticky;top:0;z-index:3;background:rgba(12,16,24,.94);padding:6px 4px 10px";
+        /* above the letters: the original radio (Cairo, the default) */
+        var cairo = el("div", "pw-ic" + (!cur ? " is-on" : ""), (ACT_ICO.radio || "") + "<span></span>");
+        cairo.querySelector("span").textContent = ar ? "الإذاعة الأصلية · القرآن الكريم من القاهرة" : "Original radio · Qur'an Cairo";
+        cairo.style.cssText = "display:inline-flex;margin-bottom:8px";
+        var cairoRun = function () { pickStation(""); };
+        cairo.addEventListener("click", cairoRun);
+        tiles.push({ el: cairo, run: cairoRun, cairo: true });
+        bar.appendChild(cairo);
+        var chips = el("div", "");
+        chips.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
+        stChipsEl = chips;
+        function chip(label, letter) {
+            var t = el("div", "pw-ic" + (stFilter === letter ? " is-on" : ""), "<span></span>");
+            t.querySelector("span").textContent = label;
+            t.style.cssText = "min-width:48px;padding:8px 14px;text-align:center;flex:0 0 auto";
+            var run = function () { if (tiles.length > stRowStart) nav.focus(stRowStart); };
+            t.addEventListener("click", function () { var k; for (k = 0; k < tiles.length; k++) if (tiles[k].el === t) { nav.focus(k); break; } });
+            if (stFilter === letter) stActiveChip = tiles.length;
+            tiles.push({ el: t, run: run, chip: true, letter: letter });
+            chips.appendChild(t);
+        }
+        chip(ar ? "الجميع" : "All", "");
+        for (i = 0; i < letters.length; i++) chip(letters[i], letters[i]);
+        stRowStart = tiles.length;
+        bar.appendChild(chips);
+        bodyEl.appendChild(bar);
+        stListEl = el("div", "aplx-list");
+        stRowsFill(stListEl);
+        bodyEl.appendChild(stListEl);
+        hintEl.textContent = ar ? "◀ ▶ حرف (التصفية فورية) · ▼ للإذاعات · OK للاختيار · رجوع للإلغاء" : "◀ ▶ letter (filters at once) · ▼ stations · OK to choose · Back to cancel";
+    }
+    /* arrows inside the stations list: the original-radio button, the letters, then the stations */
+    function stationsKey(code) {
+        var idx = nav.index, rtl = false, d, inChips = idx >= 1 && idx < stRowStart;
+        try { rtl = global.getComputedStyle(stChipsEl).direction === "rtl"; } catch (e) {}
+        if (code === APL.KEY.LEFT || code === APL.KEY.RIGHT) {
+            if (!inChips) return true;
+            d = code === APL.KEY.RIGHT ? (rtl ? -1 : 1) : (rtl ? 1 : -1);
+            if (idx + d >= 1 && idx + d < stRowStart) { nav.focus(idx + d); if (APL.sound) APL.sound.tick(); }
+            return true;
+        }
+        if (code === APL.KEY.DOWN) {
+            var to = idx === 0 ? stActiveChip : (inChips ? stRowStart : idx + 1);
+            if (to < tiles.length && to !== idx) { nav.focus(to); if (APL.sound) APL.sound.tick(); }
+            return true;
+        }
+        if (code === APL.KEY.UP) {
+            if (idx === 0) return true;
+            nav.focus(inChips ? 0 : (idx === stRowStart ? stActiveChip : idx - 1));
+            if (APL.sound) APL.sound.tick();
+            return true;
+        }
+        return false;
     }
 
     function toggleRadio() {
@@ -1608,7 +1698,16 @@
         root.appendChild(head); root.appendChild(bodyEl); root.appendChild(hintEl);
         document.body.appendChild(root);
         nav = new APL.Nav({
-            onFocus: function (i) { focusIndex = i; },
+            onFocus: function (i) {
+                focusIndex = i;
+                if (mode === "stations") stationsFocus(i);
+                /* v8.7.66: a tile with a hint (the Radio tile) shows it in the footer while focused */
+                if (mode === "main" && hintEl) {
+                    var tt = tiles[i];
+                    if (tt && tt.hint) hintEl.textContent = tt.hint;
+                    else if (mainHint) hintEl.textContent = mainHint;
+                }
+            },
             onSelect: function (i) { if (tiles[i] && tiles[i].run) tiles[i].run(); },
             canHold: function (i) { return !!(tiles[i] && tiles[i].hold); },
             onLongPress: function (i) { if (tiles[i] && tiles[i].hold) tiles[i].hold(); },

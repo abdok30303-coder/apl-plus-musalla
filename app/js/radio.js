@@ -39,6 +39,10 @@
     var abortAttempt = null, retryCount = 0, curUrl = "";
     var mode = "", playing = false, preparing = false, pausedForAlert = false, why = "";
     var waiters = [];
+    /* v8.7.66: stations of the list (Shoutcast MP3) are watched more closely: the audio clock must keep moving, and after
+       a stall the other host (backup.qurango.net) is tried first. Cairo keeps the old settings. */
+    var avLast = -1, avStill = 0, avMoved = false, rot = 0;
+    function isStation() { return !!(sys.pref("radioStation") && APL.radioStations && APL.radioStations.get(sys.pref("radioStation"))); }
 
     function storeGet(k) { try { return global.localStorage.getItem(k) || ""; } catch (e) { return ""; } }
     function storeSet(k, v) { try { if (v) global.localStorage.setItem(k, v); else global.localStorage.removeItem(k); } catch (e) {} }
@@ -57,7 +61,11 @@
         var st = sys.pref("radioStation");
         if (st && APL.radioStations) {
             APL.radioStations.urls(st).forEach(add);
-            if (out.length) return out;
+            if (out.length) {
+                var r = rot % out.length;
+                if (r) out = out.slice(r).concat(out.slice(0, r));
+                return out;
+            }
         }
         add(sys.pref("radioUrl"));
         (CFG.urls && CFG.urls.length ? CFG.urls : DEFAULT_URLS).forEach(add);
@@ -180,7 +188,7 @@
                                 stallTimer = setTimeout(function () {
                                     stallTimer = null;
                                     runtimeFailure("stalled", "buffering for over " + (STALL_LIMIT / 1000) + " seconds");
-                                }, STALL_LIMIT);
+                                }, isStation() ? 10000 : STALL_LIMIT);
                             }
                         },
                         onbufferingcomplete: function () {
@@ -271,6 +279,7 @@
         mode = h5 ? "html5" : "avplay";
         why = "";
         retryCount = 0;
+        avLast = -1; avStill = 0; avMoved = false;
         clearRetry();
         // The TV can release a player without any callback (alert focus, source
         // change). Check the real player state while we believe we are playing.
@@ -282,10 +291,21 @@
                 var ct = h5.currentTime;
                 h5Still = (ct === h5Last || h5.paused || h5.ended) ? h5Still + 1 : 0;
                 h5Last = ct;
-                if (h5Still >= 2) lostStream(token, "player state", "audio clock stopped");
+                if (h5Still >= (isStation() ? 3 : 2)) lostStream(token, "player state", "audio clock stopped");
                 return;
             }
             try { st = String(av.getState()); } catch (e) { st = "ERROR"; }
+            if (st === "PLAYING" && isStation()) {
+                /* AVPlay can say PLAYING while the stream delivers nothing: judge by the play position moving */
+                var cp = -1;
+                try { cp = Number(av.getCurrentTime()); } catch (e5) { cp = -1; }
+                if (cp >= 0) {
+                    if (avLast >= 0 && cp !== avLast) { avMoved = true; avStill = 0; }
+                    else if (avLast >= 0) avStill++;
+                    avLast = cp;
+                    if (avMoved && avStill >= 3) { lostStream(token, "no progress", "the audio position stopped moving"); return; }
+                }
+            }
             if (st !== "PLAYING") {
                 if (document.hidden && bgOK()) {            // released while another app is in front: do not reopen now
                     closeAvPlay(); playing = false; mode = ""; clearTimers();
@@ -294,7 +314,7 @@
                 }
                 lostStream(token, "player state", st);
             }
-        }, WATCH_EVERY);
+        }, isStation() ? 4000 : WATCH_EVERY);
         changed();
     }
 
@@ -302,6 +322,7 @@
        radio is wanted and the launcher is in front. */
     function lostStream(token, phase, e) {
         if (token !== session) return;
+        if (isStation()) rot++;                 // the next try starts on the other host
         closeAvPlay();
         playing = false;
         why = "AVPlay " + phase + ": " + errorText(e);
@@ -370,6 +391,7 @@
         pausedForAlert = false;
         clearRetry();
         retryCount = 0;
+        rot = 0;
         setWanted(true);
         var targetUrl = forcedUrl || url();
         curUrl = targetUrl;

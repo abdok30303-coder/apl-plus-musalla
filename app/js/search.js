@@ -17,7 +17,8 @@
     var APL = global.APL, K = APL.KEY;
     var LETTERS = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
     var root, fieldEl, keysEl, resultsEl, emptyEl, toolEl, nav;
-    var isOpen = false, query = "", keys = [], found = [], cleaning = false;
+    var isOpen = false, query = "", keys = [], found = [], cleaning = false, allMode = false;
+    function allLabel() { return APL.lang === "ar" ? "الجميع" : "All"; }
 
     function el(tag, cls, text) {
         var e = document.createElement(tag);
@@ -40,6 +41,8 @@
     /* The name's start first, then the start of a word in it, then anywhere. Nothing typed: the recent apps. */
     function match(q) {
         var all = candidates();
+        /* v8.7.66: "All" lists every app by name */
+        if (allMode) return all.slice().sort(function (x, y) { var a = norm(x.name), b = norm(y.name); return a < b ? -1 : (a > b ? 1 : 0); });
         if (!q) {
             var recent = APL.sys.pref("recentApps") || [];
             return recent.map(function (id) { return all.filter(function (a) { return a.id === id; })[0]; }).filter(Boolean);
@@ -65,6 +68,7 @@
         root.appendChild(fieldEl); root.appendChild(keysEl); root.appendChild(resultsEl); root.appendChild(emptyEl);
         document.body.appendChild(root);
 
+        keys.push({ all: true, label: allLabel(), wide: true });       // v8.7.66: "All" first, before the letters
         LETTERS.forEach(function (c) { keys.push({ type: c, label: c }); });
         keys.push({ del: true, label: APL.t("Delete"), wide: true });
         keys.forEach(function (k) {
@@ -81,6 +85,13 @@
         root.appendChild(toolEl);
 
         nav = new APL.Nav({
+            /* v8.7.66: moving onto a letter (or "All") filters at once, no OK needed */
+            onFocus: function (i, e) {
+                var k = e && e._key;
+                if (!k || !isOpen) return;
+                if (k.all) showAll();
+                else if (k.type) type(k.type);
+            },
             rows: true,     /* v7.0.5: LEFT/RIGHT stay in the row (Clean Background button no longer drops into the letters) */
             onSelect: function (i) {
                 var t = nav.tiles[i];
@@ -98,10 +109,11 @@
         });
     }
 
-    function press(k) { if (k.del) erase(); else type(k.type); }
+    function press(k) { if (k.del) erase(); else if (k.all) showAll(); else type(k.type); }
+    function showAll() { if (!allMode || query) { allMode = true; query = ""; refresh(); } }
     /* v1.2.115: one letter at a time: the new letter replaces the one chosen before */
-    function type(c) { c = String(c || "").replace(/\s/g, "").slice(-1); if (!c) return; if (query !== c) { query = c; refresh(); } }
-    function erase() { if (query) { query = ""; refresh(); } }
+    function type(c) { c = String(c || "").replace(/\s/g, "").slice(-1); if (!c) return; if (query !== c || allMode) { allMode = false; query = c; refresh(); } }
+    function erase() { if (query || allMode) { allMode = false; query = ""; refresh(); } }
 
     /* ---- v1.2.115: Clean Background -------------------------------------------------------------------
        Closes the apps that are still open behind the launcher (YouTube, Netflix... stay in memory when you
@@ -146,8 +158,8 @@
     /* Field and results again; the focus stays where it is (on the letter just typed). */
     function refresh() {
         var q = norm(query).replace(/\s+/g, " ").replace(/^ /, "");
-        fieldEl.textContent = query || APL.t("Search");
-        fieldEl.classList.toggle("is-empty", !query);
+        fieldEl.textContent = allMode ? allLabel() : (query || APL.t("Search"));
+        fieldEl.classList.toggle("is-empty", !query && !allMode);
         found = match(q);
         resultsEl.innerHTML = "";
         var tiles = found.map(function (app) {
@@ -156,10 +168,10 @@
             resultsEl.appendChild(t);
             return t;
         });
-        emptyEl.textContent = !q ? (found.length ? APL.t("Recently Used") : "") :
+        emptyEl.textContent = allMode ? "" : !q ? (found.length ? APL.t("Recently Used") : "") :
             found.length ? "" : APL.t("No apps found for “{q}”", { q: query.trim() });
-        root.classList.toggle("has-recent", !q && found.length > 0);
-        keys.forEach(function (k) { if (k.type) k.el.classList.toggle("is-picked", k.type === query); });
+        root.classList.toggle("has-recent", !q && !allMode && found.length > 0);
+        keys.forEach(function (k) { if (k.type) k.el.classList.toggle("is-picked", !allMode && k.type === query); else if (k.all) k.el.classList.toggle("is-picked", allMode); });
         var keyEls = [toolEl].concat(keys.map(function (k) { k.el._key = k; return k.el; }));
         var cur = nav.current && nav.current(), at = Math.max(0, keyEls.indexOf(cur));
         nav.setTiles(keyEls.concat(tiles));
@@ -168,10 +180,10 @@
 
     function open() {
         if (!root) buildDom();
-        query = "";
+        query = ""; allMode = false;
         nav.setTiles([]);
         refresh();
-        nav.focus(1);                                        // the first letter (index 0 is the cleaning button)
+        nav.focus(1);                                        // "All" (index 0 is the cleaning button)
         root.classList.add("is-open");
         document.body.classList.add("has-search");          // the Home Screen steps back (launcher.css)
         APL.pushNav(nav);
