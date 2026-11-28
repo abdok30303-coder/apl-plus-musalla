@@ -13883,7 +13883,7 @@ window.APL_KEYS = {
                 if (scroller) {
                     var er = el.getBoundingClientRect();
                     var sr = scroller.getBoundingClientRect();
-                    var pad = 50;
+                    var pad = parseInt(scroller.getAttribute("data-scrollpad"), 10) || 50;   // v8.7.67: a list whose tiles have a caption below can ask for more margin
                     if (er.top < sr.top + pad) {
                         scroller.scrollTop -= (sr.top + pad - er.top);
                     } else if (er.bottom > sr.bottom - pad) {
@@ -15711,7 +15711,7 @@ window.APL_KEYS = {
         }, 400);
     }
     function stRowsFill(list) {
-        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "", lastCat = "", i, o, h;
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "", lastCat = "", i, o, h, n = 0;
         list.innerHTML = "";
         function row(label, sub, on, id) {
             var r = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label"></span>' + (sub ? '<span class="aplx-row__sub"></span>' : "") + "</div>" + (on ? '<span class="aplx-badge aplx-badge--on">✓</span>' : ""));
@@ -15721,19 +15721,20 @@ window.APL_KEYS = {
             r.addEventListener("click", run);
             tiles.push({ el: r, run: run });
             list.appendChild(r);
+            n++;
         }
         for (i = 0; i < S.list.length; i++) {
             o = S.list[i];
             if (stFilter && stLetter(o, ar) !== stFilter) continue;
             if (o.cat !== lastCat) {
                 lastCat = o.cat;
-                h = el("div", "aplx-row__sub");
-                h.style.padding = "14px 8px 4px";
+                h = el("div", "stn__cat");
                 h.textContent = (S.cats[o.cat] || [o.cat, o.cat])[ar ? 0 : 1];
                 list.appendChild(h);
             }
-            row(ar ? o.ar : (o.en || o.ar), ar ? "" : (o.en && o.ar !== o.en ? o.ar : ""), o.id === cur, o.id);
+            row(ar ? o.ar : (o.en || o.ar), "", o.id === cur, o.id);
         }
+        if (!n) { h = el("div", "stn__empty"); h.textContent = ar ? "لا توجد إذاعات بهذا الحرف" : "No stations for this letter"; list.appendChild(h); }
     }
     /* v8.7.66: focusing a letter filters the stations at once (no OK needed) */
     function stationsFocus(i) {
@@ -15745,15 +15746,18 @@ window.APL_KEYS = {
         for (k = 0; k < tiles.length; k++) if (tiles[k].chip) tiles[k].el.classList.toggle("is-on", tiles[k].letter === stFilter);
         tiles.length = stRowStart;
         stRowsFill(stListEl);
+        stListEl.scrollTop = 0;
         nav.tiles = tiles.map(function (x) { return x.el; });
-        if (bodyEl) bodyEl.scrollTop = 0;
     }
+    /* v8.7.67: a glass panel on one side (the original radio and the letters, big keys) and the stations list beside it */
     function buildStations() {
         bodyEl.innerHTML = "";
         tiles = [];
         var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
         titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
-        subEl.textContent = ar ? "حرّك على الحرف لتصفية الإذاعات، ثم انزل واختر الإذاعة واضغط OK. الإذاعة المختارة تبقى هي إذاعة أيقونة الراديو." : "Move onto a letter to filter, go down, pick a station and press OK. It stays the station of the Radio tile.";
+        subEl.textContent = ar ? "قف على حرف لتصفية الإذاعات، ثم اختر إذاعة واضغط OK" : "Move onto a letter to filter, then pick a station and press OK";
+        subEl.style.fontSize = "26px";
+        hintEl.style.fontSize = "24px"; hintEl.style.color = ""; hintEl.style.fontWeight = "";
         /* the first letters that really exist among the names, nothing else */
         var seen = {}, letters = [], i, c;
         for (i = 0; i < S.list.length; i++) {
@@ -15762,23 +15766,18 @@ window.APL_KEYS = {
         }
         letters.sort(function (x, y) { return letterRank(x, ar) - letterRank(y, ar); });
         if (stFilter && !seen[stFilter]) stFilter = "";
-        var bar = el("div", "");
-        bar.style.cssText = "position:sticky;top:0;z-index:3;background:rgba(12,16,24,.94);padding:6px 4px 10px";
-        /* above the letters: the original radio (Cairo, the default) */
-        var cairo = el("div", "pw-ic" + (!cur ? " is-on" : ""), (ACT_ICO.radio || "") + "<span></span>");
-        cairo.querySelector("span").textContent = ar ? "الإذاعة الأصلية · القرآن الكريم من القاهرة" : "Original radio · Qur'an Cairo";
-        cairo.style.cssText = "display:inline-flex;margin-bottom:8px";
+        var wrap = el("div", "stn");
+        var cairo = el("div", "stn__cairo" + (!cur ? " is-on" : ""), (ACT_ICO.radio || "") + "<span></span>");
+        cairo.querySelector("span").textContent = ar ? "الإذاعة الأصلية · القاهرة" : "Original radio · Qur'an Cairo";
         var cairoRun = function () { pickStation(""); };
         cairo.addEventListener("click", cairoRun);
         tiles.push({ el: cairo, run: cairoRun, cairo: true });
-        bar.appendChild(cairo);
-        var chips = el("div", "");
-        chips.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
+        wrap.appendChild(cairo);
+        var chips = el("div", "stn__bar");
         stChipsEl = chips;
         function chip(label, letter) {
-            var t = el("div", "pw-ic" + (stFilter === letter ? " is-on" : ""), "<span></span>");
-            t.querySelector("span").textContent = label;
-            t.style.cssText = "min-width:48px;padding:8px 14px;text-align:center;flex:0 0 auto";
+            var t = el("div", "stn__key" + (letter ? "" : " stn__key--all") + (stFilter === letter ? " is-on" : ""));
+            t.textContent = label;
             var run = function () { if (tiles.length > stRowStart) nav.focus(stRowStart); };
             t.addEventListener("click", function () { var k; for (k = 0; k < tiles.length; k++) if (tiles[k].el === t) { nav.focus(k); break; } });
             if (stFilter === letter) stActiveChip = tiles.length;
@@ -15788,35 +15787,53 @@ window.APL_KEYS = {
         chip(ar ? "الجميع" : "All", "");
         for (i = 0; i < letters.length; i++) chip(letters[i], letters[i]);
         stRowStart = tiles.length;
-        bar.appendChild(chips);
-        bodyEl.appendChild(bar);
-        stListEl = el("div", "aplx-list");
+        wrap.appendChild(chips);
+        stListEl = el("div", "stn__list");
         stRowsFill(stListEl);
-        bodyEl.appendChild(stListEl);
-        hintEl.textContent = ar ? "◀ ▶ حرف (التصفية فورية) · ▼ للإذاعات · OK للاختيار · رجوع للإلغاء" : "◀ ▶ letter (filters at once) · ▼ stations · OK to choose · Back to cancel";
+        wrap.appendChild(stListEl);
+        bodyEl.appendChild(wrap);
+        hintEl.textContent = ar ? "الأسهم للتنقل · الحروف تصفّي فوراً · OK للاختيار · رجوع للإلغاء" : "Arrows move · letters filter at once · OK to choose · Back to cancel";
     }
-    /* arrows inside the stations list: the original-radio button, the letters, then the stations */
+    /* arrows inside the stations screen: the original-radio button, the letter bar (one row), the stations list below */
+    function stCenter(node) { var r = node.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
     function stationsKey(code) {
-        var idx = nav.index, rtl = false, d, inChips = idx >= 1 && idx < stRowStart;
-        try { rtl = global.getComputedStyle(stChipsEl).direction === "rtl"; } catch (e) {}
-        if (code === APL.KEY.LEFT || code === APL.KEY.RIGHT) {
-            if (!inChips) return true;
-            d = code === APL.KEY.RIGHT ? (rtl ? -1 : 1) : (rtl ? 1 : -1);
-            if (idx + d >= 1 && idx + d < stRowStart) { nav.focus(idx + d); if (APL.sound) APL.sound.tick(); }
+        var idx = nav.index, k, best = -1, bd = 1e9, dx;
+        var left = code === APL.KEY.LEFT, right = code === APL.KEY.RIGHT, up = code === APL.KEY.UP, down = code === APL.KEY.DOWN;
+        if (!(left || right || up || down) || !tiles[idx]) return false;
+        function go(i) { if (i >= 0 && i !== idx && i < tiles.length) { nav.focus(i); if (APL.sound) APL.sound.tick(); } }
+        if (idx >= stRowStart) {                                       /* in the stations list */
+            if (up) go(idx > stRowStart ? idx - 1 : stActiveChip);
+            else if (down) go(idx + 1 < tiles.length ? idx + 1 : idx);
+            else {                                                     /* v8.7.67: left/right on a station = the next/previous letter (by position, so RTL follows) */
+                var from = tiles[stActiveChip] ? stCenter(tiles[stActiveChip].el).x : 0, cand = -1, cd = 1e9;
+                for (k = 1; k < stRowStart; k++) {
+                    dx = stCenter(tiles[k].el).x - from;
+                    if (left ? dx >= -1 : dx <= 1) continue;
+                    if (Math.abs(dx) < cd) { cd = Math.abs(dx); cand = k; }
+                }
+                if (cand >= 0) {
+                    stationsFocus(cand);
+                    if (tiles.length > stRowStart) nav.focus(stRowStart);
+                    if (APL.sound) APL.sound.tick();
+                }
+            }
             return true;
         }
-        if (code === APL.KEY.DOWN) {
-            var to = idx === 0 ? stActiveChip : (inChips ? stRowStart : idx + 1);
-            if (to < tiles.length && to !== idx) { nav.focus(to); if (APL.sound) APL.sound.tick(); }
+        if (idx === 0) {                                               /* the original-radio button */
+            if (down) go(stActiveChip);
             return true;
         }
-        if (code === APL.KEY.UP) {
-            if (idx === 0) return true;
-            nav.focus(inChips ? 0 : (idx === stRowStart ? stActiveChip : idx - 1));
-            if (APL.sound) APL.sound.tick();
-            return true;
+        if (up) { go(0); return true; }                                /* a letter */
+        if (down) { if (tiles.length > stRowStart) go(stRowStart); return true; }
+        var me = stCenter(tiles[idx].el).x;
+        for (k = 1; k < stRowStart; k++) {                             /* the nearest letter on that side, by position */
+            if (k === idx) continue;
+            dx = stCenter(tiles[k].el).x - me;
+            if (left ? dx >= -1 : dx <= 1) continue;
+            if (Math.abs(dx) < bd) { bd = Math.abs(dx); best = k; }
         }
-        return false;
+        if (best >= 0) go(best);
+        return true;
     }
 
     function toggleRadio() {
@@ -15857,8 +15874,9 @@ window.APL_KEYS = {
                 /* v8.7.66: a tile with a hint (the Radio tile) shows it in the footer while focused */
                 if (mode === "main" && hintEl) {
                     var tt = tiles[i];
-                    if (tt && tt.hint) hintEl.textContent = tt.hint;
-                    else if (mainHint) hintEl.textContent = mainHint;
+                    /* the Radio tile's hint: clear gold text, two font steps larger (17 px to 24 px) */
+                    if (tt && tt.hint) { hintEl.textContent = tt.hint; hintEl.style.fontSize = "24px"; hintEl.style.color = "#ffd36b"; hintEl.style.fontWeight = "600"; }
+                    else { if (mainHint) hintEl.textContent = mainHint; hintEl.style.fontSize = ""; hintEl.style.color = ""; hintEl.style.fontWeight = ""; }
                 }
             },
             onSelect: function (i) { if (tiles[i] && tiles[i].run) tiles[i].run(); },
@@ -15887,6 +15905,7 @@ window.APL_KEYS = {
 
     function render() {
         var keep = Math.min(focusIndex, 999);
+        if (mode !== "stations") { if (subEl) subEl.style.fontSize = ""; if (hintEl) { hintEl.style.fontSize = ""; hintEl.style.color = ""; hintEl.style.fontWeight = ""; } }
         if (mode === "city") buildCity();
         else if (mode === "sleep") buildSleep();
         else if (mode === "stations") buildStations();
@@ -20774,6 +20793,12 @@ window.APL_DEVICES = [
         return s.normalize ? s.normalize("NFD").replace(/[̀-ͯ]/g, "") : s;
     }
 
+    /* v8.7.67: ONE rule for the letter bar and for the filter: the first letter or digit of the name, after any symbol or emoji
+       in front of it ("📋Tasks" is a T). The bar is made from this, and a letter filters with it, so a letter that is
+       shown always has at least one app. */
+    function firstKey(name) {
+        return norm(name).replace(/^[^a-z0-9\u0600-\u06ff]+/, "").charAt(0);
+    }
     function candidates() {
         var hidden = APL.sys.pref("searchHidden") ? [] : APL.sys.pref("hiddenApps") || [];
         return ((APL.allApps && APL.allApps()) || []).filter(function (a) {
@@ -20789,6 +20814,8 @@ window.APL_DEVICES = [
             var recent = APL.sys.pref("recentApps") || [];
             return recent.map(function (id) { return all.filter(function (a) { return a.id === id; })[0]; }).filter(Boolean);
         }
+        /* one letter or digit: exactly the apps whose name starts with it (the same rule that made the bar) */
+        if (q.length === 1) return all.filter(function (a) { return firstKey(a.name) === q; });
         var start = [], word = [], inside = [];
         all.forEach(function (a) {
             var n = norm(a.name), at = n.indexOf(q);
@@ -20800,24 +20827,37 @@ window.APL_DEVICES = [
         return q.length === 1 ? start.concat(word) : start.concat(word, inside);
     }
 
+    /* v8.7.67: only the first letters that really exist among the apps (no empty letters), "All" first, big keys, no Delete
+       (All clears the filter). The row is rebuilt every time the search opens, because the apps can change. */
+    function rebuildKeys() {
+        var seen = {}, list = [], i, c, all = candidates();
+        for (i = 0; i < all.length; i++) {
+            c = firstKey(all[i].name);
+            if (c && !seen[c]) { seen[c] = 1; list.push(c); }
+        }
+        list.sort();
+        keysEl.innerHTML = "";
+        keys.length = 0;
+        keys.push({ all: true, label: allLabel(), wide: true });
+        list.forEach(function (ch) { keys.push({ type: ch, label: ch.toUpperCase() }); });
+        keys.forEach(function (k) {
+            var t = el("div", "search__key" + (k.wide ? " search__key--wide" : ""), k.label);
+            k.el = t;
+            keysEl.appendChild(t);
+        });
+    }
     function buildDom() {
         root = el("section", "search");
         root.appendChild(el("div", "search__dim"));
         fieldEl = el("div", "search__field");
         keysEl = el("div", "search__keys");
         resultsEl = el("div", "search__results");
+        resultsEl.setAttribute("data-scrollpad", "120");
         emptyEl = el("p", "search__empty");
         root.appendChild(fieldEl); root.appendChild(keysEl); root.appendChild(resultsEl); root.appendChild(emptyEl);
         document.body.appendChild(root);
 
-        keys.push({ all: true, label: allLabel(), wide: true });       // v8.7.66: "All" first, before the letters
-        LETTERS.forEach(function (c) { keys.push({ type: c, label: c }); });
-        keys.push({ del: true, label: APL.t("Delete"), wide: true });
-        keys.forEach(function (k) {
-            var t = el("div", "search__key" + (k.wide ? " search__key--wide" : ""), k.label);
-            k.el = t;
-            keysEl.appendChild(t);
-        });
+        rebuildKeys();
 
         /* v1.2.115: the cleaning button, above the letters (right side of the field row) */
         toolEl = el("div", "search__key search__tool");
@@ -20843,6 +20883,19 @@ window.APL_DEVICES = [
             },
             onBack: close,
             onKey: function (code, e) {
+                if ((code === K.LEFT || code === K.RIGHT) && nav.current && nav.current() && nav.current()._app) {   // v8.7.67: on an app, left/right = next/previous letter
+                    var act = null, k, r, from, cand = null, cd = 1e9, dx;
+                    for (k = 0; k < keys.length; k++) if (keys[k].el.classList.contains("is-picked")) act = keys[k];
+                    if (!act) return true;
+                    from = keys[keys.indexOf(act)].el.getBoundingClientRect(); from = from.left + from.width / 2;
+                    for (k = 0; k < keys.length; k++) {
+                        r = keys[k].el.getBoundingClientRect(); dx = r.left + r.width / 2 - from;
+                        if (code === K.LEFT ? dx >= -1 : dx <= 1) continue;
+                        if (Math.abs(dx) < cd) { cd = Math.abs(dx); cand = keys[k]; }
+                    }
+                    if (cand) press(cand);
+                    return true;
+                }
                 if (code >= 48 && code <= 57) { type(String(code - 48)); return true; }             // the remote's digits
                 if (code === K.BACKSPACE && e.key === "Backspace") { erase(); return true; }        // a keyboard's ⌫
                 if (e.key && e.key.length === 1 && /[\w ]/.test(e.key)) { type(norm(e.key)); return true; }
@@ -20924,6 +20977,7 @@ window.APL_DEVICES = [
         if (!root) buildDom();
         query = ""; allMode = false;
         nav.setTiles([]);
+        rebuildKeys();
         refresh();
         nav.focus(1);                                        // "All" (index 0 is the cleaning button)
         root.classList.add("is-open");
@@ -26011,6 +26065,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.67: شريط حروف زجاجي طويل بمفاتيح كبيرة لقائمة الإذاعات ولبحث الشاشة الرئيسية، زر الإذاعة الأصلية كبير فوق الشريط وقائمة الإذاعات بعرض الشاشة تحته، والعنصر المحدد يظهر كاملاً دائماً حتى أسفل القائمة، ولا يظهر حرف ليس تحته تطبيق أو إذاعة. لم تُجرَّب على التلفزيون.",
         "✔ 8.7.66: قائمة الإذاعات والبحث والإطفاء التلقائي وأشكال المصحف. أيقونة الراديو تعرض «اضغط OK مطولاً لاختيار إذاعة». قائمة الإذاعات فيها زر الإذاعة الأصلية (القاهرة) وصف حروف (الموجودة فعلاً فقط، و«الجميع» أولاً) والتصفية فورية بمجرد الوقوف على الحرف؛ وبحث الشاشة الرئيسية بنفس الطريقة. الإذاعات اللي كانت بتقطع: في مراقب جديد بيعيد الاتصال وبيجرب العنوان الاحتياطي (السبب مش مؤكد على التلفزيون). زرّي الشاشة السوداء وتكبير العيد اتبدلوا. الإطفاء التلقائي: اتقوّى بخطّ دفاع تاني من التطبيق نفسه بيوقف الصوت وبيبعت زر الطاقة. المصحف: الشكل الورقي هو الأساسي، والأخضر لسه موجود، وزر الشكل بيدوّر: ورقي، سيبيا، هادئ، ليلي، أخضر. غير مجرّب على التلفزيون.",
         "✔ 8.7.65: إذاعات القرآن الكريم. اضغط مطولاً على OK على أيقونة الراديو في صفحة الصلاة والقرآن تظهر قائمة بـ ١٧٢ إذاعة قرآنية (تلاوات لقراء كثيرين، وترجمات المعاني، والتفسير، والأذكار، والسيرة النبوية، والرقية، والفتاوى وغيرها) مقسمة حسب النوع، واختر منها. الإذاعة المختارة تتحفظ وتشتغل من أيقونة الراديو ومن صفحة الاستماع للقرآن ومركز التحكم وشاشة التوقف؛ وإذاعة القاهرة تفضل أول صف والإذاعة الأساسية. كل إذاعة ليها عنوان احتياطي. الإذاعات من القائمة العامة لموقع MP3Quran.net. غير مجرّب على التلفزيون: اتفحص في Chrome بدون شاشة على التطبيق الحقيقي، ولسه محتاج تجربة على التلفزيون.",
         "✔ 8.7.64: طقطقة أقل في الآيات القصيرة. أول انتقال في التلاوة (من الآية الأولى للتانية) كان بيبدأ بعد ما الأولى تخلص فيحصل فاصل صغير وخرج الصوت يهدا. دلوقتي الآية الأولى كمان بتتحمّل وتتفك أول ما تتخزّن فمدتها الحقيقية معروفة، والآية الجاية بتبدأ على ساعة الصوت قبل نهاية الأولى بأجزاء من الثانية، فخرج الصوت مابيهداش، وبعدها السلسلة بتكمل زي ٨.٧.٦٢. لو الأولى ماتفكتش في وقتها بيرجع للسلوك القديم. غير مجرّب على التلفزيون.",
@@ -26068,6 +26123,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.67: one long glass letter bar with big keys for the radio list and the Home Screen search, the original radio as a big button above it and a full-width station list below, the focused item always fully visible (also at the bottom), and no letter without an app or station. Untested on the TV.",
         "✔ 8.7.66: Radio list with letters and the original-radio button, instant letter filter (also in the Home search), a reconnecting radio watchdog, Auto Off backed up by the launcher, and Mushaf looks: Paper (default), Sepia, Soft, Night, Green. Untested on the TV.",
         "✔ 8.7.65: Quran radio stations: long-press OK on the Radio tile to pick from 172 stations (reciters, translations, tafsir, adhkar and more). Cairo stays the default. Source: MP3Quran.net. Untested on the TV.",
         "✔ 8.7.64: Fewer clicks on short ayahs: the first ayah is decoded too, and the next ayah starts on the audio clock a few milliseconds before it ends, so the sound output never goes idle at the first hand-over. Untested on the TV.",

@@ -32,6 +32,12 @@
         return s.normalize ? s.normalize("NFD").replace(/[̀-ͯ]/g, "") : s;
     }
 
+    /* v8.7.67: ONE rule for the letter bar and for the filter: the first letter or digit of the name, after any symbol or emoji
+       in front of it ("📋Tasks" is a T). The bar is made from this, and a letter filters with it, so a letter that is
+       shown always has at least one app. */
+    function firstKey(name) {
+        return norm(name).replace(/^[^a-z0-9\u0600-\u06ff]+/, "").charAt(0);
+    }
     function candidates() {
         var hidden = APL.sys.pref("searchHidden") ? [] : APL.sys.pref("hiddenApps") || [];
         return ((APL.allApps && APL.allApps()) || []).filter(function (a) {
@@ -47,6 +53,8 @@
             var recent = APL.sys.pref("recentApps") || [];
             return recent.map(function (id) { return all.filter(function (a) { return a.id === id; })[0]; }).filter(Boolean);
         }
+        /* one letter or digit: exactly the apps whose name starts with it (the same rule that made the bar) */
+        if (q.length === 1) return all.filter(function (a) { return firstKey(a.name) === q; });
         var start = [], word = [], inside = [];
         all.forEach(function (a) {
             var n = norm(a.name), at = n.indexOf(q);
@@ -58,24 +66,37 @@
         return q.length === 1 ? start.concat(word) : start.concat(word, inside);
     }
 
+    /* v8.7.67: only the first letters that really exist among the apps (no empty letters), "All" first, big keys, no Delete
+       (All clears the filter). The row is rebuilt every time the search opens, because the apps can change. */
+    function rebuildKeys() {
+        var seen = {}, list = [], i, c, all = candidates();
+        for (i = 0; i < all.length; i++) {
+            c = firstKey(all[i].name);
+            if (c && !seen[c]) { seen[c] = 1; list.push(c); }
+        }
+        list.sort();
+        keysEl.innerHTML = "";
+        keys.length = 0;
+        keys.push({ all: true, label: allLabel(), wide: true });
+        list.forEach(function (ch) { keys.push({ type: ch, label: ch.toUpperCase() }); });
+        keys.forEach(function (k) {
+            var t = el("div", "search__key" + (k.wide ? " search__key--wide" : ""), k.label);
+            k.el = t;
+            keysEl.appendChild(t);
+        });
+    }
     function buildDom() {
         root = el("section", "search");
         root.appendChild(el("div", "search__dim"));
         fieldEl = el("div", "search__field");
         keysEl = el("div", "search__keys");
         resultsEl = el("div", "search__results");
+        resultsEl.setAttribute("data-scrollpad", "120");
         emptyEl = el("p", "search__empty");
         root.appendChild(fieldEl); root.appendChild(keysEl); root.appendChild(resultsEl); root.appendChild(emptyEl);
         document.body.appendChild(root);
 
-        keys.push({ all: true, label: allLabel(), wide: true });       // v8.7.66: "All" first, before the letters
-        LETTERS.forEach(function (c) { keys.push({ type: c, label: c }); });
-        keys.push({ del: true, label: APL.t("Delete"), wide: true });
-        keys.forEach(function (k) {
-            var t = el("div", "search__key" + (k.wide ? " search__key--wide" : ""), k.label);
-            k.el = t;
-            keysEl.appendChild(t);
-        });
+        rebuildKeys();
 
         /* v1.2.115: the cleaning button, above the letters (right side of the field row) */
         toolEl = el("div", "search__key search__tool");
@@ -101,6 +122,19 @@
             },
             onBack: close,
             onKey: function (code, e) {
+                if ((code === K.LEFT || code === K.RIGHT) && nav.current && nav.current() && nav.current()._app) {   // v8.7.67: on an app, left/right = next/previous letter
+                    var act = null, k, r, from, cand = null, cd = 1e9, dx;
+                    for (k = 0; k < keys.length; k++) if (keys[k].el.classList.contains("is-picked")) act = keys[k];
+                    if (!act) return true;
+                    from = keys[keys.indexOf(act)].el.getBoundingClientRect(); from = from.left + from.width / 2;
+                    for (k = 0; k < keys.length; k++) {
+                        r = keys[k].el.getBoundingClientRect(); dx = r.left + r.width / 2 - from;
+                        if (code === K.LEFT ? dx >= -1 : dx <= 1) continue;
+                        if (Math.abs(dx) < cd) { cd = Math.abs(dx); cand = keys[k]; }
+                    }
+                    if (cand) press(cand);
+                    return true;
+                }
                 if (code >= 48 && code <= 57) { type(String(code - 48)); return true; }             // the remote's digits
                 if (code === K.BACKSPACE && e.key === "Backspace") { erase(); return true; }        // a keyboard's ⌫
                 if (e.key && e.key.length === 1 && /[\w ]/.test(e.key)) { type(norm(e.key)); return true; }
@@ -182,6 +216,7 @@
         if (!root) buildDom();
         query = ""; allMode = false;
         nav.setTiles([]);
+        rebuildKeys();
         refresh();
         nav.focus(1);                                        // "All" (index 0 is the cleaning button)
         root.classList.add("is-open");

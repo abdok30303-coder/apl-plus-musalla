@@ -1558,7 +1558,7 @@
         }, 400);
     }
     function stRowsFill(list) {
-        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "", lastCat = "", i, o, h;
+        var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "", lastCat = "", i, o, h, n = 0;
         list.innerHTML = "";
         function row(label, sub, on, id) {
             var r = el("div", "aplx-row", '<div class="aplx-row__main"><span class="aplx-row__label"></span>' + (sub ? '<span class="aplx-row__sub"></span>' : "") + "</div>" + (on ? '<span class="aplx-badge aplx-badge--on">✓</span>' : ""));
@@ -1568,19 +1568,20 @@
             r.addEventListener("click", run);
             tiles.push({ el: r, run: run });
             list.appendChild(r);
+            n++;
         }
         for (i = 0; i < S.list.length; i++) {
             o = S.list[i];
             if (stFilter && stLetter(o, ar) !== stFilter) continue;
             if (o.cat !== lastCat) {
                 lastCat = o.cat;
-                h = el("div", "aplx-row__sub");
-                h.style.padding = "14px 8px 4px";
+                h = el("div", "stn__cat");
                 h.textContent = (S.cats[o.cat] || [o.cat, o.cat])[ar ? 0 : 1];
                 list.appendChild(h);
             }
-            row(ar ? o.ar : (o.en || o.ar), ar ? "" : (o.en && o.ar !== o.en ? o.ar : ""), o.id === cur, o.id);
+            row(ar ? o.ar : (o.en || o.ar), "", o.id === cur, o.id);
         }
+        if (!n) { h = el("div", "stn__empty"); h.textContent = ar ? "لا توجد إذاعات بهذا الحرف" : "No stations for this letter"; list.appendChild(h); }
     }
     /* v8.7.66: focusing a letter filters the stations at once (no OK needed) */
     function stationsFocus(i) {
@@ -1592,15 +1593,18 @@
         for (k = 0; k < tiles.length; k++) if (tiles[k].chip) tiles[k].el.classList.toggle("is-on", tiles[k].letter === stFilter);
         tiles.length = stRowStart;
         stRowsFill(stListEl);
+        stListEl.scrollTop = 0;
         nav.tiles = tiles.map(function (x) { return x.el; });
-        if (bodyEl) bodyEl.scrollTop = 0;
     }
+    /* v8.7.67: a glass panel on one side (the original radio and the letters, big keys) and the stations list beside it */
     function buildStations() {
         bodyEl.innerHTML = "";
         tiles = [];
         var ar = APL.lang === "ar", S = APL.radioStations, cur = sys.pref("radioStation") || "";
         titleEl.textContent = ar ? "إذاعات القرآن الكريم" : "Quran radio stations";
-        subEl.textContent = ar ? "حرّك على الحرف لتصفية الإذاعات، ثم انزل واختر الإذاعة واضغط OK. الإذاعة المختارة تبقى هي إذاعة أيقونة الراديو." : "Move onto a letter to filter, go down, pick a station and press OK. It stays the station of the Radio tile.";
+        subEl.textContent = ar ? "قف على حرف لتصفية الإذاعات، ثم اختر إذاعة واضغط OK" : "Move onto a letter to filter, then pick a station and press OK";
+        subEl.style.fontSize = "26px";
+        hintEl.style.fontSize = "24px"; hintEl.style.color = ""; hintEl.style.fontWeight = "";
         /* the first letters that really exist among the names, nothing else */
         var seen = {}, letters = [], i, c;
         for (i = 0; i < S.list.length; i++) {
@@ -1609,23 +1613,18 @@
         }
         letters.sort(function (x, y) { return letterRank(x, ar) - letterRank(y, ar); });
         if (stFilter && !seen[stFilter]) stFilter = "";
-        var bar = el("div", "");
-        bar.style.cssText = "position:sticky;top:0;z-index:3;background:rgba(12,16,24,.94);padding:6px 4px 10px";
-        /* above the letters: the original radio (Cairo, the default) */
-        var cairo = el("div", "pw-ic" + (!cur ? " is-on" : ""), (ACT_ICO.radio || "") + "<span></span>");
-        cairo.querySelector("span").textContent = ar ? "الإذاعة الأصلية · القرآن الكريم من القاهرة" : "Original radio · Qur'an Cairo";
-        cairo.style.cssText = "display:inline-flex;margin-bottom:8px";
+        var wrap = el("div", "stn");
+        var cairo = el("div", "stn__cairo" + (!cur ? " is-on" : ""), (ACT_ICO.radio || "") + "<span></span>");
+        cairo.querySelector("span").textContent = ar ? "الإذاعة الأصلية · القاهرة" : "Original radio · Qur'an Cairo";
         var cairoRun = function () { pickStation(""); };
         cairo.addEventListener("click", cairoRun);
         tiles.push({ el: cairo, run: cairoRun, cairo: true });
-        bar.appendChild(cairo);
-        var chips = el("div", "");
-        chips.style.cssText = "display:flex;flex-wrap:wrap;gap:8px";
+        wrap.appendChild(cairo);
+        var chips = el("div", "stn__bar");
         stChipsEl = chips;
         function chip(label, letter) {
-            var t = el("div", "pw-ic" + (stFilter === letter ? " is-on" : ""), "<span></span>");
-            t.querySelector("span").textContent = label;
-            t.style.cssText = "min-width:48px;padding:8px 14px;text-align:center;flex:0 0 auto";
+            var t = el("div", "stn__key" + (letter ? "" : " stn__key--all") + (stFilter === letter ? " is-on" : ""));
+            t.textContent = label;
             var run = function () { if (tiles.length > stRowStart) nav.focus(stRowStart); };
             t.addEventListener("click", function () { var k; for (k = 0; k < tiles.length; k++) if (tiles[k].el === t) { nav.focus(k); break; } });
             if (stFilter === letter) stActiveChip = tiles.length;
@@ -1635,35 +1634,53 @@
         chip(ar ? "الجميع" : "All", "");
         for (i = 0; i < letters.length; i++) chip(letters[i], letters[i]);
         stRowStart = tiles.length;
-        bar.appendChild(chips);
-        bodyEl.appendChild(bar);
-        stListEl = el("div", "aplx-list");
+        wrap.appendChild(chips);
+        stListEl = el("div", "stn__list");
         stRowsFill(stListEl);
-        bodyEl.appendChild(stListEl);
-        hintEl.textContent = ar ? "◀ ▶ حرف (التصفية فورية) · ▼ للإذاعات · OK للاختيار · رجوع للإلغاء" : "◀ ▶ letter (filters at once) · ▼ stations · OK to choose · Back to cancel";
+        wrap.appendChild(stListEl);
+        bodyEl.appendChild(wrap);
+        hintEl.textContent = ar ? "الأسهم للتنقل · الحروف تصفّي فوراً · OK للاختيار · رجوع للإلغاء" : "Arrows move · letters filter at once · OK to choose · Back to cancel";
     }
-    /* arrows inside the stations list: the original-radio button, the letters, then the stations */
+    /* arrows inside the stations screen: the original-radio button, the letter bar (one row), the stations list below */
+    function stCenter(node) { var r = node.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
     function stationsKey(code) {
-        var idx = nav.index, rtl = false, d, inChips = idx >= 1 && idx < stRowStart;
-        try { rtl = global.getComputedStyle(stChipsEl).direction === "rtl"; } catch (e) {}
-        if (code === APL.KEY.LEFT || code === APL.KEY.RIGHT) {
-            if (!inChips) return true;
-            d = code === APL.KEY.RIGHT ? (rtl ? -1 : 1) : (rtl ? 1 : -1);
-            if (idx + d >= 1 && idx + d < stRowStart) { nav.focus(idx + d); if (APL.sound) APL.sound.tick(); }
+        var idx = nav.index, k, best = -1, bd = 1e9, dx;
+        var left = code === APL.KEY.LEFT, right = code === APL.KEY.RIGHT, up = code === APL.KEY.UP, down = code === APL.KEY.DOWN;
+        if (!(left || right || up || down) || !tiles[idx]) return false;
+        function go(i) { if (i >= 0 && i !== idx && i < tiles.length) { nav.focus(i); if (APL.sound) APL.sound.tick(); } }
+        if (idx >= stRowStart) {                                       /* in the stations list */
+            if (up) go(idx > stRowStart ? idx - 1 : stActiveChip);
+            else if (down) go(idx + 1 < tiles.length ? idx + 1 : idx);
+            else {                                                     /* v8.7.67: left/right on a station = the next/previous letter (by position, so RTL follows) */
+                var from = tiles[stActiveChip] ? stCenter(tiles[stActiveChip].el).x : 0, cand = -1, cd = 1e9;
+                for (k = 1; k < stRowStart; k++) {
+                    dx = stCenter(tiles[k].el).x - from;
+                    if (left ? dx >= -1 : dx <= 1) continue;
+                    if (Math.abs(dx) < cd) { cd = Math.abs(dx); cand = k; }
+                }
+                if (cand >= 0) {
+                    stationsFocus(cand);
+                    if (tiles.length > stRowStart) nav.focus(stRowStart);
+                    if (APL.sound) APL.sound.tick();
+                }
+            }
             return true;
         }
-        if (code === APL.KEY.DOWN) {
-            var to = idx === 0 ? stActiveChip : (inChips ? stRowStart : idx + 1);
-            if (to < tiles.length && to !== idx) { nav.focus(to); if (APL.sound) APL.sound.tick(); }
+        if (idx === 0) {                                               /* the original-radio button */
+            if (down) go(stActiveChip);
             return true;
         }
-        if (code === APL.KEY.UP) {
-            if (idx === 0) return true;
-            nav.focus(inChips ? 0 : (idx === stRowStart ? stActiveChip : idx - 1));
-            if (APL.sound) APL.sound.tick();
-            return true;
+        if (up) { go(0); return true; }                                /* a letter */
+        if (down) { if (tiles.length > stRowStart) go(stRowStart); return true; }
+        var me = stCenter(tiles[idx].el).x;
+        for (k = 1; k < stRowStart; k++) {                             /* the nearest letter on that side, by position */
+            if (k === idx) continue;
+            dx = stCenter(tiles[k].el).x - me;
+            if (left ? dx >= -1 : dx <= 1) continue;
+            if (Math.abs(dx) < bd) { bd = Math.abs(dx); best = k; }
         }
-        return false;
+        if (best >= 0) go(best);
+        return true;
     }
 
     function toggleRadio() {
@@ -1704,8 +1721,9 @@
                 /* v8.7.66: a tile with a hint (the Radio tile) shows it in the footer while focused */
                 if (mode === "main" && hintEl) {
                     var tt = tiles[i];
-                    if (tt && tt.hint) hintEl.textContent = tt.hint;
-                    else if (mainHint) hintEl.textContent = mainHint;
+                    /* the Radio tile's hint: clear gold text, two font steps larger (17 px to 24 px) */
+                    if (tt && tt.hint) { hintEl.textContent = tt.hint; hintEl.style.fontSize = "24px"; hintEl.style.color = "#ffd36b"; hintEl.style.fontWeight = "600"; }
+                    else { if (mainHint) hintEl.textContent = mainHint; hintEl.style.fontSize = ""; hintEl.style.color = ""; hintEl.style.fontWeight = ""; }
                 }
             },
             onSelect: function (i) { if (tiles[i] && tiles[i].run) tiles[i].run(); },
@@ -1734,6 +1752,7 @@
 
     function render() {
         var keep = Math.min(focusIndex, 999);
+        if (mode !== "stations") { if (subEl) subEl.style.fontSize = ""; if (hintEl) { hintEl.style.fontSize = ""; hintEl.style.color = ""; hintEl.style.fontWeight = ""; } }
         if (mode === "city") buildCity();
         else if (mode === "sleep") buildSleep();
         else if (mode === "stations") buildStations();

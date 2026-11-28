@@ -182,7 +182,7 @@
                 if (scroller) {
                     var er = el.getBoundingClientRect();
                     var sr = scroller.getBoundingClientRect();
-                    var pad = 50;
+                    var pad = parseInt(scroller.getAttribute("data-scrollpad"), 10) || 50;   // v8.7.67: a list whose tiles have a caption below can ask for more margin
                     if (er.top < sr.top + pad) {
                         scroller.scrollTop -= (sr.top + pad - er.top);
                     } else if (er.bottom > sr.bottom - pad) {
