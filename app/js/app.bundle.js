@@ -25559,6 +25559,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.62: اختفاء الطقطقة بين الآيات في التلاوة (المصحف وصفحة الاستماع). قبل كده المشغّل كان بيتعاد تحميله مع كل آية وده ممكن يبان في صوت التلفزيون كفصل ووصل سريع. دلوقتي الآية الجاية بتكون متحمّلة ومفكوكة جاهزة وبتبدأ على ساعة الصوت في نفس لحظة نهاية اللي قبلها، وكل آية بعدها بنفس الطريقة، فخرج الصوت مابيتقفلش بين الآيات. لو التلفزيون مادعمش كده المشغّل بيرجع لطريقة ٨.٧.٦١. غير مجرّب على التلفزيون.",
         "✔ 8.7.61: إصلاح تلاوة المصحف على التلفزيون (٨.٧.٦٠ كانت بتظهر الرسالة والصوت بيفصل أو مبيشتغلش). الآيات الجاية بقت بتتحمّل في الخلفية وتتشغّل من مشغّل صوت واحد، الإذاعة بتتوقف بس لو شغالة فعلاً، والضغطة المتكررة من الريموت مابقتش توقف التلاوة ولا تفتح التفسير بالغلط، ولو الصوت مابدأش بتظهر رسالة بالسبب. غير مجرّب على التلفزيون.",
         "✔ 8.7.60: تلاوة آية من المصحف: اضغط مطوّلًا على OK على نص الصفحة فتبدأ التلاوة من الآية المحددة بصوت القارئ المختار في صفحة الاستماع، وتكمل آية بعد آية وتقلّب الصفحة لوحدها، وضغطة مطوّلة تانية بتوقفها. الضغطة القصيرة على OK لسه بتفتح التفسير. وكمان المشغّل بقى بيحمّل الآيتين الجاية قبل وقتها، في تلاوة المصحف وفي صفحة الاستماع، فالآية الجاية بتبدأ من غير وقفة. غير مجرّب على التلفزيون: اتجرّب في متصفح بدون شاشة بس.",
         "✔ 8.7.59: الإعدادات ← Vetro Root Controls بقت بتقفل بشاشة «عن Vetro»: يعني إيه Vetro، وإيه اللي اللانشر بيكسبه منه، وفين خيار «خلي الشاشة دي الافتراضية» أصلاً، وإزاي يتثبّت وإيه اللي تخلي بالك منه. وعدّاد القرّاء بقى ٤١ زي القايمة.",
@@ -25611,6 +25612,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.62: No more click between ayahs in the recitation: the next ayah is downloaded and decoded ahead and started on the audio clock at the exact end of the current one, so the sound output is never reloaded between ayahs. Untested on the TV.",
         "✔ 8.7.61: Fix for the Mushaf recitation on the TV: the next ayahs are downloaded in the background and played through one audio player, the radio is stopped only if it is playing, a repeated OK no longer stops the recitation or opens the tafsir, and a failed start now shows its reason. Untested on the TV.",
         "✔ 8.7.60: Hold OK on the Mushaf text to recite from the selected ayah in the reciter chosen on the listening page; it continues and turns the page, hold OK again to stop. A short OK still opens the tafsir. The next two ayahs are now loaded ahead (Mushaf and listening page), so there is no pause between ayahs. Untested on the TV.",
         "✔ 8.7.58: The in-launcher update keeps a copy of the current files before copying the new ones, and puts them back if the copy fails.",
@@ -29193,6 +29195,7 @@ window.APL_DEVICES = [
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
             if (playGuard) { clearTimeout(playGuard); playGuard = null; }
+            if (!chainTick) chainTick = setInterval(chainWatch, 100);
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
@@ -29230,7 +29233,7 @@ window.APL_DEVICES = [
             updateControlsUI();
             preloadAhead();
         });
-        a.addEventListener("ended", function () { if (a === audioEl) onAudioEnded(); });
+        a.addEventListener("ended", function () { if (a === audioEl && !chainQ.length) onAudioEnded(); });
         a.addEventListener("error", function () {
             if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
@@ -29441,18 +29444,29 @@ window.APL_DEVICES = [
     }
     function preloadedFor(c) {
         var e = c && preMap[buildAudioUrl(curReciter, c.s, c.a)];
-        return !!(e && e.obj);
+        return !!(e && e.ab);
     }
     function revokeObj(u) { if (u) { try { URL.revokeObjectURL(u); } catch (e) {} } }
     function dropEntry(k) {
         var e = preMap[k];
         if (!e) return;
         if (e.xhr) { try { e.xhr.abort(); } catch (x) {} }
-        revokeObj(e.obj);
+        e.ab = null; e.buf = null;
         delete preMap[k];
     }
-    /* v8.7.61: the next ayahs are downloaded as plain files (XHR, kept as blobs) and the ONE audio element switches to the blob when its turn comes.
-       v8.7.60 loaded them into extra audio elements; a TV can have a single hardware audio decoder, so extra elements may leave the real one silent. */
+    /* v8.7.61: the next ayahs are downloaded as plain files (XHR) and the ONE audio element plays them when their turn comes.
+       v8.7.60 loaded them into extra audio elements; a TV can have a single hardware audio decoder, so extra elements may leave the real one silent.
+       v8.7.62: each downloaded ayah is also decoded to an AudioBuffer, so the next ayah can be started on the audio clock at the exact end of the current one
+       (no gap from reloading the player between ayahs). If Web Audio is not available the element path above is used. */
+    function getCtx() {
+        if (ctx !== null) return ctx || null;
+        try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            ctx = AC ? new AC() : false;
+        } catch (e) { ctx = false; }
+        return ctx || null;
+    }
+    function wakeCtx() { var c = getCtx(); if (c && c.state === "suspended" && c.resume) { try { c.resume(); } catch (e) {} } }
     function preloadAhead() {
         if (!audioEl) return;
         var want = [], c = { s: curSurah, a: curAyah }, mode = mushafActive ? "continuous" : curMode, i, k;
@@ -29464,18 +29478,26 @@ window.APL_DEVICES = [
         for (k in preMap) { if (want.indexOf(k) < 0) dropEntry(k); }
         want.forEach(function (url) {
             if (preMap[url]) return;
-            var entry = { obj: "", xhr: null };
+            var entry = { ab: null, buf: null, xhr: null };
             preMap[url] = entry;
             try {
                 var x = new XMLHttpRequest();
                 x.open("GET", url, true);
-                x.responseType = "blob";
+                x.responseType = "arraybuffer";
                 x.timeout = 30000;
                 x.onload = function () {
                     entry.xhr = null;
                     if (preMap[url] !== entry) return;
-                    if (x.status === 200 && x.response && x.response.size > 0) {
-                        try { entry.obj = URL.createObjectURL(x.response); } catch (e) { delete preMap[url]; }
+                    if (x.status === 200 && x.response && x.response.byteLength > 0) {
+                        entry.ab = x.response;
+                        var cx = getCtx();
+                        if (cx && entry.ab.byteLength < 900000) {
+                            try {
+                                var copy = entry.ab.slice(0);
+                                var pr = cx.decodeAudioData(copy, function (buf) { if (preMap[url] === entry) entry.buf = buf; }, function () {});
+                                if (pr && pr.catch) pr.catch(function () {});
+                            } catch (e) {}
+                        }
                     } else { delete preMap[url]; }
                 };
                 x.onerror = x.ontimeout = function () { entry.xhr = null; if (preMap[url] === entry) delete preMap[url]; };
@@ -29487,6 +29509,87 @@ window.APL_DEVICES = [
     function clearPreloads() {
         for (var k in preMap) dropEntry(k);
         preMap = {};
+    }
+
+    /* ---- gapless hand-over (Web Audio) ----
+       While an ayah plays from the element and the next one is decoded, the next one is started on the audio clock at the end of the current one.
+       From then on every following ayah is chained the same way (each is scheduled to start exactly when the previous buffer ends). */
+    var ctx = null;           /* AudioContext, or false when unavailable */
+    var chainQ = [];          /* scheduled buffers: { src, c, when, end, timer } */
+    var chainTick = null;
+    var chainResume = false;  /* playback was paused while chained: resuming replays the current ayah with the element */
+    function haltChain() {
+        var had = chainQ.length > 0;
+        chainQ.forEach(function (q) {
+            if (q.timer) clearTimeout(q.timer);
+            q.src.onended = null;
+            try { q.src.stop(0); } catch (e) {}
+            try { q.src.disconnect(); } catch (e) {}
+        });
+        chainQ = [];
+        if (chainTick) { clearInterval(chainTick); chainTick = null; }
+        return had;
+    }
+    function pauseEl() {
+        if (chainQ.length) chainResume = true;
+        haltChain();
+        if (audioEl) { try { audioEl.pause(); } catch (e) {} }
+    }
+    function chainOk() {
+        var cx = getCtx();
+        return !!(cx && cx.state === "running" && curSpeed === 1 && (mushafActive || curMode === "continuous" || curMode === "repeat_surah"));
+    }
+    function bufFor(c) {
+        var e = c && preMap[buildAudioUrl(curReciter, c.s, c.a)];
+        return e && e.buf ? e.buf : null;
+    }
+    function chainSchedule(c, when) {
+        var cx = getCtx(), buf = bufFor(c);
+        if (!cx || !buf) return false;
+        var src = cx.createBufferSource();
+        src.buffer = buf;
+        src.connect(cx.destination);
+        try { src.start(when); } catch (e) { return false; }
+        var q = { src: src, c: c, when: when, end: when + buf.duration, timer: null };
+        q.timer = setTimeout(function () { chainEnter(q); }, Math.max(0, (when - cx.currentTime) * 1000));
+        src.onended = function () {
+            /* the last scheduled buffer finished and nothing follows: go on the normal way */
+            if (chainQ.length && chainQ[chainQ.length - 1] === q) { chainQ = []; onAudioEnded(); }
+        };
+        chainQ.push(q);
+        return true;
+    }
+    function chainEnter(q) {
+        if (chainQ.indexOf(q) < 0) return;
+        q.timer = null;
+        while (chainQ.length && chainQ[0] !== q) chainQ.shift();
+        curSurah = q.c.s; curAyah = q.c.a;
+        chainResume = false;
+        sys.setPref("quran_audio_surah", curSurah);
+        sys.setPref("quran_audio_ayah", curAyah);
+        isPlaying = true; isLoading = false;
+        if (isOpen) {
+            renderHeader();
+            renderVerseArea();
+            var reqId = ++verseReq;
+            loadVerseData(curSurah, curAyah, function () { if (reqId === verseReq) renderVerseArea(); });
+        }
+        updateControlsUI();
+        if (mushafActive && mushafCb) { try { mushafCb(curSurah, curAyah, true); } catch (e) {} }
+        preloadAhead();
+        var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
+        if (nc && chainQ.length === 1) chainSchedule(nc, q.end);
+    }
+    /* runs while the element plays: shortly before it ends, hand over to the chain if the next ayah is decoded */
+    function chainWatch() {
+        if (chainQ.length || !audioEl || !isPlaying || !chainOk()) return;
+        var d = audioEl.duration, t = audioEl.currentTime;
+        if (!isFinite(d) || d <= 0) return;
+        var rem = d - t;
+        if (rem > 1.5 || rem < 0.05) return;
+        var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
+        if (!nc || !bufFor(nc)) return;
+        chainSchedule(nc, getCtx().currentTime + rem);
     }
     function setMushaf(on) {
         if (mushafActive === !!on) return;
@@ -29509,7 +29612,15 @@ window.APL_DEVICES = [
         var pre = preMap[src];
         var useSrc = src;
         fallbackTried = false;
-        if (pre && pre.obj) { useSrc = pre.obj; playBlobFor = src; delete preMap[src]; revokeObj(curObj); curObj = pre.obj; }
+        haltChain(); chainResume = false; wakeCtx();
+        if (pre && pre.ab) {
+            var objU = "";
+            try { objU = URL.createObjectURL(new Blob([pre.ab], { type: "audio/mpeg" })); } catch (eB) {}
+            if (objU) { useSrc = objU; playBlobFor = src; revokeObj(curObj); curObj = objU; }
+            else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
+            pre.ab = null; delete preMap[src];
+            /* keep the decoded copy around for the chain if it is the next-next one: it is not needed, this ayah plays from the element */
+        }
         else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
         audioEl.src = useSrc;
         audioEl.defaultPlaybackRate = curSpeed;
@@ -29564,11 +29675,11 @@ window.APL_DEVICES = [
         initAudio();
         if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
         if (isPlaying) {
-            audioEl.pause();
+            pauseEl();
             isPlaying = false;
             updateControlsUI();
         } else {
-            if (!audioEl.src || audioEl.ended || audioEl.error) {
+            if (chainResume || !audioEl.src || audioEl.ended || audioEl.error) {
                 playCurrentAyah();
             } else {
                 audioEl.play().catch(function () {
@@ -29676,7 +29787,7 @@ window.APL_DEVICES = [
                     if (APL.toast) APL.toast(APL.lang === "ar" ? "تم إيقاف إذاعة القرآن الكريم فوراً" : "Quran Radio stopped", true);
                 } else {
                     if (audioEl) {
-                        try { audioEl.pause(); } catch (e) {}
+                        pauseEl();
                         isPlaying = false;
                         updateControlsUI();
                     }
@@ -30303,7 +30414,7 @@ window.APL_DEVICES = [
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
             wasPlayingBeforeAlert = false;
             if (audioEl) {
-                audioEl.pause();
+                pauseEl();
                 try { audioEl.currentTime = 0; } catch (eStop) {}
             }
             isPlaying = false;
@@ -30692,7 +30803,7 @@ window.APL_DEVICES = [
         }
         clearPreloads();
         if (audioEl) {
-            try { audioEl.pause(); } catch (e) {}
+            pauseEl();
             try {
                 audioEl.removeAttribute("src");
                 audioEl.load();
@@ -30707,7 +30818,7 @@ window.APL_DEVICES = [
             if (isOpen && isPlaying) {
                 if (sys.pref("quran_bg_playback") !== true) {
                     wasPlayingBeforeHidden = true;
-                    if (audioEl) audioEl.pause();
+                    if (audioEl) pauseEl();
                     isPlaying = false;
                     updateControlsUI();
                 }
@@ -30718,7 +30829,7 @@ window.APL_DEVICES = [
                 wasPlayingBeforeHidden = false;
                 if (audioEl) {
                     var pv = null;
-                    try { pv = audioEl.play(); } catch (ePv) {}
+                    try { if (chainResume) { playCurrentAyah(); pv = null; } else pv = audioEl.play(); } catch (ePv) {}
                     if (pv && pv.then) pv.then(function () { isPlaying = true; updateControlsUI(); }, function () { isPlaying = false; updateControlsUI(); });
                     else { isPlaying = true; updateControlsUI(); }
                 }
@@ -30729,7 +30840,7 @@ window.APL_DEVICES = [
     window.addEventListener("pagehide", function () {
         if (isOpen && isPlaying) {
             if (sys.pref("quran_bg_playback") !== true) {
-                if (audioEl) audioEl.pause();
+                if (audioEl) pauseEl();
                 isPlaying = false;
                 updateControlsUI();
             }
@@ -30762,13 +30873,13 @@ window.APL_DEVICES = [
         play: loadAndPlayCurrent,
         pause: function () {
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
-            if (audioEl) audioEl.pause();
+            if (audioEl) pauseEl();
         },
         pauseForAlert: function () {
             if (!isPlaying) return Promise.resolve(false);
             wasPlayingBeforeAlert = true;
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
-            if (audioEl) audioEl.pause();
+            if (audioEl) pauseEl();
             return Promise.resolve(true);
         },
         resumeAfterAlert: function () {
@@ -30779,7 +30890,7 @@ window.APL_DEVICES = [
             function attempt(n) {
                 if (!wasPlayingBeforeAlert) return Promise.resolve(false);   /* Stop / close in between */
                 var p;
-                try { p = audioEl.play(); } catch (e) { p = null; }
+                try { if (chainResume) { playCurrentAyah(); p = null; } else p = audioEl.play(); } catch (e) { p = null; }
                 if (!p || !p.then) {
                     wasPlayingBeforeAlert = false; isPlaying = true; updateControlsUI(); return Promise.resolve(true);
                 }
@@ -30803,7 +30914,7 @@ window.APL_DEVICES = [
         getSurahs: function () { return SURAHS; },
         /* Mushaf recitation (long OK on an ayah): plays from that ayah in the listening page's reciter, continuous, preloading 2 ahead */
         mushafPlay: function (surah, ayah) {
-            initAudio();
+            initAudio(); wakeCtx();
             curSurah = parseInt(surah, 10) || 1;
             curAyah = parseInt(ayah, 10) || 1;
             mushafActive = true;
@@ -30816,12 +30927,12 @@ window.APL_DEVICES = [
             if (endedAdvanceTimer) { clearTimeout(endedAdvanceTimer); endedAdvanceTimer = null; }
             if (playGuard) { clearTimeout(playGuard); playGuard = null; }
             var was = mushafActive;
-            if (was) { if (audioEl) { try { audioEl.pause(); } catch (e) {} } isPlaying = false; setMushaf(false); }
+            if (was) { if (audioEl) { pauseEl(); } isPlaying = false; setMushaf(false); }
             return was;
         },
         mushafActive: function () { return mushafActive; },
         onMushaf: function (fn) { mushafCb = fn; },
-        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap).map(function (k) { return k.split('/').pop() + (preMap[k].obj ? ':ready' : ':loading'); }), elements: 1 }; },
+        preloadInfo: function () { return { ahead: PRELOAD_AHEAD, urls: Object.keys(preMap).map(function (k) { return k.split('/').pop() + (preMap[k].obj ? ':ready' : ':loading'); }), elements: 1, chained: chainQ.length, decoded: Object.keys(preMap).filter(function (k) { return !!preMap[k].buf; }).length }; },
         getState: function () {
             return {
                 isOpen: isOpen,

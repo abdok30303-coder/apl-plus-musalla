@@ -39,6 +39,7 @@
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.62: اختفاء الطقطقة بين الآيات في التلاوة (المصحف وصفحة الاستماع). قبل كده المشغّل كان بيتعاد تحميله مع كل آية وده ممكن يبان في صوت التلفزيون كفصل ووصل سريع. دلوقتي الآية الجاية بتكون متحمّلة ومفكوكة جاهزة وبتبدأ على ساعة الصوت في نفس لحظة نهاية اللي قبلها، وكل آية بعدها بنفس الطريقة، فخرج الصوت مابيتقفلش بين الآيات. لو التلفزيون مادعمش كده المشغّل بيرجع لطريقة ٨.٧.٦١. غير مجرّب على التلفزيون.",
         "✔ 8.7.61: إصلاح تلاوة المصحف على التلفزيون (٨.٧.٦٠ كانت بتظهر الرسالة والصوت بيفصل أو مبيشتغلش). الآيات الجاية بقت بتتحمّل في الخلفية وتتشغّل من مشغّل صوت واحد، الإذاعة بتتوقف بس لو شغالة فعلاً، والضغطة المتكررة من الريموت مابقتش توقف التلاوة ولا تفتح التفسير بالغلط، ولو الصوت مابدأش بتظهر رسالة بالسبب. غير مجرّب على التلفزيون.",
         "✔ 8.7.60: تلاوة آية من المصحف: اضغط مطوّلًا على OK على نص الصفحة فتبدأ التلاوة من الآية المحددة بصوت القارئ المختار في صفحة الاستماع، وتكمل آية بعد آية وتقلّب الصفحة لوحدها، وضغطة مطوّلة تانية بتوقفها. الضغطة القصيرة على OK لسه بتفتح التفسير. وكمان المشغّل بقى بيحمّل الآيتين الجاية قبل وقتها، في تلاوة المصحف وفي صفحة الاستماع، فالآية الجاية بتبدأ من غير وقفة. غير مجرّب على التلفزيون: اتجرّب في متصفح بدون شاشة بس.",
         "✔ 8.7.59: الإعدادات ← Vetro Root Controls بقت بتقفل بشاشة «عن Vetro»: يعني إيه Vetro، وإيه اللي اللانشر بيكسبه منه، وفين خيار «خلي الشاشة دي الافتراضية» أصلاً، وإزاي يتثبّت وإيه اللي تخلي بالك منه. وعدّاد القرّاء بقى ٤١ زي القايمة.",
@@ -91,6 +92,7 @@
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.62: No more click between ayahs in the recitation: the next ayah is downloaded and decoded ahead and started on the audio clock at the exact end of the current one, so the sound output is never reloaded between ayahs. Untested on the TV.",
         "✔ 8.7.61: Fix for the Mushaf recitation on the TV: the next ayahs are downloaded in the background and played through one audio player, the radio is stopped only if it is playing, a repeated OK no longer stops the recitation or opens the tafsir, and a failed start now shows its reason. Untested on the TV.",
         "✔ 8.7.60: Hold OK on the Mushaf text to recite from the selected ayah in the reciter chosen on the listening page; it continues and turns the page, hold OK again to stop. A short OK still opens the tafsir. The next two ayahs are now loaded ahead (Mushaf and listening page), so there is no pause between ayahs. Untested on the TV.",
         "✔ 8.7.58: The in-launcher update keeps a copy of the current files before copying the new ones, and puts them back if the copy fails.",

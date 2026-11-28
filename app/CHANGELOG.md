@@ -1,3 +1,7 @@
+## 8.7.62
+
+- No more click between ayahs in the recitation (Mushaf and listening page). Before, the player was reloaded for every ayah, which the TV's sound output could make audible as a short disconnect and reconnect. Now the next ayah is already downloaded and decoded, and it is started on the audio clock at the exact end of the current one, and each following ayah is chained the same way, so the audio output is never stopped between ayahs. If the TV cannot do this, the player falls back to the 8.7.61 behaviour. Pause and resume work as before (resuming replays the current ayah). Untested on the TV: checked in headless Chrome with a test server; the real TV's Web Audio support and the sound output itself still need a listen.
+
 ## 8.7.61
 
 - Fix for the Mushaf recitation on the TV (8.7.60 showed the message but the sound cut off or did not start). The next ayahs are now downloaded in the background and played through the one audio player (8.7.60 used extra players, which some TVs do not handle). The radio is only stopped when it is really playing. A repeated OK from the remote can no longer stop the recitation right after it starts or open the tafsir. If the sound cannot start, the screen now shows the reason instead of a silent message. Untested on the TV: checked in headless Chrome with a test server and simulated remote key patterns only.
