@@ -1,3 +1,7 @@
+## 8.7.63
+
+- Fix for long ayahs being cut short in the recitation. A downloaded copy of the ayah was played from a blob address, which some TV players cut short on long files; now the player always streams the real address, and the downloaded copy is only used for the gapless hand-over (and only for files under about 600 KB; longer ayahs play from the stream). The hand-over to the next ayah now starts at the real end of the file, not at an estimated duration, so it can no longer jump early. Untested on the TV: checked in headless Chrome with a 25 s and a 40 s test file (both played to the end, the next ayah followed); the cause on the TV itself is not confirmed.
+
 ## 8.7.62
 
 - No more click between ayahs in the recitation (Mushaf and listening page). Before, the player was reloaded for every ayah, which the TV's sound output could make audible as a short disconnect and reconnect. Now the next ayah is already downloaded and decoded, and it is started on the audio clock at the exact end of the current one, and each following ayah is chained the same way, so the audio output is never stopped between ayahs. If the TV cannot do this, the player falls back to the 8.7.61 behaviour. Pause and resume work as before (resuming replays the current ayah). Untested on the TV: checked in headless Chrome with a test server; the real TV's Web Audio support and the sound output itself still need a listen.

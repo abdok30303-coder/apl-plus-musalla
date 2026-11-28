@@ -346,7 +346,6 @@
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
             if (playGuard) { clearTimeout(playGuard); playGuard = null; }
-            if (!chainTick) chainTick = setInterval(chainWatch, 100);
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
@@ -384,7 +383,13 @@
             updateControlsUI();
             preloadAhead();
         });
-        a.addEventListener("ended", function () { if (a === audioEl && !chainQ.length) onAudioEnded(); });
+        a.addEventListener("ended", function () {
+            if (a !== audioEl || chainQ.length) return;
+            /* the real end of the file (never an estimated duration): start the chain from here if the next ayah is decoded */
+            var ncE = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
+            if (ncE && chainOk() && bufFor(ncE) && chainSchedule(ncE, getCtx().currentTime + 0.005)) return;
+            onAudioEnded();
+        });
         a.addEventListener("error", function () {
             if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
@@ -642,7 +647,7 @@
                     if (x.status === 200 && x.response && x.response.byteLength > 0) {
                         entry.ab = x.response;
                         var cx = getCtx();
-                        if (cx && entry.ab.byteLength < 900000) {
+                        if (cx && entry.ab.byteLength < 600000) {
                             try {
                                 var copy = entry.ab.slice(0);
                                 var pr = cx.decodeAudioData(copy, function (buf) { if (preMap[url] === entry) entry.buf = buf; }, function () {});
@@ -731,17 +736,6 @@
         var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
         if (nc && chainQ.length === 1) chainSchedule(nc, q.end);
     }
-    /* runs while the element plays: shortly before it ends, hand over to the chain if the next ayah is decoded */
-    function chainWatch() {
-        if (chainQ.length || !audioEl || !isPlaying || !chainOk()) return;
-        var d = audioEl.duration, t = audioEl.currentTime;
-        if (!isFinite(d) || d <= 0) return;
-        var rem = d - t;
-        if (rem > 1.5 || rem < 0.05) return;
-        var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
-        if (!nc || !bufFor(nc)) return;
-        chainSchedule(nc, getCtx().currentTime + rem);
-    }
     function setMushaf(on) {
         if (mushafActive === !!on) return;
         mushafActive = !!on;
@@ -764,15 +758,8 @@
         var useSrc = src;
         fallbackTried = false;
         haltChain(); chainResume = false; wakeCtx();
-        if (pre && pre.ab) {
-            var objU = "";
-            try { objU = URL.createObjectURL(new Blob([pre.ab], { type: "audio/mpeg" })); } catch (eB) {}
-            if (objU) { useSrc = objU; playBlobFor = src; revokeObj(curObj); curObj = objU; }
-            else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
-            pre.ab = null; delete preMap[src];
-            /* keep the decoded copy around for the chain if it is the next-next one: it is not needed, this ayah plays from the element */
-        }
-        else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
+        /* the element always plays the real address (a downloaded copy played from a blob: URL may be cut short on some TV players); the downloaded copy is only decoded for the chain */
+        playBlobFor = "";
         audioEl.src = useSrc;
         audioEl.defaultPlaybackRate = curSpeed;
         try { audioEl.load(); } catch (e) {}

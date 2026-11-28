@@ -25559,6 +25559,7 @@ window.APL_DEVICES = [
 
     /* 3) What's New (v3.3.3): shown once per version, 8 s after the Home Screen is up; also in Settings > Performance. Untested on the TV. */
     var NEWS_AR = [
+        "✔ 8.7.63: إصلاح قطع الآيات الطويلة في التلاوة. نسخة الآية المحمّلة كانت بتتشغّل من عنوان داخلي (blob) وبعض مشغّلات التلفزيون بتقطعها في الملفات الطويلة؛ دلوقتي المشغّل بيشغّل العنوان الحقيقي دايماً، والنسخة المحمّلة بتُستخدم بس للانتقال من غير فاصل (للملفات الأصغر من حوالي ٦٠٠ كيلوبايت)، والانتقال للآية الجاية بيبدأ عند النهاية الحقيقية للملف مش عند مدة مقدّرة فمبقاش بيقفز بدري. غير مجرّب على التلفزيون.",
         "✔ 8.7.62: اختفاء الطقطقة بين الآيات في التلاوة (المصحف وصفحة الاستماع). قبل كده المشغّل كان بيتعاد تحميله مع كل آية وده ممكن يبان في صوت التلفزيون كفصل ووصل سريع. دلوقتي الآية الجاية بتكون متحمّلة ومفكوكة جاهزة وبتبدأ على ساعة الصوت في نفس لحظة نهاية اللي قبلها، وكل آية بعدها بنفس الطريقة، فخرج الصوت مابيتقفلش بين الآيات. لو التلفزيون مادعمش كده المشغّل بيرجع لطريقة ٨.٧.٦١. غير مجرّب على التلفزيون.",
         "✔ 8.7.61: إصلاح تلاوة المصحف على التلفزيون (٨.٧.٦٠ كانت بتظهر الرسالة والصوت بيفصل أو مبيشتغلش). الآيات الجاية بقت بتتحمّل في الخلفية وتتشغّل من مشغّل صوت واحد، الإذاعة بتتوقف بس لو شغالة فعلاً، والضغطة المتكررة من الريموت مابقتش توقف التلاوة ولا تفتح التفسير بالغلط، ولو الصوت مابدأش بتظهر رسالة بالسبب. غير مجرّب على التلفزيون.",
         "✔ 8.7.60: تلاوة آية من المصحف: اضغط مطوّلًا على OK على نص الصفحة فتبدأ التلاوة من الآية المحددة بصوت القارئ المختار في صفحة الاستماع، وتكمل آية بعد آية وتقلّب الصفحة لوحدها، وضغطة مطوّلة تانية بتوقفها. الضغطة القصيرة على OK لسه بتفتح التفسير. وكمان المشغّل بقى بيحمّل الآيتين الجاية قبل وقتها، في تلاوة المصحف وفي صفحة الاستماع، فالآية الجاية بتبدأ من غير وقفة. غير مجرّب على التلفزيون: اتجرّب في متصفح بدون شاشة بس.",
@@ -25612,6 +25613,7 @@ window.APL_DEVICES = [
         "\u26a0 Untested on the TV \u2014 \u0645\u062d\u062a\u0627\u062c \u062a\u062c\u0631\u0628\u0629 \u0639\u0644\u0649 \u0627\u0644\u0634\u0627\u0634\u0629"
     ];
     var NEWS_EN = [
+        "✔ 8.7.63: Fix for long ayahs being cut short: the player always streams the real address, and the hand-over to the next ayah starts at the real end of the file. Untested on the TV.",
         "✔ 8.7.62: No more click between ayahs in the recitation: the next ayah is downloaded and decoded ahead and started on the audio clock at the exact end of the current one, so the sound output is never reloaded between ayahs. Untested on the TV.",
         "✔ 8.7.61: Fix for the Mushaf recitation on the TV: the next ayahs are downloaded in the background and played through one audio player, the radio is stopped only if it is playing, a repeated OK no longer stops the recitation or opens the tafsir, and a failed start now shows its reason. Untested on the TV.",
         "✔ 8.7.60: Hold OK on the Mushaf text to recite from the selected ayah in the reciter chosen on the listening page; it continues and turns the page, hold OK again to stop. A short OK still opens the tafsir. The next two ayahs are now loaded ahead (Mushaf and listening page), so there is no pause between ayahs. Untested on the TV.",
@@ -29195,7 +29197,6 @@ window.APL_DEVICES = [
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
             fallbackTried = false;
             if (playGuard) { clearTimeout(playGuard); playGuard = null; }
-            if (!chainTick) chainTick = setInterval(chainWatch, 100);
             isPlaying = true;
             isLoading = false;
             updateControlsUI();
@@ -29233,7 +29234,13 @@ window.APL_DEVICES = [
             updateControlsUI();
             preloadAhead();
         });
-        a.addEventListener("ended", function () { if (a === audioEl && !chainQ.length) onAudioEnded(); });
+        a.addEventListener("ended", function () {
+            if (a !== audioEl || chainQ.length) return;
+            /* the real end of the file (never an estimated duration): start the chain from here if the next ayah is decoded */
+            var ncE = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
+            if (ncE && chainOk() && bufFor(ncE) && chainSchedule(ncE, getCtx().currentTime + 0.005)) return;
+            onAudioEnded();
+        });
         a.addEventListener("error", function () {
             if (a !== audioEl) return;
             if (stallWatchdog) { clearTimeout(stallWatchdog); stallWatchdog = null; }
@@ -29491,7 +29498,7 @@ window.APL_DEVICES = [
                     if (x.status === 200 && x.response && x.response.byteLength > 0) {
                         entry.ab = x.response;
                         var cx = getCtx();
-                        if (cx && entry.ab.byteLength < 900000) {
+                        if (cx && entry.ab.byteLength < 600000) {
                             try {
                                 var copy = entry.ab.slice(0);
                                 var pr = cx.decodeAudioData(copy, function (buf) { if (preMap[url] === entry) entry.buf = buf; }, function () {});
@@ -29580,17 +29587,6 @@ window.APL_DEVICES = [
         var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
         if (nc && chainQ.length === 1) chainSchedule(nc, q.end);
     }
-    /* runs while the element plays: shortly before it ends, hand over to the chain if the next ayah is decoded */
-    function chainWatch() {
-        if (chainQ.length || !audioEl || !isPlaying || !chainOk()) return;
-        var d = audioEl.duration, t = audioEl.currentTime;
-        if (!isFinite(d) || d <= 0) return;
-        var rem = d - t;
-        if (rem > 1.5 || rem < 0.05) return;
-        var nc = nextCoords(curSurah, curAyah, mushafActive ? "continuous" : curMode);
-        if (!nc || !bufFor(nc)) return;
-        chainSchedule(nc, getCtx().currentTime + rem);
-    }
     function setMushaf(on) {
         if (mushafActive === !!on) return;
         mushafActive = !!on;
@@ -29613,15 +29609,8 @@ window.APL_DEVICES = [
         var useSrc = src;
         fallbackTried = false;
         haltChain(); chainResume = false; wakeCtx();
-        if (pre && pre.ab) {
-            var objU = "";
-            try { objU = URL.createObjectURL(new Blob([pre.ab], { type: "audio/mpeg" })); } catch (eB) {}
-            if (objU) { useSrc = objU; playBlobFor = src; revokeObj(curObj); curObj = objU; }
-            else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
-            pre.ab = null; delete preMap[src];
-            /* keep the decoded copy around for the chain if it is the next-next one: it is not needed, this ayah plays from the element */
-        }
-        else { playBlobFor = ""; revokeObj(curObj); curObj = ""; }
+        /* the element always plays the real address (a downloaded copy played from a blob: URL may be cut short on some TV players); the downloaded copy is only decoded for the chain */
+        playBlobFor = "";
         audioEl.src = useSrc;
         audioEl.defaultPlaybackRate = curSpeed;
         try { audioEl.load(); } catch (e) {}
